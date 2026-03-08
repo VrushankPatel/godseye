@@ -260,6 +260,7 @@ const AIRCRAFT_SOURCES = [
 export default function AircraftLayer({ viewer }) {
     const isEnabled = useStore((s) => s.layers.aircraft.enabled);
     const flightFilters = useStore((s) => s.flightFilters);
+    const trackedTarget = useStore((s) => s.trackedTarget);
     const updateData = useStore((s) => s.updateLayerData);
     const setStatus = useStore((s) => s.setLayerStatus);
 
@@ -275,6 +276,22 @@ export default function AircraftLayer({ viewer }) {
         entitiesRef.current.forEach((entity) => viewer.entities.remove(entity));
         entitiesRef.current.clear();
         flightStateRef.current.clear();
+    }, [viewer]);
+
+    const applyTrackedVisibility = useCallback((trackedEntityId) => {
+        const hasTrackedAircraft = Boolean(
+            trackedEntityId &&
+            typeof trackedEntityId === 'string' &&
+            trackedEntityId.startsWith('aircraft-')
+        );
+
+        for (const [, entity] of entitiesRef.current.entries()) {
+            entity.show = hasTrackedAircraft ? entity.id === trackedEntityId : true;
+        }
+
+        if (viewer && !viewer.isDestroyed()) {
+            viewer.scene.requestRender();
+        }
     }, [viewer]);
 
     const animateFlights = useCallback(() => {
@@ -317,6 +334,14 @@ export default function AircraftLayer({ viewer }) {
         }
 
         const activeFilters = useStore.getState().flightFilters;
+        const activeTrackedTarget = useStore.getState().trackedTarget;
+        const trackedEntityId = (
+            activeTrackedTarget?.type === 'aircraft' &&
+            typeof activeTrackedTarget.entityId === 'string' &&
+            activeTrackedTarget.entityId.startsWith('aircraft-')
+        )
+            ? activeTrackedTarget.entityId
+            : null;
         const airlineQuery = String(activeFilters.airlineQuery || '').trim().toUpperCase();
         const visibleFlights = flights.filter((flight) => {
             if (!activeFilters[flight.flightClass]) return false;
@@ -351,6 +376,7 @@ export default function AircraftLayer({ viewer }) {
                 const entity = entitiesRef.current.get(id);
                 entity.position = Cesium.Cartesian3.fromDegrees(flight.longitude, flight.latitude, flight.altitudeM);
                 entity.billboard.rotation = rotation;
+                entity.show = trackedEntityId ? entity.id === trackedEntityId : true;
                 entity.properties.callsign = flight.callsign;
                 entity.properties.operator = flight.operator;
                 entity.properties.provider = flight.provider;
@@ -367,6 +393,7 @@ export default function AircraftLayer({ viewer }) {
                 const entity = viewer.entities.add({
                     id: `aircraft-${id}`,
                     position: Cesium.Cartesian3.fromDegrees(flight.longitude, flight.latitude, flight.altitudeM),
+                    show: trackedEntityId ? `aircraft-${id}` === trackedEntityId : true,
                     name: flight.callsign,
                     billboard: {
                         image: planeIconRef.current,
@@ -467,6 +494,18 @@ export default function AircraftLayer({ viewer }) {
         if (!rawFlightsRef.current.length) return;
         handleData(rawFlightsRef.current);
     }, [flightFilters, handleData, isEnabled]);
+
+    useEffect(() => {
+        if (!isEnabled) return;
+        const trackedEntityId = (
+            trackedTarget?.type === 'aircraft' &&
+            typeof trackedTarget.entityId === 'string' &&
+            trackedTarget.entityId.startsWith('aircraft-')
+        )
+            ? trackedTarget.entityId
+            : null;
+        applyTrackedVisibility(trackedEntityId);
+    }, [trackedTarget, applyTrackedVisibility, isEnabled]);
 
     useEffect(() => {
         mountedRef.current = true;
