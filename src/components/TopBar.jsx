@@ -65,6 +65,9 @@ export default function TopBar() {
                 <div className="text-[10px] tracking-widest text-text-dim font-semibold min-h-[16px] transition-opacity duration-300">
                     {SLOGANS[sloganIndex]}
                 </div>
+                <div className="text-[10px] tracking-wide text-electric-blue/90 font-medium">
+                    Built with ❤️ by - Vrushank Patel
+                </div>
             </div>
 
             {/* Top Center: Classification Banner */}

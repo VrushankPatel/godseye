@@ -88,6 +88,10 @@ src/
 - Some feeds can intermittently fail due to CORS limits, region blocks, source downtime, or third-party rate limiting.
 - The app degrades gracefully and keeps other layers active when one source is unavailable.
 
+## Credits
+
+Built with ❤️ by - **Vrushank Patel**
+
 ## License
 
 Licensed under Apache License 2.0. See [LICENSE](./LICENSE).
