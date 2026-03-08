@@ -24,6 +24,8 @@ export default function MissionHud() {
         seismic: 600,
         airports: 10000,
         seismicStations: 5000,
+        maritime: 8000,
+        powerGrid: 7000,
         cctv: 8000,
         traffic: 1200,
         conflicts: 1200,

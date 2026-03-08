@@ -12,6 +12,8 @@ const useStore = create((set, get) => ({
         seismic: { enabled: false, data: [], count: 0, status: 'idle' },
         airports: { enabled: false, data: [], count: 0, status: 'idle' },
         seismicStations: { enabled: false, data: [], count: 0, status: 'idle' },
+        maritime: { enabled: false, data: [], count: 0, status: 'idle' },
+        powerGrid: { enabled: false, data: [], count: 0, status: 'idle' },
         hazards: { enabled: false, data: [], count: 0, status: 'idle' },
         disasters: { enabled: false, data: [], count: 0, status: 'idle' },
         conflicts: { enabled: false, data: [], count: 0, status: 'idle' },

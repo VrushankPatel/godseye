@@ -23,6 +23,8 @@ I used **Codex** as a programming assistant for selected implementation tasks su
   - Natural hazards (NASA EONET live events: storms, wildfires, volcanoes, floods)
   - Global disaster alerts (GDACS: earthquakes, cyclones, floods, droughts, volcanoes, wildfires)
   - Global conflict/war layer (Wikidata SPARQL, geocoded recent ongoing armed conflicts)
+  - Maritime layer (WFP global ports + AISstream realtime vessels when API key is configured)
+  - Power grid layer (US DOE ODIN outage intelligence + WRI global power-plant infrastructure)
   - Weather layer now includes severe alert overlays (NOAA/NWS watches, warnings, advisories)
   - Live ocean buoy telemetry (NOAA NDBC: wind, wave, pressure, air/water temp)
   - Global volcanic activity alerts (Smithsonian/USGS geotagged weekly activity feed)
@@ -117,6 +119,10 @@ src/
 - Open-Meteo air-quality API
 - Open/public municipal and curated world camera feeds
 - Open geospatial traffic/airspace datasets
+- WFP Global Ports ArcGIS FeatureServer (public global maritime infrastructure points)
+- AISstream WebSocket feed (optional key) for realtime ship positions
+- US DOE ODIN real-time county outage feed
+- WRI Global Power Plant Database (global infrastructure baseline)
 - NTAD Military Bases (ArcGIS public layer)
 - OpenStreetMap Overpass military/landuse feed (`military=*`, `landuse=military`) via bundled global snapshot (`/public/data/osmMilitarySites.json`)
 - Curated global no-go/restricted location dataset (publicly documented exclusion/protection zones)
@@ -141,6 +147,7 @@ src/
 - This project is intentionally backend-free: no server, no database, no auth.
 - Some feeds can intermittently fail due to CORS limits, region blocks, source downtime, or third-party rate limiting.
 - The app degrades gracefully and keeps other layers active when one source is unavailable.
+- Optional: set `VITE_AISSTREAM_API_KEY` in your local `.env` to enable realtime AIS vessel streaming in the Maritime layer.
 
 ## Credits
 

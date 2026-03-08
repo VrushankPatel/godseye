@@ -265,6 +265,9 @@ export default function SatelliteLayer({ viewer }) {
             API_URLS.CELESTRAK_GEO,
             API_URLS.CELESTRAK_GPS_OPS,
             API_URLS.CELESTRAK_SCIENCE,
+            API_URLS.CELESTRAK_COSMOS_DEBRIS,
+            API_URLS.CELESTRAK_IRIDIUM_DEBRIS,
+            API_URLS.CELESTRAK_FENGYUN_DEBRIS,
         ];
 
         const results = await Promise.allSettled(

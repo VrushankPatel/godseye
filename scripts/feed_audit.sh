@@ -58,6 +58,20 @@ else
   echo "CELESTRAK_ACTIVE_RECORDS ERR"
 fi
 
+if celestrak_debris=$(curl -s --max-time 45 "https://celestrak.org/NORAD/elements/gp.php?GROUP=cosmos-2251-debris&FORMAT=json" \
+  | jq -r 'if type=="array" then length else 0 end' 2>/dev/null); then
+  echo "CELESTRAK_COSMOS2251_DEBRIS ${celestrak_debris:-0}"
+else
+  echo "CELESTRAK_COSMOS2251_DEBRIS ERR"
+fi
+
+if celestrak_fengyun=$(curl -s --max-time 45 "https://celestrak.org/NORAD/elements/gp.php?GROUP=fengyun-1c-debris&FORMAT=json" \
+  | jq -r 'if type=="array" then length else 0 end' 2>/dev/null); then
+  echo "CELESTRAK_FENGYUN1C_DEBRIS ${celestrak_fengyun:-0}"
+else
+  echo "CELESTRAK_FENGYUN1C_DEBRIS ERR"
+fi
+
 if usgs=$(curl -s --max-time 45 "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson" \
   | jq -r '.features|length' 2>/dev/null); then
   echo "USGS_ALL_HOUR ${usgs:-0}"
@@ -77,6 +91,20 @@ if gdacs=$(curl -s --max-time 45 "https://www.gdacs.org/gdacsapi/api/events/gete
   echo "GDACS_EVENTS ${gdacs:-0}"
 else
   echo "GDACS_EVENTS ERR"
+fi
+
+if ports=$(curl -s --max-time 45 "https://gis.wfp.org/arcgis/rest/services/GLOBAL/GlobalPorts/FeatureServer/0/query?where=1%3D1&returnCountOnly=true&f=pjson" \
+  | jq -r '.count' 2>/dev/null); then
+  echo "GLOBAL_PORTS_COUNT ${ports:-0}"
+else
+  echo "GLOBAL_PORTS_COUNT ERR"
+fi
+
+if odin=$(curl -s --max-time 45 "https://ornl.opendatasoft.com/api/explore/v2.1/catalog/datasets/odin-real-time-outages-county/records?limit=1" \
+  | jq -r '.total_count // 0' 2>/dev/null); then
+  echo "ODIN_OUTAGE_RECORDS ${odin:-0}"
+else
+  echo "ODIN_OUTAGE_RECORDS ERR"
 fi
 
 if conflicts=$(curl -s --max-time 45 "https://query.wikidata.org/sparql?format=json&query=PREFIX%20xsd%3A%20%3Chttp%3A%2F%2Fwww.w3.org%2F2001%2FXMLSchema%23%3E%20SELECT%20(COUNT(%3Fitem)%20AS%20%3Fcount)%20WHERE%20%7B%20%3Fitem%20wdt%3AP31%2Fwdt%3AP279*%20wd%3AQ350604.%20%3Fitem%20wdt%3AP625%20%3Fcoord.%20OPTIONAL%20%7B%20%3Fitem%20wdt%3AP580%20%3Fstart.%20%7D%20OPTIONAL%20%7B%20%3Fitem%20wdt%3AP571%20%3Finception.%20%7D%20FILTER((BOUND(%3Fstart)%20%26%26%20%3Fstart%20%3E%3D%20%222010-01-01T00%3A00%3A00Z%22%5E%5Exsd%3AdateTime)%20%7C%7C%20(BOUND(%3Finception)%20%26%26%20%3Finception%20%3E%3D%20%222010-01-01T00%3A00%3A00Z%22%5E%5Exsd%3AdateTime)).%20FILTER(NOT%20EXISTS%20%7B%20%3Fitem%20wdt%3AP582%20%3Fend.%20%7D)%20%7D" \

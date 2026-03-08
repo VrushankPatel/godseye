@@ -7,6 +7,8 @@ import SatelliteLayer from '../layers/SatelliteLayer';
 import SeismicLayer from '../layers/SeismicLayer';
 import AirportsLayer from '../layers/AirportsLayer';
 import SeismicStationsLayer from '../layers/SeismicStationsLayer';
+import MaritimeLayer from '../layers/MaritimeLayer';
+import PowerGridLayer from '../layers/PowerGridLayer';
 import HazardsLayer from '../layers/HazardsLayer';
 import DisasterLayer from '../layers/DisasterLayer';
 import ConflictLayer from '../layers/ConflictLayer';
@@ -51,6 +53,10 @@ const ENTITY_ID_PREFIX_LAYER_MAP = [
     ['seismic-', 'seismic'],
     ['airport-', 'airports'],
     ['seismic-station-', 'seismicStations'],
+    ['maritime-port-', 'maritime'],
+    ['maritime-vessel-', 'maritime'],
+    ['grid-outage-', 'powerGrid'],
+    ['power-plant-', 'powerGrid'],
     ['hazard-', 'hazards'],
     ['disaster-', 'disasters'],
     ['conflict-', 'conflicts'],
@@ -534,6 +540,8 @@ export default function Globe() {
                     <SeismicLayer viewer={viewerRef.current} />
                     <AirportsLayer viewer={viewerRef.current} />
                     <SeismicStationsLayer viewer={viewerRef.current} />
+                    <MaritimeLayer viewer={viewerRef.current} />
+                    <PowerGridLayer viewer={viewerRef.current} />
                     <HazardsLayer viewer={viewerRef.current} />
                     <DisasterLayer viewer={viewerRef.current} />
                     <ConflictLayer viewer={viewerRef.current} />

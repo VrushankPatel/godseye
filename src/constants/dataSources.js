@@ -14,6 +14,7 @@ export const API_URLS = {
     AIRPLANES_GLOBAL: 'https://api.airplanes.live/v2/point/0/0/10000',
     ADSB_ONE_GLOBAL: 'https://api.adsb.one/v2/point/0/0/10000',
     ADSB_LOL_GLOBAL: 'https://api.adsb.lol/v2/point/0/0/10000',
+    AISSTREAM_WS: 'wss://stream.aisstream.io/v0/stream',
 
     // CelesTrak - TLE data for satellites
     // We proxy this as well to prevent "Feed Offline" errors from strict browser CORS
@@ -24,6 +25,9 @@ export const API_URLS = {
     CELESTRAK_GEO: 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://celestrak.org/NORAD/elements/gp.php?GROUP=geo&FORMAT=tle'),
     CELESTRAK_GPS_OPS: 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://celestrak.org/NORAD/elements/gp.php?GROUP=gps-ops&FORMAT=tle'),
     CELESTRAK_SCIENCE: 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://celestrak.org/NORAD/elements/gp.php?GROUP=science&FORMAT=tle'),
+    CELESTRAK_COSMOS_DEBRIS: 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://celestrak.org/NORAD/elements/gp.php?GROUP=cosmos-2251-debris&FORMAT=tle'),
+    CELESTRAK_IRIDIUM_DEBRIS: 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://celestrak.org/NORAD/elements/gp.php?GROUP=iridium-33-debris&FORMAT=tle'),
+    CELESTRAK_FENGYUN_DEBRIS: 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://celestrak.org/NORAD/elements/gp.php?GROUP=fengyun-1c-debris&FORMAT=tle'),
 
     // USGS Earthquake feed - excellent CORS support
     USGS_EARTHQUAKES_DAY: 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson',
@@ -44,6 +48,11 @@ export const API_URLS = {
         'https://api.open-meteo.com/v1/forecast?current=temperature_2m,relative_humidity_2m,wind_speed_10m,wind_direction_10m,weather_code&timezone=GMT',
     OPEN_METEO_AIR_QUALITY:
         'https://air-quality-api.open-meteo.com/v1/air-quality?current=pm2_5,pm10,nitrogen_dioxide,ozone,us_aqi&timezone=GMT',
+    // WFP Global ports (ArcGIS FeatureServer, public)
+    GLOBAL_PORTS_ARCGIS_QUERY:
+        'https://gis.wfp.org/arcgis/rest/services/GLOBAL/GlobalPorts/FeatureServer/0/query?where=1%3D1&outFields=objectid,portname,prttype,prtsize,status,latitude,longitude,iso3,country,updatedate&returnGeometry=false&f=pjson',
+    GLOBAL_PORTS_ARCGIS_QUERY_PROXY:
+        'https://api.allorigins.win/raw?url=',
     // NOAA NDBC latest buoy observations (text table)
     NDBC_LATEST_OBS: 'https://www.ndbc.noaa.gov/data/latest_obs/latest_obs.txt',
     NDBC_LATEST_OBS_PROXY:
@@ -90,6 +99,13 @@ export const API_URLS = {
         'https://r.jina.ai/http://aviationweather.gov/api/data/sigmet?format=json',
     // NOAA / NWS CAP alerts (official active watches/warnings/advisories)
     NWS_ALERTS_ACTIVE: 'https://api.weather.gov/alerts/active?status=actual',
+    // Power-grid/infrastructure feeds
+    ODIN_OUTAGES:
+        'https://ornl.opendatasoft.com/api/explore/v2.1/catalog/datasets/odin-real-time-outages-county/records',
+    ODIN_OUTAGES_PROXY: 'https://api.allorigins.win/raw?url=',
+    WRI_GLOBAL_POWER_PLANTS_CSV:
+        'https://raw.githubusercontent.com/wri/global-power-plant-database/master/output_database/global_power_plant_database.csv',
+    WRI_GLOBAL_POWER_PLANTS_PROXY: 'https://api.allorigins.win/raw?url=',
     // GDACS - global disaster alert feed (earthquakes, cyclones, floods, wildfires, drought, volcanoes)
     GDACS_EVENTS: 'https://www.gdacs.org/gdacsapi/api/events/geteventlist/SEARCH',
     WIKIDATA_SPARQL: 'https://query.wikidata.org/sparql',
@@ -127,6 +143,8 @@ export const POLL_INTERVALS = {
     AIR_QUALITY: 600000, // 10 minutes
     WEATHER: 600000,    // 10 minutes
     CCTV: 5000,         // 5 seconds for still images
+    MARITIME_PORTS: 43200000, // 12 hours
+    POWER_GRID: 300000, // 5 minutes
 };
 
 // ── Shader Modes ──────────────────────────────────────
@@ -148,6 +166,7 @@ export const LAYER_DEFS = {
     hazards: { label: 'HAZARDS', color: '#ff8a3d', icon: '☣', description: 'General hazard overlays from open feeds.' },
     disasters: { label: 'DISASTERS', color: '#ff6f61', icon: '☄', description: 'Global disaster incidents and alerts.' },
     conflicts: { label: 'CONFLICTS', color: '#ff4d6d', icon: '⚔', description: 'Open-source conflict and unrest event signals.' },
+    maritime: { label: 'MARITIME', color: '#00ffd5', icon: '⛴', description: 'Global port network + live AIS vessel tracking (AIS key optional).' },
     oceanBuoys: { label: 'OCEAN BUOYS', color: '#38bdf8', icon: '⚓', description: 'Buoy observations: waves, wind, pressure, sea temp.' },
     volcanoes: { label: 'VOLCANOES', color: '#ff4d4d', icon: '🌋', description: 'Volcanic activity and monitoring notices.' },
     spaceWeather: { label: 'SPACE WX', color: '#a3e635', icon: '☀', description: 'NOAA aurora probability model; strongest near poles.' },
@@ -158,6 +177,7 @@ export const LAYER_DEFS = {
     seismicStations: { label: 'SEIS STATIONS', color: '#22d3ee', icon: '📡', description: 'Seismometer station network locations.' },
     weather: { label: 'WEATHER', color: '#7dd3fc', icon: '☁', description: 'Global sampled weather field with alert merge.' },
     airQuality: { label: 'AIR QUALITY', color: '#84cc16', icon: 'AQ', description: 'Air quality indicators (AQI, PM2.5, ozone).' },
+    powerGrid: { label: 'POWER GRID', color: '#facc15', icon: '⚡', description: 'Real-time outage intelligence + global power infrastructure.' },
     cctv: { label: 'CCTV', color: '#00ff41', icon: '📹', description: 'Public live camera feeds and refresh streams.' },
     traffic: { label: 'TRAFFIC', color: '#ff69b4', icon: '🚗', description: 'Traffic flow animation and traffic-linked cams.' },
     militaryActivity: { label: 'MIL ACTIVITY', color: '#ff5b5b', icon: '⚠', description: 'Likely military flights inferred from air traffic feed.' },
@@ -173,6 +193,8 @@ export const SURVEILLANCE_PRIMARY_LAYERS = [
     'seismic',
     'airports',
     'seismicStations',
+    'maritime',
+    'powerGrid',
     'cctv',
     'traffic',
     'conflicts',
