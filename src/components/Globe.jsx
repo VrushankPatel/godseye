@@ -94,7 +94,7 @@ export default function Globe() {
             ),
             orientation: {
                 heading: Cesium.Math.toRadians(0),
-                pitch: Cesium.Math.toRadians(-45),
+                pitch: Cesium.Math.toRadians(-90),
                 roll: 0,
             },
             duration: 0,

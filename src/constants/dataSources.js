@@ -53,7 +53,7 @@ export const LAYER_DEFS = {
 
 // ── Default Camera ────────────────────────────────────
 export const DEFAULT_CAMERA = {
-    longitude: -74.006,
-    latitude: 40.7128,
-    height: 2500000,
+    longitude: 10,
+    latitude: 20,
+    height: 9000000,
 };
