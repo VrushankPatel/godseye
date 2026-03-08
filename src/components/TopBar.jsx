@@ -53,8 +53,9 @@ export default function TopBar() {
 
     return (
         <div
-            className="absolute top-0 left-0 right-0 h-16 pointer-events-none z-10 flex justify-between items-start pt-4"
+            className="absolute top-0 left-0 right-0 h-20 pointer-events-none z-10 flex justify-between items-start"
             style={{
+                paddingTop: 'max(20px, env(safe-area-inset-top))',
                 paddingLeft: 'max(24px, env(safe-area-inset-left))',
                 paddingRight: 'max(24px, env(safe-area-inset-right))',
             }}

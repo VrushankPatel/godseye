@@ -41,14 +41,14 @@ export default function LayerPanel() {
         if (!def) return null;
 
         return (
-            <div key={key} className="flex flex-col gap-2.5 px-2.5 py-2">
+            <div key={key} className="flex flex-col gap-1 px-2 py-1">
                 <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3.5 min-w-0">
+                    <div className="flex items-center gap-2.5 min-w-0">
                         <span style={{ color: def.color }} className="text-lg w-6 text-center shrink-0">
                             {def.icon}
                         </span>
                         <div className="flex items-center gap-1.5 min-w-0">
-                            <span className={`text-sm leading-tight tracking-wider ${layer.enabled ? 'text-white' : 'text-text-dim'}`}>
+                            <span className={`px-[1px] py-[1px] text-sm leading-tight tracking-wider ${layer.enabled ? 'text-white' : 'text-text-dim'}`}>
                                 {def.label}
                             </span>
                             {def.description && (
@@ -73,24 +73,24 @@ export default function LayerPanel() {
                     />
                 </div>
 
-                <div className="ml-[2.5rem] pr-1 flex justify-between items-center text-[10px] leading-tight tracking-widest uppercase">
+                <div className="ml-[2.45rem] pr-1 flex justify-between items-center text-[9px] leading-tight tracking-widest uppercase">
                     {layer.status === 'error' ? (
-                        <span className="text-neon-red bg-neon-red/10 px-1 py-0.5 rounded">FEED OFFLINE</span>
+                        <span className="text-neon-red bg-neon-red/10 px-[5px] py-[2px] rounded">FEED OFFLINE</span>
                     ) : layer.status === 'loading' ? (
-                        <span className="text-neon-amber animate-pulse">ACQUIRING...</span>
+                        <span className="text-neon-amber animate-pulse px-[1px] py-[1px]">ACQUIRING...</span>
                     ) : layer.enabled ? (
-                        <span className="text-neon-green">ACTIVE</span>
+                        <span className="text-neon-green px-[1px] py-[1px]">ACTIVE</span>
                     ) : (
-                        <span className="text-text-dim">STANDBY</span>
+                        <span className="text-text-dim px-[1px] py-[1px]">STANDBY</span>
                     )}
 
                     {layer.enabled && layer.status === 'active' && (
-                        <span className="text-electric-blue">
+                        <span className="text-electric-blue px-[1px] py-[1px]">
                             {layer.count.toLocaleString()} <span className="text-text-dim">TRK</span>
                         </span>
                     )}
                 </div>
-                <div className="w-full h-[1px] bg-white/5 mt-1" />
+                <div className="w-full h-[1px] bg-white/5" />
             </div>
         );
     };
@@ -116,8 +116,8 @@ export default function LayerPanel() {
         >
             <div className="glass-panel w-full h-full flex flex-col pointer-events-auto">
 
-                <div className="px-6 py-[18px] border-b border-border-panel flex justify-between items-center bg-black/20">
-                    <h2 className="text-sm tracking-widest leading-none text-white/90">DATA_LAYERS</h2>
+                <div className="px-5 py-4 border-b border-border-panel flex justify-between items-center bg-black/20">
+                    <h2 className="text-[13px] tracking-[0.18em] leading-tight text-white/90">Data Layers</h2>
                     <button onClick={toggleLayerPanel} className="text-text-dim hover:text-white transition-colors">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-5 h-5">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -125,7 +125,7 @@ export default function LayerPanel() {
                     </button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto px-[18px] py-[18px] flex flex-col gap-4">
+                <div className="flex-1 overflow-y-auto px-[14px] py-[10px] flex flex-col gap-1">
                     {primaryEntries.map(renderLayerRow)}
 
                     {otherEntries.length > 0 && (
@@ -157,7 +157,7 @@ export default function LayerPanel() {
                     )}
                 </div>
 
-                <div className="px-6 py-[18px] border-t border-border-panel bg-black/20">
+                <div className="px-6 py-4 border-t border-border-panel bg-black/20">
                     <button
                         onClick={enableAllLayers}
                         className="w-full py-2 border border-neon-cyan/30 bg-neon-cyan/10 text-neon-cyan text-sm tracking-widest hover:bg-neon-cyan/20 hover:shadow-[0_0_15px_rgba(0,255,255,0.2)] transition-all font-bold uppercase rounded-sm"
