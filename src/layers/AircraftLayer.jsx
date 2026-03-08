@@ -1,187 +1,497 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import * as Cesium from 'cesium';
 import useStore from '../store/useStore';
-import { useDataFetcher } from '../hooks/useDataFetcher';
 import { API_URLS, POLL_INTERVALS } from '../constants/dataSources';
 
-// Generate dynamic mock flights that actually move over time if the real API fails
-const getMockFlights = () => {
-    const timeOffset = Date.now() / 1000;
-    const mockStates = [];
+const FEET_TO_METERS = 0.3048;
+const KNOTS_TO_MPS = 0.514444;
+const REQUEST_TIMEOUT_MS = 10000;
+const EARTH_RADIUS_M = 6371000;
+const ANIMATION_INTERVAL_MS = 350;
+const MAX_EXTRAPOLATION_SECONDS = 45;
 
-    // Create 150 mock flights spreading across the globe
-    for (let i = 0; i < 150; i++) {
-        const id = `mock-${i}`;
-        const callsign = `MOC${i.toString().padStart(3, '0')}`;
+const MILITARY_CALLSIGN_PREFIXES = [
+    'RCH', 'CMB', 'KING', 'DUKE', 'NAVY', 'SPAR', 'NATO', 'QID', 'MMF', 'BAF', 'CNV',
+];
+const CARGO_CALLSIGN_PREFIXES = [
+    'FDX', 'UPS', 'DHL', 'CKS', 'GTI', 'ABX', 'CLX', 'BOX', 'NCR', 'BCS', 'FX',
+];
+const MILITARY_TYPE_PREFIXES = [
+    'C17', 'C130', 'KC', 'E3', 'P8', 'A400', 'C5', 'F15', 'F16', 'F18', 'B52', 'B1',
+];
+const CARGO_TYPE_HINTS = ['744F', '748F', '77F', '76F', '73F', 'A332F', 'A30F'];
 
-        // Base starting positions
-        const startLat = (i * 137.5) % 150 - 75; // stay away from poles
-        const startLon = (i * 222.5) % 360 - 180;
+function toRadians(value) {
+    return value * Math.PI / 180;
+}
 
-        // Constant speed
-        const speedKmh = 700 + (i % 300);
-        const speedDegSec = speedKmh / 111139; // approx degrees per sec
+function toDegrees(value) {
+    return value * 180 / Math.PI;
+}
 
-        // Heading
-        const heading = (i * 67) % 360;
-        const headingRad = heading * Math.PI / 180;
+function normalizeLongitude(lon) {
+    let value = lon;
+    while (value > 180) value -= 360;
+    while (value < -180) value += 360;
+    return value;
+}
 
-        // Calculate current position based on time elapsed
-        let lat = startLat + Math.cos(headingRad) * speedDegSec * timeOffset;
-        let lon = startLon + Math.sin(headingRad) * speedDegSec * timeOffset;
+function normalizeCallsign(raw) {
+    return String(raw || '')
+        .trim()
+        .toUpperCase()
+        .replace(/\s+/g, '');
+}
 
-        // Wrap around logic
-        lon = ((lon + 180) % 360 + 360) % 360 - 180;
-        if (lat > 90) lat = 180 - lat;
-        if (lat < -90) lat = -180 - lat;
+function classifyFlight({ callsign, operator, aircraftType, categoryCode }) {
+    const normalizedCallsign = normalizeCallsign(callsign);
+    const operatorText = String(operator || '').toUpperCase();
+    const typeText = String(aircraftType || '').toUpperCase();
 
-        mockStates.push([
-            id, callsign, 'Simulated', null, null, lon, lat, 10000 + (i * 50), false, speedKmh / 3.6, heading
-        ]);
+    const isMilitary =
+        MILITARY_CALLSIGN_PREFIXES.some((prefix) => normalizedCallsign.startsWith(prefix)) ||
+        MILITARY_TYPE_PREFIXES.some((prefix) => typeText.startsWith(prefix)) ||
+        /(AIR FORCE|AIRFORCE|MILITARY|NAVY|ARMY|MARINES|DEFENCE|DEFENSE|USAF|RAF)/.test(operatorText);
+
+    if (isMilitary) return 'military';
+
+    const isCargo =
+        CARGO_CALLSIGN_PREFIXES.some((prefix) => normalizedCallsign.startsWith(prefix)) ||
+        CARGO_TYPE_HINTS.some((hint) => typeText.includes(hint)) ||
+        /(CARGO|FREIGHT|EXPRESS|LOGISTICS|PARCEL)/.test(operatorText);
+
+    if (isCargo) return 'cargo';
+
+    const looksPassenger = /^[A-Z]{2,3}\d/.test(normalizedCallsign) ||
+        /(AIRLINES|AIRWAYS|JET|AIR\s)/.test(operatorText);
+
+    if (looksPassenger) return 'passenger';
+
+    if (categoryCode === 'A1' || categoryCode === 'A2') return 'private';
+
+    if (!normalizedCallsign && !operatorText) return 'unknown';
+
+    return 'private';
+}
+
+function projectFlightPosition(longitude, latitude, headingDeg, speedMps, dtSeconds) {
+    if (
+        !Number.isFinite(longitude) ||
+        !Number.isFinite(latitude) ||
+        !Number.isFinite(headingDeg) ||
+        !Number.isFinite(speedMps) ||
+        speedMps <= 0
+    ) {
+        return { longitude, latitude };
     }
-    return { states: mockStates };
-};
+
+    const angularDistance = (speedMps * dtSeconds) / EARTH_RADIUS_M;
+    const heading = toRadians(headingDeg);
+    const lat1 = toRadians(latitude);
+    const lon1 = toRadians(longitude);
+
+    const sinLat1 = Math.sin(lat1);
+    const cosLat1 = Math.cos(lat1);
+    const sinAngular = Math.sin(angularDistance);
+    const cosAngular = Math.cos(angularDistance);
+
+    const lat2 = Math.asin(
+        sinLat1 * cosAngular + cosLat1 * sinAngular * Math.cos(heading)
+    );
+
+    const lon2 = lon1 + Math.atan2(
+        Math.sin(heading) * sinAngular * cosLat1,
+        cosAngular - sinLat1 * Math.sin(lat2)
+    );
+
+    return {
+        longitude: normalizeLongitude(toDegrees(lon2)),
+        latitude: Math.max(-89.9, Math.min(89.9, toDegrees(lat2))),
+    };
+}
+
+function parseOpenSkyPayload(payload) {
+    try {
+        let parsed = payload;
+        if (typeof parsed === 'string') parsed = JSON.parse(parsed);
+        if (parsed && typeof parsed.contents === 'string') parsed = JSON.parse(parsed.contents);
+        if (!parsed || !Array.isArray(parsed.states)) return [];
+
+        return parsed.states
+            .map((state) => {
+                const [
+                    icao24, callsign, origin_country, , ,
+                    longitude, latitude, baro_altitude,
+                    on_ground, velocity, true_track,
+                ] = state;
+
+                if (!Number.isFinite(longitude) || !Number.isFinite(latitude) || on_ground === true) return null;
+
+                const normalizedCallsign = callsign ? String(callsign).trim() : String(icao24 || 'UNKNOWN').toUpperCase();
+                const operator = origin_country || 'Unknown';
+
+                return {
+                    id: String(icao24 || `${longitude}:${latitude}`).toLowerCase(),
+                    callsign: normalizedCallsign,
+                    operator,
+                    origin: operator,
+                    registration: 'N/A',
+                    aircraftType: 'N/A',
+                    categoryCode: 'N/A',
+                    provider: 'OpenSky',
+                    longitude,
+                    latitude,
+                    altitudeM: Number.isFinite(baro_altitude) ? baro_altitude : 10000,
+                    velocityMps: Number.isFinite(velocity) ? velocity : 0,
+                    headingDeg: Number.isFinite(true_track) ? true_track : 0,
+                };
+            })
+            .filter(Boolean)
+            .map((flight) => ({
+                ...flight,
+                flightClass: classifyFlight(flight),
+            }));
+    } catch (err) {
+        return [];
+    }
+}
+
+function parseAdsbPayload(payload, provider) {
+    if (!payload || !Array.isArray(payload.ac)) return [];
+
+    return payload.ac
+        .map((ac) => {
+            const longitude = typeof ac.lon === 'number' ? ac.lon : Number(ac.lon);
+            const latitude = typeof ac.lat === 'number' ? ac.lat : Number(ac.lat);
+            if (!Number.isFinite(longitude) || !Number.isFinite(latitude)) return null;
+
+            const baroFeet = typeof ac.alt_baro === 'number' ? ac.alt_baro : null;
+            const geomFeet = typeof ac.alt_geom === 'number' ? ac.alt_geom : null;
+            const altitudeM = Number.isFinite(baroFeet)
+                ? baroFeet * FEET_TO_METERS
+                : Number.isFinite(geomFeet)
+                    ? geomFeet * FEET_TO_METERS
+                    : 10000;
+
+            const onGround = ac.alt_baro === 'ground' || (Number.isFinite(geomFeet) && geomFeet < 120);
+            if (onGround) return null;
+
+            const speedKnots = typeof ac.gs === 'number' ? ac.gs : Number(ac.gs);
+            const headingDeg = typeof ac.track === 'number' ? ac.track : Number(ac.track);
+            const callsign = String(ac.flight || ac.hex || 'UNKNOWN').trim();
+            const operator = ac.ownOp || ac.desc || 'Unknown';
+
+            const parsedFlight = {
+                id: String(ac.hex || `${longitude}:${latitude}`).toLowerCase(),
+                callsign,
+                operator,
+                origin: operator,
+                registration: ac.r || 'N/A',
+                aircraftType: ac.t || ac.desc || 'N/A',
+                categoryCode: ac.category || 'N/A',
+                provider,
+                longitude,
+                latitude,
+                altitudeM,
+                velocityMps: Number.isFinite(speedKnots) ? speedKnots * KNOTS_TO_MPS : 0,
+                headingDeg: Number.isFinite(headingDeg) ? headingDeg : 0,
+            };
+
+            return {
+                ...parsedFlight,
+                flightClass: classifyFlight(parsedFlight),
+            };
+        })
+        .filter(Boolean);
+}
+
+async function fetchJsonWithTimeout(url, timeoutMs) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+        const response = await fetch(url, {
+            signal: controller.signal,
+            cache: 'no-store',
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return await response.json();
+    } finally {
+        clearTimeout(timeoutId);
+    }
+}
+
+function createPlaneIconDataUri() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 28;
+    canvas.height = 28;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+
+    ctx.translate(14, 14);
+    ctx.fillStyle = '#00b4ff';
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+    ctx.lineWidth = 1.2;
+
+    ctx.beginPath();
+    ctx.moveTo(0, -10);
+    ctx.lineTo(2.6, 2.4);
+    ctx.lineTo(8.2, 6.5);
+    ctx.lineTo(7.2, 8.1);
+    ctx.lineTo(1.3, 5.6);
+    ctx.lineTo(1.3, 10.5);
+    ctx.lineTo(-1.3, 10.5);
+    ctx.lineTo(-1.3, 5.6);
+    ctx.lineTo(-7.2, 8.1);
+    ctx.lineTo(-8.2, 6.5);
+    ctx.lineTo(-2.6, 2.4);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    return canvas.toDataURL('image/png');
+}
+
+const AIRCRAFT_SOURCES = [
+    { url: API_URLS.ADSB_ONE_GLOBAL, parser: (payload) => parseAdsbPayload(payload, 'ADSB.one') },
+    { url: API_URLS.AIRPLANES_GLOBAL, parser: (payload) => parseAdsbPayload(payload, 'Airplanes.live') },
+    { url: API_URLS.OPENSKY_PROXY, parser: parseOpenSkyPayload },
+];
 
 export default function AircraftLayer({ viewer }) {
     const isEnabled = useStore((s) => s.layers.aircraft.enabled);
+    const flightFilters = useStore((s) => s.flightFilters);
     const updateData = useStore((s) => s.updateLayerData);
     const setStatus = useStore((s) => s.setLayerStatus);
+
     const entitiesRef = useRef(new Map());
+    const flightStateRef = useRef(new Map());
+    const rawFlightsRef = useRef([]);
+    const pollTimerRef = useRef(null);
+    const animationTimerRef = useRef(null);
+    const mountedRef = useRef(true);
+    const planeIconRef = useRef(null);
 
-    // Cleanup on unmount or disable
-    useEffect(() => {
-        if (!isEnabled) {
-            entitiesRef.current.forEach((entity) => viewer.entities.remove(entity));
-            entitiesRef.current.clear();
-            setStatus('aircraft', 'idle');
+    const clearEntities = useCallback(() => {
+        entitiesRef.current.forEach((entity) => viewer.entities.remove(entity));
+        entitiesRef.current.clear();
+        flightStateRef.current.clear();
+    }, [viewer]);
+
+    const animateFlights = useCallback(() => {
+        if (!viewer || viewer.isDestroyed()) return;
+
+        const nowMs = Date.now();
+        for (const [id, flight] of flightStateRef.current.entries()) {
+            const entity = entitiesRef.current.get(id);
+            if (!entity) continue;
+
+            const elapsedSeconds = Math.min(
+                Math.max((nowMs - flight.updatedAtMs) / 1000, 0),
+                MAX_EXTRAPOLATION_SECONDS
+            );
+
+            const projected = projectFlightPosition(
+                flight.longitude,
+                flight.latitude,
+                flight.headingDeg,
+                flight.velocityMps,
+                elapsedSeconds
+            );
+
+            entity.position = Cesium.Cartesian3.fromDegrees(
+                projected.longitude,
+                projected.latitude,
+                flight.altitudeM
+            );
         }
-        return () => {
-            if (viewer && !viewer.isDestroyed()) {
-                entitiesRef.current.forEach((entity) => viewer.entities.remove(entity));
-            }
-            entitiesRef.current.clear();
-        };
-    }, [isEnabled, viewer, setStatus]);
 
-    // Handle incoming OpenSky data
-    const handleData = (data) => {
-        if (!data || !data.states) {
-            if (entitiesRef.current.size === 0) setStatus('aircraft', 'error');
+        viewer.scene.requestRender();
+    }, [viewer]);
+
+    const handleData = useCallback((flights) => {
+        if (!Array.isArray(flights) || !flights.length) {
+            clearEntities();
+            updateData('aircraft', []);
+            setStatus('aircraft', 'error');
             return;
         }
 
+        const activeFilters = useStore.getState().flightFilters;
+        const airlineQuery = String(activeFilters.airlineQuery || '').trim().toUpperCase();
+        const visibleFlights = flights.filter((flight) => {
+            if (!activeFilters[flight.flightClass]) return false;
+            if (!airlineQuery) return true;
+            return (
+                String(flight.callsign || '').toUpperCase().includes(airlineQuery) ||
+                String(flight.operator || '').toUpperCase().includes(airlineQuery) ||
+                String(flight.registration || '').toUpperCase().includes(airlineQuery)
+            );
+        });
+
         setStatus('aircraft', 'active');
-        updateData('aircraft', data.states);
+        updateData('aircraft', visibleFlights);
 
-        const currentTime = Cesium.JulianDate.now();
-        const currentFrameIds = new Set();
+        const currentIds = new Set();
+        const nowMs = Date.now();
 
-        // Process top 1000 flights to keep performance smooth
-        const flights = data.states.slice(0, 1000);
+        visibleFlights.forEach((flight) => {
+            const id = flight.id;
+            currentIds.add(id);
 
-        flights.forEach((state) => {
-            const [
-                icao24, callsign, origin_country, time_position,
-                last_contact, longitude, latitude, baro_altitude,
-                on_ground, velocity, true_track
-            ] = state;
+            flightStateRef.current.set(id, {
+                ...flight,
+                updatedAtMs: nowMs,
+            });
 
-            if (longitude === null || latitude === null || on_ground) return;
+            const speedKmh = flight.velocityMps ? Math.round(flight.velocityMps * 3.6) : null;
+            const heading = Number.isFinite(flight.headingDeg) ? Math.round(flight.headingDeg) : null;
+            const rotation = Cesium.Math.toRadians((heading || 0) - 90);
 
-            currentFrameIds.add(icao24);
-            const height = baro_altitude !== null ? baro_altitude : 10000;
-
-            // Cleaned up callsign
-            const cleanlyCallsign = callsign ? callsign.trim() : 'UNKNOWN';
-
-            const position = Cesium.Cartesian3.fromDegrees(longitude, latitude, height);
-
-            if (entitiesRef.current.has(icao24)) {
-                // Update existing entity smoothly
-                const entity = entitiesRef.current.get(icao24);
-                entity.position = position;
-
-                // Update properties
-                entity.properties.latitude = latitude.toFixed(4);
-                entity.properties.longitude = longitude.toFixed(4);
-                entity.properties.altitude = `${Math.round(height)} m`;
-                entity.properties.velocity = `${Math.round(velocity * 3.6)} km/h`;
-                entity.properties.heading = `${Math.round(true_track)}°`;
+            if (entitiesRef.current.has(id)) {
+                const entity = entitiesRef.current.get(id);
+                entity.position = Cesium.Cartesian3.fromDegrees(flight.longitude, flight.latitude, flight.altitudeM);
+                entity.billboard.rotation = rotation;
+                entity.properties.callsign = flight.callsign;
+                entity.properties.operator = flight.operator;
+                entity.properties.provider = flight.provider;
+                entity.properties.class = flight.flightClass.toUpperCase();
+                entity.properties.aircraftType = flight.aircraftType;
+                entity.properties.registration = flight.registration;
+                entity.properties.latitude = flight.latitude.toFixed(4);
+                entity.properties.longitude = flight.longitude.toFixed(4);
+                entity.properties.altitude = `${Math.round(flight.altitudeM)} m`;
+                entity.properties.velocity = speedKmh !== null ? `${speedKmh} km/h` : 'N/A';
+                entity.properties.heading = heading !== null ? `${heading}°` : 'N/A';
             } else {
-                // Create new entity
-                const AIRCRAFT_SVG = '<svg width="24" height="24" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#00b4ff" stroke="#ffffff" stroke-width="0.5"><path d="M21 16v-2l-8-5V3.5C13 2.67 12.33 2 11.5 2S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg>';
-                const AIRCRAFT_IMG = 'data:image/svg+xml;base64,' + btoa(AIRCRAFT_SVG);
-
                 const entity = viewer.entities.add({
-                    id: `aircraft-${icao24}`,
-                    position: position,
-                    name: cleanlyCallsign,
+                    id: `aircraft-${id}`,
+                    position: Cesium.Cartesian3.fromDegrees(flight.longitude, flight.latitude, flight.altitudeM),
+                    name: flight.callsign,
                     billboard: {
-                        image: AIRCRAFT_IMG,
-                        scale: 0.8,
-                        rotation: Cesium.Math.toRadians(-true_track), // SVG points North by default, orient to heading
+                        image: planeIconRef.current,
+                        scale: 0.48,
                         alignedAxis: Cesium.Cartesian3.UNIT_Z,
-                        disableDepthTestDistance: 5000000,
+                        rotation,
+                        disableDepthTestDistance: 9000000,
                     },
                     properties: {
                         _layerType: 'aircraft',
-                        callsign: cleanlyCallsign,
-                        icao24: icao24,
-                        origin: origin_country,
-                        altitude: `${Math.round(height)} m`,
-                        velocity: `${Math.round(velocity * 3.6)} km/h`,
-                        heading: `${Math.round(true_track)}°`,
+                        callsign: flight.callsign,
+                        operator: flight.operator,
+                        provider: flight.provider,
+                        class: flight.flightClass.toUpperCase(),
+                        icao24: id,
+                        registration: flight.registration,
+                        aircraftType: flight.aircraftType,
+                        altitude: `${Math.round(flight.altitudeM)} m`,
+                        velocity: speedKmh !== null ? `${speedKmh} km/h` : 'N/A',
+                        heading: heading !== null ? `${heading}°` : 'N/A',
+                        latitude: flight.latitude.toFixed(4),
+                        longitude: flight.longitude.toFixed(4),
                         status: 'AIRBORNE',
                     },
                 });
-
-                entitiesRef.current.set(icao24, entity);
+                entitiesRef.current.set(id, entity);
             }
         });
 
-        // Remove stale entities that didn't appear in this update
         for (const [id, entity] of entitiesRef.current.entries()) {
-            if (!currentFrameIds.has(id)) {
+            if (!currentIds.has(id)) {
                 viewer.entities.remove(entity);
                 entitiesRef.current.delete(id);
+                flightStateRef.current.delete(id);
             }
         }
-    };
+    }, [clearEntities, setStatus, updateData, viewer]);
 
-    const handleError = () => {
-        // OpenSky often blocks browser requests due to CORS or rate limits
-        // Fallback to dynamic simulated aircraft so the UI keeps working
-        setStatus('aircraft', 'active');
-        handleData(getMockFlights());
-    };
+    const pollAircraft = useCallback(async () => {
+        if (!isEnabled || !mountedRef.current) return;
 
-    // Poll OpenSky
-    // Using the proxy URL since OpenSky strict CORS blocks browser access
-    useDataFetcher(
-        API_URLS.OPENSKY_PROXY,
-        POLL_INTERVALS.AIRCRAFT,
-        isEnabled,
-        (data) => {
-            // The proxy wraps the real JSON as a string in `contents`
-            if (data && data.contents) {
-                try {
-                    const parsed = JSON.parse(data.contents);
-                    handleData(parsed);
-                } catch (e) {
-                    handleError();
+        const results = await Promise.allSettled(
+            AIRCRAFT_SOURCES.map(async (source) => {
+                const payload = await fetchJsonWithTimeout(source.url, REQUEST_TIMEOUT_MS);
+                return source.parser(payload);
+            })
+        );
+
+        const merged = new Map();
+        for (const result of results) {
+            if (result.status !== 'fulfilled') continue;
+            for (const flight of result.value) {
+                if (!flight || !flight.id) continue;
+                const existing = merged.get(flight.id);
+                if (!existing) {
+                    merged.set(flight.id, flight);
+                    continue;
                 }
-            } else {
-                handleData(data); // If we somehow used direct URL
+
+                // Prefer records with richer metadata.
+                const existingScore =
+                    (existing.operator && existing.operator !== 'Unknown' ? 1 : 0) +
+                    (existing.registration && existing.registration !== 'N/A' ? 1 : 0) +
+                    (existing.aircraftType && existing.aircraftType !== 'N/A' ? 1 : 0);
+                const newScore =
+                    (flight.operator && flight.operator !== 'Unknown' ? 1 : 0) +
+                    (flight.registration && flight.registration !== 'N/A' ? 1 : 0) +
+                    (flight.aircraftType && flight.aircraftType !== 'N/A' ? 1 : 0);
+
+                if (newScore >= existingScore) {
+                    merged.set(flight.id, flight);
+                }
             }
-        },
-        handleError
-    );
+        }
+
+        const flights = Array.from(merged.values());
+        rawFlightsRef.current = flights;
+
+        if (!flights.length) {
+            clearEntities();
+            updateData('aircraft', []);
+            setStatus('aircraft', 'error');
+            return;
+        }
+
+        handleData(flights);
+    }, [clearEntities, handleData, isEnabled, setStatus, updateData]);
 
     useEffect(() => {
-        if (isEnabled && entitiesRef.current.size === 0) {
-            setStatus('aircraft', 'loading');
+        if (!planeIconRef.current) {
+            planeIconRef.current = createPlaneIconDataUri();
         }
-    }, [isEnabled, setStatus]);
+    }, []);
+
+    useEffect(() => {
+        if (!isEnabled) return;
+        if (!rawFlightsRef.current.length) return;
+        handleData(rawFlightsRef.current);
+    }, [flightFilters, handleData, isEnabled]);
+
+    useEffect(() => {
+        mountedRef.current = true;
+
+        if (!isEnabled) {
+            clearInterval(pollTimerRef.current);
+            clearInterval(animationTimerRef.current);
+            clearEntities();
+            updateData('aircraft', []);
+            setStatus('aircraft', 'idle');
+            return;
+        }
+
+        setStatus('aircraft', 'loading');
+        pollAircraft();
+        pollTimerRef.current = setInterval(pollAircraft, POLL_INTERVALS.AIRCRAFT);
+        animationTimerRef.current = setInterval(animateFlights, ANIMATION_INTERVAL_MS);
+
+        return () => {
+            mountedRef.current = false;
+            clearInterval(pollTimerRef.current);
+            clearInterval(animationTimerRef.current);
+            if (viewer && !viewer.isDestroyed()) {
+                clearEntities();
+            }
+        };
+    }, [isEnabled, pollAircraft, animateFlights, clearEntities, updateData, setStatus, viewer]);
 
     return null;
 }

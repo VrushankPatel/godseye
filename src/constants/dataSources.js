@@ -1,9 +1,13 @@
 // ── API Endpoints ────────────────────────────────────
 export const API_URLS = {
     // OpenSky Network - anonymous access, no API key needed
-    // CORS: May be blocked from browser; fallback to proxy
+    // CORS: Browser requests are blocked; this stays as a last-resort source.
     OPENSKY: 'https://opensky-network.org/api/states/all',
     OPENSKY_PROXY: 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://opensky-network.org/api/states/all'),
+    // ADS-B public mirrors with CORS enabled and no auth requirement.
+    // Radius 10000 (NM) gives near-global coverage in one request.
+    AIRPLANES_GLOBAL: 'https://api.airplanes.live/v2/point/0/0/10000',
+    ADSB_ONE_GLOBAL: 'https://api.adsb.one/v2/point/0/0/10000',
 
     // CelesTrak - TLE data for satellites
     // We proxy this as well to prevent "Feed Offline" errors from strict browser CORS

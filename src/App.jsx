@@ -6,6 +6,8 @@ import ShaderToolbar from './components/ShaderToolbar';
 import Inspector from './components/Inspector';
 import Reticle from './components/Reticle';
 import ShaderOverlay from './components/ShaderOverlay';
+import MissionHud from './components/MissionHud';
+import FlightFilterPanel from './components/FlightFilterPanel';
 import useStore from './store/useStore';
 import { SHADER_MODES } from './constants/dataSources';
 
@@ -68,6 +70,8 @@ export default function App() {
             <LayerPanel />
             <ShaderToolbar />
             <Inspector />
+            <MissionHud />
+            <FlightFilterPanel />
         </div>
     );
 }

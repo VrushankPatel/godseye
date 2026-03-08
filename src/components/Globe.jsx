@@ -7,27 +7,52 @@ import SatelliteLayer from '../layers/SatelliteLayer';
 import SeismicLayer from '../layers/SeismicLayer';
 import CameraLayer from '../layers/CameraLayer';
 import AirspaceLayer from '../layers/AirspaceLayer';
+import TrafficLayer from '../layers/TrafficLayer';
+
+const TRACK_SAMPLE_INTERVAL_MS = 1000;
+const MAX_TRACK_POINTS = 220;
+const MIN_TRACK_POINT_DISTANCE_METERS = 250;
 
 export default function Globe() {
     const containerRef = useRef(null);
     const viewerRef = useRef(null);
+    const trailEntityRef = useRef(null);
+    const trailPositionsRef = useRef([]);
+    const trailTimerRef = useRef(null);
     const [viewerReady, setViewerReady] = useState(false);
     const setViewerRefStore = useStore((s) => s.setViewerRef);
     const isAutoRotating = useStore((s) => s.isAutoRotating);
     const setAutoRotating = useStore((s) => s.setAutoRotating);
     const setInspector = useStore((s) => s.setInspector);
+    const trackedTarget = useStore((s) => s.trackedTarget);
+    const clearTrackedTarget = useStore((s) => s.clearTrackedTarget);
+
+    const removeTrail = useCallback(() => {
+        clearInterval(trailTimerRef.current);
+        trailTimerRef.current = null;
+        trailPositionsRef.current = [];
+
+        const viewer = viewerRef.current;
+        if (viewer && !viewer.isDestroyed() && trailEntityRef.current) {
+            viewer.entities.remove(trailEntityRef.current);
+        }
+        trailEntityRef.current = null;
+    }, []);
 
     // Initialize Cesium viewer
     useEffect(() => {
         if (!containerRef.current || viewerRef.current) return;
 
-        const arcgisProvider = Cesium.ArcGisMapServerImageryProvider.fromUrl(
-            'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer'
-        );
+        // Core Initialization - bypass Ion tokens with robust URL templates
+        const esriProvider = new Cesium.UrlTemplateImageryProvider({
+            url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+            maximumLevel: 19,
+            credit: 'Esri World Imagery'
+        });
 
         const viewer = new Cesium.Viewer(containerRef.current, {
             terrainProvider: new Cesium.EllipsoidTerrainProvider(),
-            baseLayer: Cesium.ImageryLayer.fromProviderAsync(arcgisProvider),
+            baseLayer: new Cesium.ImageryLayer(esriProvider),
             baseLayerPicker: false,
             animation: false,
             fullscreenButton: false,
@@ -112,9 +137,10 @@ export default function Globe() {
                 });
 
                 setInspector({
+                    ...props,
                     type: props._layerType || 'unknown',
                     name: pickedObject.id.name || 'Unknown',
-                    ...props,
+                    _entityId: pickedObject.id.id || null,
                 });
             } else {
                 // Clicked on empty space, close inspector
@@ -124,12 +150,14 @@ export default function Globe() {
 
         return () => {
             handler.destroy();
+            removeTrail();
             if (viewerRef.current && !viewerRef.current.isDestroyed()) {
                 viewerRef.current.destroy();
             }
             viewerRef.current = null;
+            setViewerRefStore(null);
         };
-    }, []);
+    }, [removeTrail, setAutoRotating, setInspector, setViewerRefStore]);
 
     // Auto-rotation
     useEffect(() => {
@@ -153,6 +181,83 @@ export default function Globe() {
         };
     }, [isAutoRotating]);
 
+    useEffect(() => {
+        const viewer = viewerRef.current;
+        if (!viewer || viewer.isDestroyed()) return;
+
+        if (!trackedTarget?.entityId) {
+            viewer.trackedEntity = undefined;
+            removeTrail();
+            return;
+        }
+
+        const targetEntity = viewer.entities.getById(trackedTarget.entityId);
+        if (!targetEntity) {
+            clearTrackedTarget();
+            removeTrail();
+            return;
+        }
+
+        setAutoRotating(false);
+        viewer.trackedEntity = targetEntity;
+        removeTrail();
+
+        const trailColor = trackedTarget.type === 'satellites'
+            ? Cesium.Color.fromCssColorString('#ffaa00')
+            : Cesium.Color.fromCssColorString('#00b4ff');
+
+        trailEntityRef.current = viewer.entities.add({
+            id: `track-trail-${trackedTarget.entityId}`,
+            polyline: {
+                positions: new Cesium.CallbackProperty(() => trailPositionsRef.current, false),
+                width: 2.5,
+                material: new Cesium.PolylineGlowMaterialProperty({
+                    glowPower: 0.2,
+                    taperPower: 0.4,
+                    color: trailColor.withAlpha(0.85),
+                }),
+                clampToGround: false,
+            },
+        });
+
+        const captureTrailPoint = () => {
+            const liveEntity = viewer.entities.getById(trackedTarget.entityId);
+            if (!liveEntity) {
+                clearTrackedTarget();
+                removeTrail();
+                return;
+            }
+
+            let position = null;
+            const positionProp = liveEntity.position;
+            if (positionProp && typeof positionProp.getValue === 'function') {
+                position = positionProp.getValue(viewer.clock.currentTime);
+            } else if (positionProp) {
+                position = positionProp;
+            }
+
+            if (!position) return;
+
+            const trail = trailPositionsRef.current;
+            const lastPoint = trail[trail.length - 1];
+            if (!lastPoint || Cesium.Cartesian3.distance(lastPoint, position) >= MIN_TRACK_POINT_DISTANCE_METERS) {
+                trail.push(Cesium.Cartesian3.clone(position));
+                if (trail.length > MAX_TRACK_POINTS) {
+                    trail.splice(0, trail.length - MAX_TRACK_POINTS);
+                }
+                viewer.scene.requestRender();
+            }
+        };
+
+        captureTrailPoint();
+        trailTimerRef.current = setInterval(captureTrailPoint, TRACK_SAMPLE_INTERVAL_MS);
+
+        return () => {
+            clearInterval(trailTimerRef.current);
+            trailTimerRef.current = null;
+        };
+    }, [trackedTarget, clearTrackedTarget, removeTrail, setAutoRotating]);
+
     return (
         <>
             <div
@@ -165,6 +270,7 @@ export default function Globe() {
                     <SatelliteLayer viewer={viewerRef.current} />
                     <SeismicLayer viewer={viewerRef.current} />
                     <CameraLayer viewer={viewerRef.current} />
+                    <TrafficLayer viewer={viewerRef.current} />
                     <AirspaceLayer viewer={viewerRef.current} />
                 </>
             )}

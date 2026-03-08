@@ -1,9 +1,15 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import * as Cesium from 'cesium';
 import * as satellite from 'satellite.js';
 import useStore from '../store/useStore';
-import { useTextFetcher } from '../hooks/useDataFetcher';
 import { API_URLS, POLL_INTERVALS } from '../constants/dataSources';
+
+const TLE_API_BASE = 'https://tle.ivanstanojevic.me/api/tle/';
+const PAGE_SIZE = 100;
+const MAX_FETCH_PAGES = 45; // 4,500 satellites
+const PAGE_FETCH_CONCURRENCY = 6;
+const MAX_RENDERED_SATELLITES = 6500;
+const MAX_CELESTRAK_RECORDS = 8000;
 
 const FALLBACK_TLE = `ISS (ZARYA)
 1 25544U 98067A   24068.31846065  .00017169  00000+0  31416-3 0  9997
@@ -18,6 +24,104 @@ STARLINK-1007
 1 44713U 19074A   24068.41666667  .00000000  00000+0  00000+0 0  9990
 2 44713  53.0500  10.0000 0001000   0.0000   0.0000 15.06000000000000`;
 
+function parseFallbackTle(text) {
+    const records = [];
+    const lines = text.split('\n').filter((l) => l.trim().length > 0);
+    for (let i = 0; i < lines.length; i += 3) {
+        if (i + 2 >= lines.length) break;
+        const name = lines[i].trim();
+        const line1 = lines[i + 1].trim();
+        const line2 = lines[i + 2].trim();
+        if (!line1.startsWith('1 ') || !line2.startsWith('2 ')) continue;
+        try {
+            const satrec = satellite.twoline2satrec(line1, line2);
+            records.push({
+                id: String(satrec.satnum),
+                name,
+                satrec,
+            });
+        } catch (err) {
+            // Skip invalid rows.
+        }
+    }
+    return records;
+}
+
+function parseTleApiMember(member = []) {
+    const records = [];
+    for (const item of member) {
+        if (!item || !item.line1 || !item.line2) continue;
+        try {
+            const satrec = satellite.twoline2satrec(item.line1.trim(), item.line2.trim());
+            if (!satrec || !satrec.satnum) continue;
+            records.push({
+                id: String(item.satelliteId || satrec.satnum),
+                name: item.name || `SAT-${item.satelliteId || satrec.satnum}`,
+                satrec,
+            });
+        } catch (err) {
+            // Skip malformed TLE pairs.
+        }
+    }
+    return records;
+}
+
+function parseTleTextRecords(text = '', maxRecords = MAX_CELESTRAK_RECORDS) {
+    const records = [];
+    const lines = text
+        .split('\n')
+        .map((line) => line.trim())
+        .filter(Boolean);
+
+    for (let i = 0; i + 2 < lines.length; i += 3) {
+        const name = lines[i];
+        const line1 = lines[i + 1];
+        const line2 = lines[i + 2];
+        if (!line1.startsWith('1 ') || !line2.startsWith('2 ')) continue;
+
+        try {
+            const satrec = satellite.twoline2satrec(line1, line2);
+            if (!satrec?.satnum) continue;
+            records.push({
+                id: String(satrec.satnum),
+                name,
+                satrec,
+            });
+        } catch (err) {
+            // Ignore malformed records.
+        }
+
+        if (records.length >= maxRecords) break;
+    }
+
+    return records;
+}
+
+function getTotalPages(view) {
+    const last = view?.last;
+    if (!last || typeof last !== 'string') return null;
+    const match = last.match(/[?&]page=(\d+)/);
+    return match ? Number(match[1]) : null;
+}
+
+async function fetchTlePage(page, signal) {
+    const response = await fetch(`${TLE_API_BASE}?page=${page}&page-size=${PAGE_SIZE}`, {
+        signal,
+        cache: 'no-store',
+    });
+    if (!response.ok) throw new Error(`TLE API HTTP ${response.status}`);
+    return response.json();
+}
+
+async function fetchTleText(url, signal) {
+    const response = await fetch(url, {
+        signal,
+        cache: 'no-store',
+    });
+    if (!response.ok) throw new Error(`TLE text HTTP ${response.status}`);
+    return response.text();
+}
+
 export default function SatelliteLayer({ viewer }) {
     const isEnabled = useStore((s) => s.layers.satellites.enabled);
     const updateData = useStore((s) => s.updateLayerData);
@@ -26,73 +130,32 @@ export default function SatelliteLayer({ viewer }) {
     const entitiesRef = useRef(new Map());
     const satRecordsRef = useRef([]);
     const updateTimerRef = useRef(null);
+    const abortRef = useRef(null);
 
-    // Cleanup
-    useEffect(() => {
-        if (!isEnabled) {
-            clearInterval(updateTimerRef.current);
-            entitiesRef.current.forEach((entity) => viewer.entities.remove(entity));
-            entitiesRef.current.clear();
-            satRecordsRef.current = [];
-            setStatus('satellites', 'idle');
-        }
-        return () => {
-            clearInterval(updateTimerRef.current);
-            if (viewer && !viewer.isDestroyed()) {
-                entitiesRef.current.forEach((entity) => viewer.entities.remove(entity));
-            }
-            entitiesRef.current.clear();
-        };
-    }, [isEnabled, viewer, setStatus]);
-
-    // Parse TLE text data
-    const handleTLEData = (tleText) => {
-        setStatus('satellites', 'active');
-
-        // Parse TLE pairs
-        const lines = tleText.split('\n').filter(l => l.trim().length > 0);
-        const records = [];
-
-        for (let i = 0; i < lines.length; i += 3) {
-            if (i + 2 >= lines.length) break;
-            const name = lines[i].trim();
-            const tleLine1 = lines[i + 1].trim();
-            const tleLine2 = lines[i + 2].trim();
-
-            try {
-                const satrec = satellite.twoline2satrec(tleLine1, tleLine2);
-                records.push({ name, satrec });
-            } catch (err) {
-                // Skip invalid records
-            }
-        }
-
-        satRecordsRef.current = records;
-        updateData('satellites', records);
-        updateSatellitePositions();
-
-        // Start local propagation loop
+    const clearSatellites = useCallback(() => {
         clearInterval(updateTimerRef.current);
-        updateTimerRef.current = setInterval(updateSatellitePositions, POLL_INTERVALS.SATELLITES);
-    };
+        entitiesRef.current.forEach((entity) => viewer.entities.remove(entity));
+        entitiesRef.current.clear();
+        satRecordsRef.current = [];
+        if (abortRef.current) {
+            abortRef.current.abort();
+            abortRef.current = null;
+        }
+    }, [viewer]);
 
-    const updateSatellitePositions = () => {
+    const updateSatellitePositions = useCallback(() => {
         if (!satRecordsRef.current.length || !viewer || viewer.isDestroyed()) return;
 
         const now = new Date();
         const currentIds = new Set();
+        const activeRecords = satRecordsRef.current.slice(0, MAX_RENDERED_SATELLITES);
 
-        // To preserve performance, only render a subset (e.g. 1500 max)
-        const activeRecords = satRecordsRef.current.slice(0, 1500);
+        activeRecords.forEach(({ id, name, satrec }) => {
+            const satId = `sat-${id}`;
+            currentIds.add(satId);
 
-        activeRecords.forEach(({ name, satrec }, idx) => {
-            const id = `sat-${satrec.satnum}-${idx}`;
-            currentIds.add(id);
-
-            // Propagate position using satellite.js
             const positionAndVelocity = satellite.propagate(satrec, now);
-            const posEci = positionAndVelocity.position;
-
+            const posEci = positionAndVelocity?.position;
             if (!posEci || typeof posEci === 'boolean') return;
 
             const gmst = satellite.gstime(now);
@@ -100,79 +163,175 @@ export default function SatelliteLayer({ viewer }) {
 
             const longitude = satellite.degreesLong(posGd.longitude);
             const latitude = satellite.degreesLat(posGd.latitude);
-            const height = posGd.height * 1000; // km to meters
+            const heightKm = posGd.height;
+            const heightM = heightKm * 1000;
+            if (!Number.isFinite(longitude) || !Number.isFinite(latitude) || !Number.isFinite(heightM)) return;
 
-            if (isNaN(longitude) || isNaN(latitude) || isNaN(height)) return;
+            const velocity = positionAndVelocity.velocity;
+            const velocityKmh = velocity
+                ? Math.round(Math.sqrt(velocity.x ** 2 + velocity.y ** 2 + velocity.z ** 2) * 3600)
+                : null;
+            const orbitalPeriodMinutes = satrec.no ? (2 * Math.PI) / satrec.no : null;
 
-            const position = Cesium.Cartesian3.fromDegrees(longitude, latitude, height);
+            const position = Cesium.Cartesian3.fromDegrees(longitude, latitude, heightM);
 
-            // Velocity in km/s -> km/h
-            const velEci = positionAndVelocity.velocity;
-            const velocityKmh = velEci
-                ? Math.round(Math.sqrt(velEci.x * velEci.x + velEci.y * velEci.y + velEci.z * velEci.z) * 3600)
-                : 'Unknown';
-
-            if (entitiesRef.current.has(id)) {
-                // Update
-                const entity = entitiesRef.current.get(id);
+            if (entitiesRef.current.has(satId)) {
+                const entity = entitiesRef.current.get(satId);
                 entity.position = position;
                 entity.properties.latitude = latitude.toFixed(4);
                 entity.properties.longitude = longitude.toFixed(4);
-                entity.properties.altitude = `${Math.round(posGd.height)} km`;
+                entity.properties.altitude = `${Math.round(heightKm)} km`;
+                if (velocityKmh !== null) entity.properties.velocity = `${velocityKmh} km/h`;
             } else {
-                // Create
-                const SAT_SVG = '<svg width="12" height="12" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#ffaa00" stroke="#ffffff" stroke-width="0.5"><path d="M22.08 7.21l-5.3-5.3c-.39-.39-1.02-.39-1.41 0l-1.42 1.42 6.71 6.71 1.42-1.42c.39-.39.39-1.02 0-1.41zM3.46 17.96l6.71 6.71 1.42-1.42c.39-.39.39-1.02 0-1.41l-5.3-5.3c-.39-.39-1.02-.39-1.41 0l-1.42 1.42m10.74-6.32l-6.11 6.1c-.39.39-1.02.39-1.41 0l-2.83-2.83c-.39-.39-.39-1.02 0-1.41l6.11-6.1c.36-.36.86-.44 1.3-.23.69.32 1.41.6 2.18.79.46.12.82.52.88 1 .2.76.47 1.49.8 2.18.2.43.12.92-.23 1.28L14.2 11.64zM2.83 23.36l2.12-2.12-1.41-1.41-2.12 2.12 1.41 1.41z"/></svg>';
-                const SAT_IMG = 'data:image/svg+xml;base64,' + btoa(SAT_SVG);
-
                 const entity = viewer.entities.add({
-                    id: id,
-                    position: position,
-                    name: name,
-                    billboard: {
-                        image: SAT_IMG,
-                        scale: 1.0,
-                        disableDepthTestDistance: Number.POSITIVE_INFINITY, // Show through earth occasionally for orbital feel
+                    id: satId,
+                    position,
+                    name,
+                    point: {
+                        pixelSize: 4.2,
+                        color: Cesium.Color.fromCssColorString('#ffaa00').withAlpha(0.95),
+                        outlineColor: Cesium.Color.WHITE.withAlpha(0.75),
+                        outlineWidth: 1,
+                        disableDepthTestDistance: 9000000,
                     },
                     properties: {
                         _layerType: 'satellites',
-                        designator: satrec.satnum,
-                        altitude: `${Math.round(posGd.height)} km`,
-                        velocity: `${velocityKmh} km/h`,
-                        inclination: `${(satrec.inclo * 180 / Math.PI).toFixed(2)}°`,
-                        status: 'ORBIT TACKING',
+                        designator: id,
+                        altitude: `${Math.round(heightKm)} km`,
+                        velocity: velocityKmh !== null ? `${velocityKmh} km/h` : 'N/A',
+                        period: orbitalPeriodMinutes ? `${orbitalPeriodMinutes.toFixed(1)} min` : 'N/A',
+                        inclination: `${((satrec.inclo || 0) * 180 / Math.PI).toFixed(2)}°`,
+                        latitude: latitude.toFixed(4),
+                        longitude: longitude.toFixed(4),
+                        status: 'ORBIT TRACKING',
                     },
                 });
-                entitiesRef.current.set(id, entity);
+                entitiesRef.current.set(satId, entity);
             }
         });
 
-        // Remove old ones
         for (const [id, entity] of entitiesRef.current.entries()) {
             if (!currentIds.has(id)) {
                 viewer.entities.remove(entity);
                 entitiesRef.current.delete(id);
             }
         }
-    };
+    }, [viewer]);
 
-    const handleError = () => {
-        // Celestrak often rate limits or CORS blocks. Provide a reliable fallback.
-        setStatus('satellites', 'active');
-        handleTLEData(FALLBACK_TLE);
-    };
+    const startPropagation = useCallback(() => {
+        clearInterval(updateTimerRef.current);
+        updateSatellitePositions();
+        updateTimerRef.current = setInterval(updateSatellitePositions, POLL_INTERVALS.SATELLITES);
+    }, [updateSatellitePositions]);
 
-    useTextFetcher(
-        API_URLS.CELESTRAK_ACTIVE,
-        isEnabled,
-        handleTLEData,
-        handleError
-    );
+    const loadFromCelestrak = useCallback(async (signal) => {
+        const sources = [
+            API_URLS.CELESTRAK_ACTIVE,
+            API_URLS.CELESTRAK_STATIONS,
+            API_URLS.CELESTRAK_STARLINK,
+        ];
+
+        const results = await Promise.allSettled(
+            sources.map((url) => fetchTleText(url, signal))
+        );
+
+        const merged = new Map();
+        for (const result of results) {
+            if (result.status !== 'fulfilled') continue;
+            const parsed = parseTleTextRecords(result.value, MAX_CELESTRAK_RECORDS);
+            for (const record of parsed) {
+                if (!merged.has(record.id)) {
+                    merged.set(record.id, record);
+                }
+                if (merged.size >= MAX_CELESTRAK_RECORDS) break;
+            }
+            if (merged.size >= MAX_CELESTRAK_RECORDS) break;
+        }
+
+        return Array.from(merged.values());
+    }, []);
+
+    const loadFromPaginatedApi = useCallback(async (signal) => {
+        const aggregate = [];
+
+        const firstPage = await fetchTlePage(1, signal);
+        aggregate.push(...parseTleApiMember(firstPage.member));
+        updateData('satellites', aggregate);
+
+        const totalPages = getTotalPages(firstPage.view) || 1;
+        const pagesToFetch = Math.min(MAX_FETCH_PAGES, totalPages);
+
+        for (let start = 2; start <= pagesToFetch; start += PAGE_FETCH_CONCURRENCY) {
+            const pages = [];
+            for (let p = start; p < start + PAGE_FETCH_CONCURRENCY && p <= pagesToFetch; p++) {
+                pages.push(p);
+            }
+
+            const results = await Promise.allSettled(
+                pages.map((page) => fetchTlePage(page, signal))
+            );
+
+            for (const result of results) {
+                if (result.status !== 'fulfilled') continue;
+                aggregate.push(...parseTleApiMember(result.value.member));
+            }
+
+            if (signal.aborted || !isEnabled) return [];
+            updateData('satellites', aggregate);
+        }
+
+        return aggregate;
+    }, [isEnabled, updateData]);
+
+    const loadSatellites = useCallback(async () => {
+        setStatus('satellites', 'loading');
+        const controller = new AbortController();
+        abortRef.current = controller;
+
+        try {
+            let records = await loadFromCelestrak(controller.signal);
+
+            // If CelesTrak is temporarily unavailable, fall back to paginated API.
+            if (records.length < 1000) {
+                const paginatedRecords = await loadFromPaginatedApi(controller.signal);
+                if (paginatedRecords.length > records.length) {
+                    records = paginatedRecords;
+                }
+            }
+
+            if (controller.signal.aborted || !isEnabled) return;
+            if (!records.length) throw new Error('No satellite records available');
+
+            satRecordsRef.current = records;
+            updateData('satellites', records);
+            setStatus('satellites', 'active');
+            startPropagation();
+        } catch (err) {
+            if (controller.signal.aborted) return;
+
+            const fallbackRecords = parseFallbackTle(FALLBACK_TLE);
+            satRecordsRef.current = fallbackRecords;
+            updateData('satellites', fallbackRecords);
+            setStatus('satellites', fallbackRecords.length ? 'active' : 'error');
+            startPropagation();
+        }
+    }, [isEnabled, loadFromCelestrak, loadFromPaginatedApi, setStatus, updateData, startPropagation]);
 
     useEffect(() => {
-        if (isEnabled && satRecordsRef.current.length === 0) {
-            setStatus('satellites', 'loading');
+        if (!isEnabled) {
+            clearSatellites();
+            setStatus('satellites', 'idle');
+            updateData('satellites', []);
+            return;
         }
-    }, [isEnabled, setStatus]);
+
+        clearSatellites();
+        loadSatellites();
+
+        return () => {
+            clearSatellites();
+        };
+    }, [isEnabled, clearSatellites, setStatus, updateData, loadSatellites]);
 
     return null;
 }

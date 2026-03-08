@@ -1,14 +1,50 @@
 import React, { useState, useEffect } from 'react';
 import useStore from '../store/useStore';
 
+const SLOGANS = [
+    "Nowhere to hide",
+    "We see everything",
+    "No blind spots",
+    "Nothing escapes",
+    "Every move tracked",
+    "You cannot slip through",
+    "Every corner under watch",
+    "No shadows left",
+    "Total control everywhere",
+    "We miss nothing",
+    "If it moves, we know",
+    "Every inch under control",
+    "Nothing gets past us",
+    "Every breach ends here",
+    "Watch everywhere",
+    "No ground left uncovered",
+    "Every place. Every time.",
+    "Nothing left unseen",
+    "Every corner covered",
+    "Leave nothing unchecked",
+    "Complete coverage. Zero gaps.",
+    "Every inch accounted for",
+    "No gaps. No misses.",
+    "Coverage without compromise",
+    "Everywhere. Always."
+];
+
 export default function TopBar() {
     const [time, setTime] = useState(new Date());
+    const [sloganIndex, setSloganIndex] = useState(0);
     const activeFeedCount = useStore((s) => s.getActiveFeedCount());
     const totalEntityCount = useStore((s) => s.getTotalEntityCount());
 
     useEffect(() => {
         const timer = setInterval(() => setTime(new Date()), 1000);
         return () => clearInterval(timer);
+    }, []);
+
+    useEffect(() => {
+        const sloganTimer = setInterval(() => {
+            setSloganIndex((prev) => (prev + 1) % SLOGANS.length);
+        }, 15000);
+        return () => clearInterval(sloganTimer);
     }, []);
 
     const formatUTC = (date) => {
@@ -23,11 +59,11 @@ export default function TopBar() {
                 <div className="flex items-center gap-3">
                     <div className="w-4 h-4 rounded-full bg-neon-green/80 shadow-[0_0_10px_rgba(0,255,65,0.8)] animate-pulse" />
                     <h1 className="text-2xl font-bold tracking-[0.3em] text-white" style={{ textShadow: '0 0 10px rgba(255,255,255,0.3)' }}>
-                        WORLDVIEW
+                        GODSEYE 1.0
                     </h1>
                 </div>
-                <div className="text-[10px] tracking-widest text-text-dim uppercase font-semibold">
-                    NO PLACE LEFT BEHIND
+                <div className="text-[10px] tracking-widest text-text-dim font-semibold min-h-[16px] transition-opacity duration-300">
+                    {SLOGANS[sloganIndex]}
                 </div>
             </div>
 

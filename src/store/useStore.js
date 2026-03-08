@@ -64,6 +64,56 @@ const useStore = create((set, get) => ({
     setInspector: (obj) => set({ inspector: obj }),
     clearInspector: () => set({ inspector: null }),
 
+    // Flight filters
+    flightFilters: {
+        passenger: true,
+        cargo: true,
+        military: true,
+        private: true,
+        unknown: true,
+        airlineQuery: '',
+    },
+    setFlightFilter: (key, value) =>
+        set((state) => ({
+            flightFilters: {
+                ...state.flightFilters,
+                [key]: value,
+            },
+        })),
+    setFlightAirlineQuery: (value) =>
+        set((state) => ({
+            flightFilters: {
+                ...state.flightFilters,
+                airlineQuery: value,
+            },
+        })),
+    resetFlightFilters: () =>
+        set(() => ({
+            flightFilters: {
+                passenger: true,
+                cargo: true,
+                military: true,
+                private: true,
+                unknown: true,
+                airlineQuery: '',
+            },
+        })),
+
+    // Track target state (aircraft / satellite)
+    trackedTarget: null,
+    setTrackedTarget: (target) => set({ trackedTarget: target }),
+    clearTrackedTarget: () => set({ trackedTarget: null }),
+    toggleTrackedTarget: (target) =>
+        set((state) => {
+            if (
+                state.trackedTarget &&
+                state.trackedTarget.entityId === target.entityId
+            ) {
+                return { trackedTarget: null };
+            }
+            return { trackedTarget: target };
+        }),
+
     // Globe state
     isAutoRotating: true,
     setAutoRotating: (val) => set({ isAutoRotating: val }),
