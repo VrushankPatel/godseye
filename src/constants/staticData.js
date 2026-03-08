@@ -2,6 +2,21 @@
 // Primary ingestion is loaded dynamically from Caltrans catalog in CameraLayer.
 export const CAMERA_FEEDS = [
     {
+        id: 'nasa-iss-live-houston',
+        name: 'NASA ISS Live Stream',
+        lat: 29.5593,
+        lng: -95.0839,
+        url: null,
+        videoUrl: 'https://www.youtube.com/embed/21X5lGlDOfg?autoplay=1&rel=0',
+        fallbackUrl: null,
+        detailsUrl: 'https://www.nasa.gov/nasatv',
+        city: 'Houston',
+        mediaType: 'embed',
+        refreshSeconds: 20,
+        provider: 'NASA TV',
+        type: 'space',
+    },
+    {
         id: 'caltrans-d1-us101-north-sr20',
         name: 'US-101 North of SR-20',
         lat: 39.250296,

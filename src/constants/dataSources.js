@@ -14,10 +14,15 @@ export const API_URLS = {
     CELESTRAK_ACTIVE: 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=tle'),
     CELESTRAK_STATIONS: 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://celestrak.org/NORAD/elements/gp.php?GROUP=stations&FORMAT=tle'),
     CELESTRAK_STARLINK: 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://celestrak.org/NORAD/elements/gp.php?GROUP=starlink&FORMAT=tle'),
+    CELESTRAK_WEATHER: 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://celestrak.org/NORAD/elements/gp.php?GROUP=weather&FORMAT=tle'),
+    CELESTRAK_GEO: 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://celestrak.org/NORAD/elements/gp.php?GROUP=geo&FORMAT=tle'),
+    CELESTRAK_GPS_OPS: 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://celestrak.org/NORAD/elements/gp.php?GROUP=gps-ops&FORMAT=tle'),
+    CELESTRAK_SCIENCE: 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://celestrak.org/NORAD/elements/gp.php?GROUP=science&FORMAT=tle'),
 
     // USGS Earthquake feed - excellent CORS support
     USGS_EARTHQUAKES_DAY: 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson',
     USGS_EARTHQUAKES_HOUR: 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson',
+    IRIS_EARTHQUAKES_TEXT: 'https://service.iris.edu/fdsnws/event/1/query?format=text',
 
     // NTAD / ArcGIS military installations dataset (public, no key required)
     MILITARY_BASES_NTAD:

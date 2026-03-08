@@ -76,11 +76,20 @@ src/
 - Open/public municipal and curated world camera feeds
 - Open geospatial traffic/airspace datasets
 - NTAD Military Bases (ArcGIS public layer)
+- IRIS FDSN event feed fallback (`service.iris.edu`)
+- NASA TV / ISS live stream
 
 ## Military Activity Data Notes
 
 - Live military activity in this app is sourced from open ADS-B tracks and filtered/classified client-side (military callsign/operator/type heuristics).
 - Many conflict/event APIs require account authentication or keys (for example ACLED), so this build keeps the default experience keyless and frontend-only.
+
+## Feed Resilience
+
+- Multi-source fallback is enabled for satellites (multiple CelesTrak groups + paginated TLE fallback API).
+- Seismic ingest uses USGS feeds first and falls back to IRIS text feed parsing if USGS is unavailable.
+- CCTV ingest prioritizes live-capable streams/embeds; if a source only exposes still images, those are treated as fallback mode.
+- Each layer fails independently and surfaces `FEED OFFLINE` state without crashing other layers.
 
 ## Notes
 

@@ -6,10 +6,10 @@ import { API_URLS, POLL_INTERVALS } from '../constants/dataSources';
 
 const TLE_API_BASE = 'https://tle.ivanstanojevic.me/api/tle/';
 const PAGE_SIZE = 100;
-const MAX_FETCH_PAGES = 45; // 4,500 satellites
+const MAX_FETCH_PAGES = 120; // up to ~12,000 records from fallback API
 const PAGE_FETCH_CONCURRENCY = 6;
-const MAX_RENDERED_SATELLITES = 6500;
-const MAX_CELESTRAK_RECORDS = 8000;
+const MAX_RENDERED_SATELLITES = 8000;
+const MAX_CELESTRAK_RECORDS = 12000;
 
 const FALLBACK_TLE = `ISS (ZARYA)
 1 25544U 98067A   24068.31846065  .00017169  00000+0  31416-3 0  9997
@@ -261,6 +261,10 @@ export default function SatelliteLayer({ viewer }) {
             API_URLS.CELESTRAK_ACTIVE,
             API_URLS.CELESTRAK_STATIONS,
             API_URLS.CELESTRAK_STARLINK,
+            API_URLS.CELESTRAK_WEATHER,
+            API_URLS.CELESTRAK_GEO,
+            API_URLS.CELESTRAK_GPS_OPS,
+            API_URLS.CELESTRAK_SCIENCE,
         ];
 
         const results = await Promise.allSettled(

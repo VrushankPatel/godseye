@@ -56,6 +56,19 @@ function inferMediaTypeFromUrls({ url, videoUrl }) {
     return 'image';
 }
 
+function isStillImageUrl(url) {
+    if (!url) return false;
+    return /\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i.test(String(url).toLowerCase());
+}
+
+function isLiveCapableFeed(feed) {
+    if (!feed) return false;
+    if (feed.videoUrl) return true;
+    if (feed.mediaType === 'video' || feed.mediaType === 'embed') return true;
+    if (feed.url && !isStillImageUrl(feed.url)) return true;
+    return false;
+}
+
 function normalizeCaltransFeed(text) {
     const feeds = [];
     const seen = new Set();
@@ -325,6 +338,10 @@ export default function CameraLayer({ viewer }) {
 
             // Prefer feeds that can actually render media over metadata-only points.
             feeds = feeds.filter((feed) => Boolean(feed.videoUrl || feed.url || feed.fallbackUrl));
+            const liveCapableFeeds = feeds.filter(isLiveCapableFeed);
+            if (liveCapableFeeds.length) {
+                feeds = liveCapableFeeds;
+            }
 
             if (!feeds.length) {
                 feeds = CAMERA_FEEDS;
