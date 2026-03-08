@@ -357,12 +357,12 @@ export default function Inspector() {
     return (
         <>
             <div
-                className="absolute top-24 w-80 pointer-events-none z-10 animate-slide-right"
+                className="absolute top-24 w-[22.5rem] pointer-events-none z-10 animate-slide-right"
                 style={{ right: 'max(16px, env(safe-area-inset-right))' }}
             >
                 <div className="glass-panel w-full flex flex-col pointer-events-auto shadow-[0_0_20px_rgba(0,180,255,0.15)]">
 
-                    <div className="px-4 py-3.5 border-b border-border-panel flex justify-between items-center bg-black/40">
+                    <div className="px-5 py-4 border-b border-border-panel flex justify-between items-center bg-black/40">
                         <div className="flex items-center gap-2">
                             <span style={{ color: def.color }} className="text-lg">{def.icon}</span>
                             <h2 className="text-sm tracking-widest text-text-primary">{def.label} TRK</h2>
@@ -375,11 +375,11 @@ export default function Inspector() {
                         </button>
                     </div>
 
-                    <div className="p-4 flex flex-col gap-3">
+                    <div className="p-5 flex flex-col gap-4">
 
-                        <div className="flex flex-col gap-1 mb-2">
-                            <div className="text-[10px] text-text-dim tracking-widest uppercase">Target Ident</div>
-                            <div className="text-xl font-bold tracking-wider text-white" style={{ textShadow: `0 0 10px ${def.color}40` }}>
+                        <div className="flex flex-col gap-1.5 mb-1">
+                            <div className="text-[10px] leading-none text-text-dim tracking-widest uppercase">Target Ident</div>
+                            <div className="text-[1.95rem] leading-[1.1] font-bold tracking-[0.04em] text-white break-words" style={{ textShadow: `0 0 10px ${def.color}40` }}>
                                 {inspector.name || inspector.callsign || inspector.id || 'UNIDENTIFIED'}
                             </div>
                         </div>
@@ -398,7 +398,7 @@ export default function Inspector() {
                             </div>
                         )}
 
-                        <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+                        <div className="grid grid-cols-2 gap-x-6 gap-y-4">
                             {Object.entries(inspector).map(([key, value]) => {
                                 if (
                                     key === 'type' ||
@@ -415,9 +415,12 @@ export default function Inspector() {
                                     return null;
                                 }
                                 return (
-                                    <div key={key} className="flex flex-col gap-0.5">
-                                        <div className="text-[9px] text-text-dim tracking-widest uppercase">{key}</div>
-                                        <div className="text-xs text-text-primary tracking-wider truncate" title={String(value)}>
+                                    <div key={key} className="flex flex-col gap-1">
+                                        <div className="text-[10px] leading-none text-text-dim tracking-[0.16em] uppercase">{key}</div>
+                                        <div
+                                            className="text-[15px] leading-[1.2] text-text-primary tracking-[0.03em] break-words"
+                                            title={String(value)}
+                                        >
                                             {value !== null && value !== undefined ? String(value) : 'N/A'}
                                         </div>
                                     </div>
@@ -428,7 +431,7 @@ export default function Inspector() {
                         {isTrackable && (
                             <button
                                 onClick={handleTrackToggle}
-                                className={`mt-1 border text-xs tracking-widest px-3 py-2 transition-colors ${
+                                className={`mt-2 border text-xs tracking-widest px-3 py-2.5 transition-colors ${
                                     isTracked
                                         ? 'border-red-400/50 text-red-200 bg-red-500/15 hover:bg-red-500/25'
                                         : 'border-cyan-400/50 text-cyan-200 bg-cyan-500/10 hover:bg-cyan-500/20'
@@ -440,7 +443,7 @@ export default function Inspector() {
 
                         {isTracked && (
                             <div className="mt-2">
-                                <div className="text-[9px] text-text-dim tracking-widest uppercase mb-1">
+                                <div className="text-[10px] text-text-dim tracking-widest uppercase mb-1.5">
                                     Track View
                                 </div>
                                 <div className="grid grid-cols-2 gap-1.5">
@@ -463,7 +466,7 @@ export default function Inspector() {
 
                     </div>
 
-                    <div className="p-2 border-t border-border-panel bg-black/40 flex justify-between items-center text-[9px] text-text-dim tracking-[0.2em] px-4">
+                    <div className="py-2.5 px-5 border-t border-border-panel bg-black/40 flex justify-between items-center text-[9px] text-text-dim tracking-[0.2em]">
                         <span>{isTracked ? 'TRACKING ACTIVE' : 'INSPECT MODE'}</span>
                         <span className={isTracked ? 'animate-pulse' : ''} style={{ color: isTracked ? '#00ff41' : def.color }}>●</span>
                     </div>
