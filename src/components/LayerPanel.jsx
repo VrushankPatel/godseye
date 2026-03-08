@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import useStore from '../store/useStore';
-import { LAYER_DEFS } from '../constants/dataSources';
+import { LAYER_DEFS, SURVEILLANCE_PRIMARY_LAYERS } from '../constants/dataSources';
 
 export default function LayerPanel() {
     const {
@@ -10,6 +10,75 @@ export default function LayerPanel() {
         layerPanelOpen,
         toggleLayerPanel
     } = useStore();
+    const [othersOpen, setOthersOpen] = useState(false);
+
+    const { primaryEntries, otherEntries } = useMemo(() => {
+        const validEntries = Object.entries(layers).filter(([key]) => Boolean(LAYER_DEFS[key]));
+        const byKey = new Map(validEntries);
+
+        const primary = [];
+        SURVEILLANCE_PRIMARY_LAYERS.forEach((key) => {
+            const layer = byKey.get(key);
+            if (!layer) return;
+            primary.push([key, layer]);
+            byKey.delete(key);
+        });
+
+        const others = Array.from(byKey.entries()).sort((a, b) => {
+            const aLabel = LAYER_DEFS[a[0]]?.label || a[0];
+            const bLabel = LAYER_DEFS[b[0]]?.label || b[0];
+            return aLabel.localeCompare(bLabel);
+        });
+
+        return {
+            primaryEntries: primary,
+            otherEntries: others,
+        };
+    }, [layers]);
+
+    const renderLayerRow = ([key, layer]) => {
+        const def = LAYER_DEFS[key];
+        if (!def) return null;
+
+        return (
+            <div key={key} className="flex flex-col gap-2 px-1 py-1">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <span style={{ color: def.color }} className="text-lg w-5 text-center">
+                            {def.icon}
+                        </span>
+                        <span className={`text-sm tracking-wider ${layer.enabled ? 'text-white' : 'text-text-dim'}`}>
+                            {def.label}
+                        </span>
+                    </div>
+
+                    <div
+                        className={`toggle-switch ${layer.enabled ? 'active' : ''}`}
+                        onClick={() => toggleLayer(key)}
+                    />
+                </div>
+
+                <div className="ml-[2.125rem] flex justify-between items-center text-[10px] tracking-widest uppercase">
+                    {layer.status === 'error' ? (
+                        <span className="text-neon-red bg-neon-red/10 px-1 py-0.5 rounded">FEED OFFLINE</span>
+                    ) : layer.status === 'loading' ? (
+                        <span className="text-neon-amber animate-pulse">ACQUIRING...</span>
+                    ) : layer.enabled ? (
+                        <span className="text-neon-green">ACTIVE</span>
+                    ) : (
+                        <span className="text-text-dim">STANDBY</span>
+                    )}
+
+                    {layer.enabled && layer.status === 'active' && (
+                        <span className="text-electric-blue">
+                            {layer.count.toLocaleString()} <span className="text-text-dim">TRK</span>
+                        </span>
+                    )}
+                </div>
+                <div className="w-full h-[1px] bg-white/5 mt-1" />
+            </div>
+        );
+    };
 
     if (!layerPanelOpen) {
         return (
@@ -32,7 +101,6 @@ export default function LayerPanel() {
         >
             <div className="glass-panel w-full h-full flex flex-col pointer-events-auto">
 
-                {/* Header */}
                 <div className="px-5 py-4 border-b border-border-panel flex justify-between items-center bg-black/20">
                     <h2 className="text-sm tracking-widest leading-none text-white/90">DATA_LAYERS</h2>
                     <button onClick={toggleLayerPanel} className="text-text-dim hover:text-white transition-colors">
@@ -42,55 +110,38 @@ export default function LayerPanel() {
                     </button>
                 </div>
 
-                {/* Layer List */}
                 <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-4">
-                    {Object.entries(layers).map(([key, layer]) => {
-                        const def = LAYER_DEFS[key];
-                        if (!def) return null;
+                    {primaryEntries.map(renderLayerRow)}
 
-                        return (
-                            <div key={key} className="flex flex-col gap-2 px-1 py-1">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <span style={{ color: def.color }} className="text-lg w-5 text-center">
-                                            {def.icon}
-                                        </span>
-                                        <span className={`text-sm tracking-wider ${layer.enabled ? 'text-white' : 'text-text-dim'}`}>
-                                            {def.label}
-                                        </span>
-                                    </div>
+                    {otherEntries.length > 0 && (
+                        <div className="pt-1 border-t border-white/10">
+                            <button
+                                onClick={() => setOthersOpen((open) => !open)}
+                                className="w-full flex items-center justify-between px-1 py-2 text-left text-xs tracking-[0.24em] text-text-dim hover:text-white transition-colors"
+                            >
+                                <span>OTHERS</span>
+                                <span className="flex items-center gap-2 text-[10px] tracking-[0.2em]">
+                                    {otherEntries.length}
+                                    <svg
+                                        className={`w-3.5 h-3.5 transition-transform ${othersOpen ? 'rotate-180' : ''}`}
+                                        viewBox="0 0 20 20"
+                                        fill="none"
+                                        stroke="currentColor"
+                                    >
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M5 7.5l5 5 5-5" />
+                                    </svg>
+                                </span>
+                            </button>
 
-                                    <div
-                                        className={`toggle-switch ${layer.enabled ? 'active' : ''}`}
-                                        onClick={() => toggleLayer(key)}
-                                    />
+                            {othersOpen && (
+                                <div className="mt-1 flex flex-col gap-2">
+                                    {otherEntries.map(renderLayerRow)}
                                 </div>
-
-                                {/* Status Bar for Layer */}
-                                <div className="ml-[2.125rem] flex justify-between items-center text-[10px] tracking-widest uppercase">
-                                    {layer.status === 'error' ? (
-                                        <span className="text-neon-red bg-neon-red/10 px-1 py-0.5 rounded">FEED OFFLINE</span>
-                                    ) : layer.status === 'loading' ? (
-                                        <span className="text-neon-amber animate-pulse">ACQUIRING...</span>
-                                    ) : layer.enabled ? (
-                                        <span className="text-neon-green">ACTIVE</span>
-                                    ) : (
-                                        <span className="text-text-dim">STANDBY</span>
-                                    )}
-
-                                    {layer.enabled && layer.status === 'active' && (
-                                        <span className="text-electric-blue">
-                                            {layer.count.toLocaleString()} <span className="text-text-dim">TRK</span>
-                                        </span>
-                                    )}
-                                </div>
-                                <div className="w-full h-[1px] bg-white/5 mt-1" />
-                            </div>
-                        );
-                    })}
+                            )}
+                        </div>
+                    )}
                 </div>
 
-                {/* Footer (God Mode) */}
                 <div className="px-5 py-4 border-t border-border-panel bg-black/20">
                     <button
                         onClick={enableAllLayers}

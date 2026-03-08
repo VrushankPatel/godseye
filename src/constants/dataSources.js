@@ -153,6 +153,22 @@ export const LAYER_DEFS = {
     airspace: { label: 'AIRSPACE', color: '#00ffff', icon: '⬡' },
 };
 
+// Keep these layers in the primary tactical list; everything else is grouped under "OTHERS".
+export const SURVEILLANCE_PRIMARY_LAYERS = [
+    'aircraft',
+    'satellites',
+    'seismic',
+    'airports',
+    'seismicStations',
+    'cctv',
+    'traffic',
+    'conflicts',
+    'militaryActivity',
+    'militaryBases',
+    'forbiddenZones',
+    'airspace',
+];
+
 // ── Default Camera ────────────────────────────────────
 export const DEFAULT_CAMERA = {
     longitude: 10,
