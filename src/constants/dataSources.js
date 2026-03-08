@@ -74,6 +74,7 @@ export const API_URLS = {
         'https://r.jina.ai/http://firms.modaps.eosdis.nasa.gov/data/active_fire/c6.1/csv/MODIS_C6_1_Global_24h.csv',
     // Global AIRMET/SIGMET polygons and metadata (aviation hazards)
     AIRSIGMET: 'https://aviationweather.gov/api/data/airsigmet?format=json',
+    SIGMET: 'https://aviationweather.gov/api/data/sigmet?format=json',
     // NOAA / NWS CAP alerts (official active watches/warnings/advisories)
     NWS_ALERTS_ACTIVE: 'https://api.weather.gov/alerts/active?status=actual',
     // GDACS - global disaster alert feed (earthquakes, cyclones, floods, wildfires, drought, volcanoes)
@@ -134,7 +135,6 @@ export const LAYER_DEFS = {
     hazards: { label: 'HAZARDS', color: '#ff8a3d', icon: '☣' },
     disasters: { label: 'DISASTERS', color: '#ff6f61', icon: '☄' },
     conflicts: { label: 'CONFLICTS', color: '#ff4d6d', icon: '⚔' },
-    weatherAlerts: { label: 'WX ALERTS', color: '#f97316', icon: '⚡' },
     oceanBuoys: { label: 'OCEAN BUOYS', color: '#38bdf8', icon: '⚓' },
     volcanoes: { label: 'VOLCANOES', color: '#ff4d4d', icon: '🌋' },
     spaceWeather: { label: 'SPACE WX', color: '#a3e635', icon: '☀' },

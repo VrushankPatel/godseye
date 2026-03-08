@@ -4,60 +4,51 @@ import useStore from '../store/useStore';
 import { API_URLS, POLL_INTERVALS } from '../constants/dataSources';
 
 const REQUEST_TIMEOUT_MS = 12000;
-const BATCH_SIZE = 24;
+const BATCH_SIZE = 48;
 
-const WEATHER_NODES = [
-    { id: 'nyc', name: 'New York', country: 'US', lat: 40.7128, lng: -74.0060 },
-    { id: 'la', name: 'Los Angeles', country: 'US', lat: 34.0522, lng: -118.2437 },
-    { id: 'chicago', name: 'Chicago', country: 'US', lat: 41.8781, lng: -87.6298 },
-    { id: 'toronto', name: 'Toronto', country: 'CA', lat: 43.6532, lng: -79.3832 },
-    { id: 'mexico_city', name: 'Mexico City', country: 'MX', lat: 19.4326, lng: -99.1332 },
-    { id: 'sao_paulo', name: 'Sao Paulo', country: 'BR', lat: -23.5505, lng: -46.6333 },
-    { id: 'buenos_aires', name: 'Buenos Aires', country: 'AR', lat: -34.6037, lng: -58.3816 },
-    { id: 'lima', name: 'Lima', country: 'PE', lat: -12.0464, lng: -77.0428 },
-    { id: 'bogota', name: 'Bogota', country: 'CO', lat: 4.711, lng: -74.0721 },
-    { id: 'london', name: 'London', country: 'GB', lat: 51.5072, lng: -0.1276 },
-    { id: 'paris', name: 'Paris', country: 'FR', lat: 48.8566, lng: 2.3522 },
-    { id: 'berlin', name: 'Berlin', country: 'DE', lat: 52.52, lng: 13.4050 },
-    { id: 'madrid', name: 'Madrid', country: 'ES', lat: 40.4168, lng: -3.7038 },
-    { id: 'rome', name: 'Rome', country: 'IT', lat: 41.9028, lng: 12.4964 },
-    { id: 'amsterdam', name: 'Amsterdam', country: 'NL', lat: 52.3676, lng: 4.9041 },
-    { id: 'stockholm', name: 'Stockholm', country: 'SE', lat: 59.3293, lng: 18.0686 },
-    { id: 'warsaw', name: 'Warsaw', country: 'PL', lat: 52.2297, lng: 21.0122 },
-    { id: 'istanbul', name: 'Istanbul', country: 'TR', lat: 41.0082, lng: 28.9784 },
-    { id: 'moscow', name: 'Moscow', country: 'RU', lat: 55.7558, lng: 37.6173 },
-    { id: 'cairo', name: 'Cairo', country: 'EG', lat: 30.0444, lng: 31.2357 },
-    { id: 'lagos', name: 'Lagos', country: 'NG', lat: 6.5244, lng: 3.3792 },
-    { id: 'nairobi', name: 'Nairobi', country: 'KE', lat: -1.2864, lng: 36.8172 },
-    { id: 'johannesburg', name: 'Johannesburg', country: 'ZA', lat: -26.2041, lng: 28.0473 },
-    { id: 'casablanca', name: 'Casablanca', country: 'MA', lat: 33.5731, lng: -7.5898 },
-    { id: 'addis_ababa', name: 'Addis Ababa', country: 'ET', lat: 8.9806, lng: 38.7578 },
-    { id: 'dubai', name: 'Dubai', country: 'AE', lat: 25.2048, lng: 55.2708 },
-    { id: 'riyadh', name: 'Riyadh', country: 'SA', lat: 24.7136, lng: 46.6753 },
-    { id: 'tehran', name: 'Tehran', country: 'IR', lat: 35.6892, lng: 51.3890 },
-    { id: 'jerusalem', name: 'Jerusalem', country: 'IL', lat: 31.7683, lng: 35.2137 },
-    { id: 'karachi', name: 'Karachi', country: 'PK', lat: 24.8607, lng: 67.0011 },
-    { id: 'mumbai', name: 'Mumbai', country: 'IN', lat: 19.0760, lng: 72.8777 },
-    { id: 'delhi', name: 'Delhi', country: 'IN', lat: 28.6139, lng: 77.2090 },
-    { id: 'kolkata', name: 'Kolkata', country: 'IN', lat: 22.5726, lng: 88.3639 },
-    { id: 'bangkok', name: 'Bangkok', country: 'TH', lat: 13.7563, lng: 100.5018 },
-    { id: 'jakarta', name: 'Jakarta', country: 'ID', lat: -6.2088, lng: 106.8456 },
-    { id: 'singapore', name: 'Singapore', country: 'SG', lat: 1.3521, lng: 103.8198 },
-    { id: 'kuala_lumpur', name: 'Kuala Lumpur', country: 'MY', lat: 3.1390, lng: 101.6869 },
-    { id: 'manila', name: 'Manila', country: 'PH', lat: 14.5995, lng: 120.9842 },
-    { id: 'hong_kong', name: 'Hong Kong', country: 'HK', lat: 22.3193, lng: 114.1694 },
-    { id: 'shanghai', name: 'Shanghai', country: 'CN', lat: 31.2304, lng: 121.4737 },
-    { id: 'beijing', name: 'Beijing', country: 'CN', lat: 39.9042, lng: 116.4074 },
-    { id: 'seoul', name: 'Seoul', country: 'KR', lat: 37.5665, lng: 126.9780 },
-    { id: 'tokyo', name: 'Tokyo', country: 'JP', lat: 35.6895, lng: 139.6917 },
-    { id: 'osaka', name: 'Osaka', country: 'JP', lat: 34.6937, lng: 135.5023 },
-    { id: 'sydney', name: 'Sydney', country: 'AU', lat: -33.8688, lng: 151.2093 },
-    { id: 'melbourne', name: 'Melbourne', country: 'AU', lat: -37.8136, lng: 144.9631 },
-    { id: 'brisbane', name: 'Brisbane', country: 'AU', lat: -27.4698, lng: 153.0251 },
-    { id: 'auckland', name: 'Auckland', country: 'NZ', lat: -36.8509, lng: 174.7645 },
-    { id: 'honolulu', name: 'Honolulu', country: 'US', lat: 21.3069, lng: -157.8583 },
-    { id: 'anchorage', name: 'Anchorage', country: 'US', lat: 61.2181, lng: -149.9003 },
-];
+const WORLD_GRID_STEP = 8;
+const INDIA_GRID_STEP = 4;
+
+function formatCellId(lat, lon) {
+    const latToken = `${lat >= 0 ? 'n' : 's'}${Math.abs(lat).toFixed(1).replace('.', '_')}`;
+    const lonToken = `${lon >= 0 ? 'e' : 'w'}${Math.abs(lon).toFixed(1).replace('.', '_')}`;
+    return `wx-${latToken}-${lonToken}`;
+}
+
+function buildWeatherNodes() {
+    const nodesById = new Map();
+
+    for (let lat = -56; lat <= 72; lat += WORLD_GRID_STEP) {
+        for (let lon = -176; lon <= 176; lon += WORLD_GRID_STEP) {
+            const id = formatCellId(lat, lon);
+            nodesById.set(id, {
+                id,
+                name: `Grid ${lat.toFixed(1)}, ${lon.toFixed(1)}`,
+                country: 'GLOBAL',
+                lat,
+                lng: lon,
+            });
+        }
+    }
+
+    // Extra densification for India to avoid sparse domestic coverage.
+    for (let lat = 8; lat <= 36; lat += INDIA_GRID_STEP) {
+        for (let lon = 68; lon <= 98; lon += INDIA_GRID_STEP) {
+            const id = formatCellId(lat, lon);
+            nodesById.set(id, {
+                id,
+                name: `India Grid ${lat.toFixed(1)}, ${lon.toFixed(1)}`,
+                country: 'IN',
+                lat,
+                lng: lon,
+            });
+        }
+    }
+
+    return Array.from(nodesById.values());
+}
+
+const WEATHER_NODES = buildWeatherNodes();
 
 const WEATHER_CODE_MAP = {
     0: { label: 'Clear', color: '#7dd3fc' },
@@ -89,6 +80,139 @@ const WEATHER_CODE_MAP = {
     96: { label: 'Storm + Hail', color: '#f97316' },
     99: { label: 'Severe Storm + Hail', color: '#ef4444' },
 };
+const MAX_ALERT_OVERLAYS = 800;
+
+function toIsoOrNA(value) {
+    const ts = Date.parse(String(value || ''));
+    return Number.isFinite(ts) ? new Date(ts).toISOString() : 'N/A';
+}
+
+function getSeverityColor(severity) {
+    const key = String(severity || '').trim().toLowerCase();
+    if (key === 'extreme') return '#ef4444';
+    if (key === 'severe') return '#f97316';
+    if (key === 'moderate') return '#f59e0b';
+    if (key === 'minor') return '#facc15';
+    return '#fb7185';
+}
+
+function getRingCentroid(ring) {
+    if (!Array.isArray(ring) || ring.length < 3) return null;
+    const points = ring.filter(
+        (point) =>
+            Array.isArray(point) &&
+            point.length >= 2 &&
+            Number.isFinite(point[0]) &&
+            Number.isFinite(point[1])
+    );
+    if (points.length < 3) return null;
+
+    let areaAcc = 0;
+    let cxAcc = 0;
+    let cyAcc = 0;
+
+    for (let i = 0; i < points.length - 1; i += 1) {
+        const [x0, y0] = points[i];
+        const [x1, y1] = points[i + 1];
+        const cross = x0 * y1 - x1 * y0;
+        areaAcc += cross;
+        cxAcc += (x0 + x1) * cross;
+        cyAcc += (y0 + y1) * cross;
+    }
+
+    const area = areaAcc / 2;
+    if (Math.abs(area) < 1e-7) {
+        const avg = points.reduce(
+            (acc, [lng, lat]) => ({ lng: acc.lng + lng, lat: acc.lat + lat }),
+            { lng: 0, lat: 0 }
+        );
+        return { lng: avg.lng / points.length, lat: avg.lat / points.length };
+    }
+
+    return {
+        lng: cxAcc / (6 * area),
+        lat: cyAcc / (6 * area),
+    };
+}
+
+function computeGeometryCenter(geometry) {
+    if (!geometry || !geometry.type) return null;
+    const { type, coordinates } = geometry;
+
+    if (type === 'Point' && Array.isArray(coordinates) && coordinates.length >= 2) {
+        const [lng, lat] = coordinates;
+        if (Number.isFinite(lng) && Number.isFinite(lat)) return { lng, lat };
+        return null;
+    }
+
+    if (type === 'Polygon' && Array.isArray(coordinates)) {
+        for (const ring of coordinates) {
+            const centroid = getRingCentroid(ring);
+            if (centroid) return centroid;
+        }
+        return null;
+    }
+
+    if (type === 'MultiPolygon' && Array.isArray(coordinates)) {
+        for (const polygon of coordinates) {
+            if (!Array.isArray(polygon)) continue;
+            for (const ring of polygon) {
+                const centroid = getRingCentroid(ring);
+                if (centroid) return centroid;
+            }
+        }
+    }
+
+    return null;
+}
+
+function normalizeAlertOverlays(payload) {
+    const features = Array.isArray(payload?.features) ? payload.features : [];
+    const nowMs = Date.now();
+    const dedup = new Map();
+
+    for (const feature of features) {
+        const props = feature?.properties || {};
+        const center = computeGeometryCenter(feature?.geometry);
+        if (!center) continue;
+
+        const expiresTs = Date.parse(String(props.expires || ''));
+        if (Number.isFinite(expiresTs) && expiresTs < nowMs) continue;
+
+        const rawId = feature?.id || props.id || `${props.event}-${props.areaDesc}`;
+        const id = String(rawId || '')
+            .replace(/^urn:oid:/i, '')
+            .replace(/[^a-zA-Z0-9_.-]/g, '_');
+        if (!id) continue;
+
+        dedup.set(id, {
+            id: `wx-alert-${id}`,
+            name: props.event || 'Weather Alert',
+            country: 'US',
+            lat: center.lat,
+            lng: center.lng,
+            weatherCode: -1,
+            condition: `ALERT: ${props.event || 'Weather Alert'}`,
+            color: getSeverityColor(props.severity),
+            temperature: 'N/A',
+            humidity: 'N/A',
+            windSpeed: 'N/A',
+            windDirection: 'N/A',
+            updated: toIsoOrNA(props.sent || props.updated),
+            source: 'NOAA / NWS Alerts',
+            reference:
+                props['@id'] ||
+                props.web ||
+                feature?.id ||
+                API_URLS.NWS_ALERTS_ACTIVE,
+            alertSeverity: props.severity || 'Unknown',
+            alertUrgency: props.urgency || 'Unknown',
+            alertArea: props.areaDesc || 'N/A',
+        });
+    }
+
+    return Array.from(dedup.values()).slice(0, MAX_ALERT_OVERLAYS);
+}
 
 function chunkArray(items, size) {
     const chunks = [];
@@ -228,6 +352,9 @@ export default function WeatherLayer({ viewer }) {
                 entity.properties.windSpeed = entry.windSpeed;
                 entity.properties.windDirection = entry.windDirection;
                 entity.properties.updated = entry.updated;
+                entity.properties.alertSeverity = entry.alertSeverity || 'N/A';
+                entity.properties.alertUrgency = entry.alertUrgency || 'N/A';
+                entity.properties.alertArea = entry.alertArea || 'N/A';
                 return;
             }
 
@@ -251,6 +378,9 @@ export default function WeatherLayer({ viewer }) {
                     windSpeed: entry.windSpeed,
                     windDirection: entry.windDirection,
                     updated: entry.updated,
+                    alertSeverity: entry.alertSeverity || 'N/A',
+                    alertUrgency: entry.alertUrgency || 'N/A',
+                    alertArea: entry.alertArea || 'N/A',
                     latitude: entry.lat.toFixed(4),
                     longitude: entry.lng.toFixed(4),
                     source: entry.source,
@@ -278,9 +408,19 @@ export default function WeatherLayer({ viewer }) {
 
             const chunks = chunkArray(WEATHER_NODES, BATCH_SIZE);
             const responses = await Promise.all(chunks.map((chunk) => fetchWeatherBatch(chunk)));
-            const entries = chunks.flatMap((chunk, index) =>
+            const weatherEntries = chunks.flatMap((chunk, index) =>
                 normalizeWeatherResponse(chunk, responses[index] || [])
             );
+            let alertEntries = [];
+            try {
+                const alertPayload = await fetchJsonWithTimeout(API_URLS.NWS_ALERTS_ACTIVE);
+                alertEntries = normalizeAlertOverlays(alertPayload);
+            } catch (err) {
+                // Alerts are optional and US-specific; weather grid still remains global.
+                alertEntries = [];
+            }
+
+            const entries = [...weatherEntries, ...alertEntries];
 
             if (!entries.length) throw new Error('No weather entries');
 

@@ -10,7 +10,6 @@ import SeismicStationsLayer from '../layers/SeismicStationsLayer';
 import HazardsLayer from '../layers/HazardsLayer';
 import DisasterLayer from '../layers/DisasterLayer';
 import ConflictLayer from '../layers/ConflictLayer';
-import WeatherAlertsLayer from '../layers/WeatherAlertsLayer';
 import OceanBuoysLayer from '../layers/OceanBuoysLayer';
 import VolcanoesLayer from '../layers/VolcanoesLayer';
 import SpaceWeatherLayer from '../layers/SpaceWeatherLayer';
@@ -483,7 +482,6 @@ export default function Globe() {
                     <HazardsLayer viewer={viewerRef.current} />
                     <DisasterLayer viewer={viewerRef.current} />
                     <ConflictLayer viewer={viewerRef.current} />
-                    <WeatherAlertsLayer viewer={viewerRef.current} />
                     <OceanBuoysLayer viewer={viewerRef.current} />
                     <VolcanoesLayer viewer={viewerRef.current} />
                     <SpaceWeatherLayer viewer={viewerRef.current} />

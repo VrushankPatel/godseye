@@ -23,7 +23,7 @@ I used **Codex** as a programming assistant for selected implementation tasks su
   - Natural hazards (NASA EONET live events: storms, wildfires, volcanoes, floods)
   - Global disaster alerts (GDACS: earthquakes, cyclones, floods, droughts, volcanoes, wildfires)
   - Global conflict/war layer (Wikidata SPARQL, geocoded recent ongoing armed conflicts)
-  - Official weather warnings layer (NOAA/NWS active watches, warnings, advisories)
+  - Weather layer now includes severe alert overlays (NOAA/NWS watches, warnings, advisories)
   - Live ocean buoy telemetry (NOAA NDBC: wind, wave, pressure, air/water temp)
   - Global volcanic activity alerts (Smithsonian/USGS geotagged weekly activity feed)
   - Space-weather aurora intensity map (NOAA SWPC global Ovation probability grid)
@@ -31,7 +31,7 @@ I used **Codex** as a programming assistant for selected implementation tasks su
   - Global active-fire detections (NASA FIRMS MODIS thermal hotspots, last 24h)
   - Aviation hazard polygons (AIRMET/SIGMET convective, turbulence, icing, IFR zones)
   - Solar flare activity layer (NOAA SWPC GOES X-ray flare events)
-  - Global weather conditions (Open-Meteo live current observations across major world nodes)
+  - Global weather conditions (Open-Meteo dense world grid + India refinement cells)
   - Global air quality intelligence (Open-Meteo AQI + PM2.5/PM10/NO2/O3 at major world nodes)
   - Traffic flow animation + traffic camera points
   - Military activity (live military-class ADS-B tracks)

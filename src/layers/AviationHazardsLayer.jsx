@@ -5,6 +5,7 @@ import { API_URLS, POLL_INTERVALS } from '../constants/dataSources';
 
 const REQUEST_TIMEOUT_MS = 12000;
 const MAX_HAZARDS = 650;
+const MAX_METAR_HAZARDS = 500;
 
 const HAZARD_STYLE = {
     CONVECTIVE: { color: '#ef4444', marker: '#ff6b6b' },
@@ -13,6 +14,12 @@ const HAZARD_STYLE = {
     IFR: { color: '#a855f7', marker: '#c084fc' },
     MTW: { color: '#f59e0b', marker: '#fbbf24' },
     UNKNOWN: { color: '#9ca3af', marker: '#cbd5e1' },
+};
+
+const METAR_HAZARD_STYLE = {
+    LIFR: { color: '#ef4444', marker: '#f87171' },
+    IFR: { color: '#f97316', marker: '#fb923c' },
+    MVFR: { color: '#f59e0b', marker: '#fbbf24' },
 };
 
 function toIsoFromEpochSeconds(value) {
@@ -129,6 +136,56 @@ function normalizeHazards(payload) {
         .slice(0, MAX_HAZARDS);
 }
 
+function normalizeMetarHazards(payload) {
+    const rows = Array.isArray(payload) ? payload : [];
+    const mapped = [];
+
+    rows.forEach((row, index) => {
+        const category = String(row?.fltCat || row?.flight_category || '')
+            .trim()
+            .toUpperCase();
+        if (!METAR_HAZARD_STYLE[category]) return;
+
+        const lat = Number(row?.lat);
+        const lon = Number(row?.lon);
+        if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+
+        const icaoId = String(row?.icaoId || '').trim().toUpperCase();
+        if (!icaoId) return;
+
+        const obsEpoch = Number(row?.obsTime);
+        const style = METAR_HAZARD_STYLE[category];
+
+        mapped.push({
+            id: `metar-hz-${icaoId}-${Number.isFinite(obsEpoch) ? obsEpoch : index}`,
+            name: `${category} Conditions ${icaoId}`,
+            icaoId,
+            seriesId: `METAR-${icaoId}`,
+            hazard: category,
+            hazardType: 'METAR',
+            validFrom: toIsoFromEpochSeconds(obsEpoch),
+            validTo: 'N/A',
+            severity: category,
+            altitudeLow1: 'N/A',
+            altitudeLow2: 'N/A',
+            altitudeHigh1: 'N/A',
+            altitudeHigh2: 'N/A',
+            movementDir: 'N/A',
+            movementSpd: 'N/A',
+            rawText: String(row?.rawOb || 'N/A'),
+            receiptTime: 'N/A',
+            creationTime: 'N/A',
+            centroid: { lat, lon },
+            positionsFlat: [],
+            style,
+            source: 'NOAA AviationWeather METAR (IFR/MVFR/LIFR)',
+            reference: `https://aviationweather.gov/data/metar?ids=${encodeURIComponent(icaoId)}`,
+        });
+    });
+
+    return mapped.slice(0, MAX_METAR_HAZARDS);
+}
+
 async function fetchJsonWithTimeout(url, timeoutMs = REQUEST_TIMEOUT_MS) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
@@ -174,9 +231,10 @@ export default function AviationHazardsLayer({ viewer }) {
                     hazard.centroid.lat,
                     1600
                 );
-                const polygonHierarchy = Cesium.Cartesian3.fromDegreesArray(
-                    hazard.positionsFlat
-                );
+                const hasPolygon = Array.isArray(hazard.positionsFlat) && hazard.positionsFlat.length >= 6;
+                const polygonHierarchy = hasPolygon
+                    ? Cesium.Cartesian3.fromDegreesArray(hazard.positionsFlat)
+                    : null;
                 const fillColor = Cesium.Color.fromCssColorString(hazard.style.color).withAlpha(0.22);
                 const markerColor = Cesium.Color.fromCssColorString(hazard.style.marker);
 
@@ -206,11 +264,31 @@ export default function AviationHazardsLayer({ viewer }) {
 
                 if (entitiesRef.current.has(bundleId)) {
                     const bundle = entitiesRef.current.get(bundleId);
-                    if (bundle.polygon) {
+                    if (bundle.polygon && hasPolygon) {
                         bundle.polygon.polygon.hierarchy = polygonHierarchy;
                         bundle.polygon.polygon.material = fillColor;
                         bundle.polygon.name = hazard.name;
                         bundle.polygon.properties = commonProps;
+                    }
+                    if (bundle.polygon && !hasPolygon) {
+                        viewer.entities.remove(bundle.polygon);
+                        bundle.polygon = null;
+                    }
+                    if (!bundle.polygon && hasPolygon) {
+                        bundle.polygon = viewer.entities.add({
+                            id: `${bundleId}-poly`,
+                            name: hazard.name,
+                            polygon: {
+                                hierarchy: polygonHierarchy,
+                                material: fillColor,
+                                outline: true,
+                                outlineColor: Cesium.Color.fromCssColorString(hazard.style.color).withAlpha(0.8),
+                                outlineWidth: 1.5,
+                                perPositionHeight: false,
+                                height: 0,
+                            },
+                            properties: commonProps,
+                        });
                     }
                     if (bundle.marker) {
                         bundle.marker.position = centroidPos;
@@ -221,20 +299,22 @@ export default function AviationHazardsLayer({ viewer }) {
                     return;
                 }
 
-                const polygon = viewer.entities.add({
-                    id: `${bundleId}-poly`,
-                    name: hazard.name,
-                    polygon: {
-                        hierarchy: polygonHierarchy,
-                        material: fillColor,
-                        outline: true,
-                        outlineColor: Cesium.Color.fromCssColorString(hazard.style.color).withAlpha(0.8),
-                        outlineWidth: 1.5,
-                        perPositionHeight: false,
-                        height: 0,
-                    },
-                    properties: commonProps,
-                });
+                const polygon = hasPolygon
+                    ? viewer.entities.add({
+                        id: `${bundleId}-poly`,
+                        name: hazard.name,
+                        polygon: {
+                            hierarchy: polygonHierarchy,
+                            material: fillColor,
+                            outline: true,
+                            outlineColor: Cesium.Color.fromCssColorString(hazard.style.color).withAlpha(0.8),
+                            outlineWidth: 1.5,
+                            perPositionHeight: false,
+                            height: 0,
+                        },
+                        properties: commonProps,
+                    })
+                    : null;
 
                 const marker = viewer.entities.add({
                     id: `${bundleId}-marker`,
@@ -271,8 +351,34 @@ export default function AviationHazardsLayer({ viewer }) {
                 setStatus('aviationHazards', 'loading');
             }
 
-            const payload = await fetchJsonWithTimeout(API_URLS.AIRSIGMET);
-            const hazards = normalizeHazards(payload);
+            const [airSigmetRes, sigmetRes, metarRes] = await Promise.allSettled([
+                fetchJsonWithTimeout(API_URLS.AIRSIGMET),
+                fetchJsonWithTimeout(API_URLS.SIGMET),
+                fetchJsonWithTimeout(API_URLS.METAR_GLOBAL),
+            ]);
+
+            const polygonRows = [
+                ...(airSigmetRes.status === 'fulfilled' && Array.isArray(airSigmetRes.value)
+                    ? airSigmetRes.value
+                    : []),
+                ...(sigmetRes.status === 'fulfilled' && Array.isArray(sigmetRes.value)
+                    ? sigmetRes.value
+                    : []),
+            ];
+
+            let hazards = normalizeHazards(polygonRows);
+
+            if (metarRes.status === 'fulfilled') {
+                const metarHazards = normalizeMetarHazards(metarRes.value);
+                const merged = new Map(hazards.map((hz) => [hz.id, hz]));
+                metarHazards.forEach((hz) => {
+                    if (!merged.has(hz.id) && merged.size < MAX_HAZARDS) {
+                        merged.set(hz.id, hz);
+                    }
+                });
+                hazards = Array.from(merged.values()).slice(0, MAX_HAZARDS);
+            }
+
             if (!hazards.length) throw new Error('No active aviation hazards');
 
             upsertHazards(hazards);

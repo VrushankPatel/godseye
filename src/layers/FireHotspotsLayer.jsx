@@ -5,6 +5,7 @@ import { API_URLS, POLL_INTERVALS } from '../constants/dataSources';
 
 const REQUEST_TIMEOUT_MS = 12000;
 const MAX_POINTS = 7000;
+const MAX_EONET_POINTS = 1200;
 const MIN_CONFIDENCE = 35;
 const GRID_RESOLUTION = 20; // 0.05 degree cells
 
@@ -163,6 +164,64 @@ function normalizeHotspots(csvText) {
         .slice(0, MAX_POINTS);
 }
 
+function normalizeEonetWildfireEvents(payload) {
+    const events = Array.isArray(payload?.events) ? payload.events : [];
+    const mapped = [];
+
+    events.forEach((event, index) => {
+        const categories = Array.isArray(event?.categories) ? event.categories : [];
+        const isWildfire = categories.some((cat) =>
+            String(cat?.title || '')
+                .toLowerCase()
+                .includes('wildfire')
+        );
+        if (!isWildfire) return;
+
+        const geometries = Array.isArray(event?.geometry) ? event.geometry : [];
+        const latestPoint = [...geometries]
+            .reverse()
+            .find(
+                (geo) =>
+                    String(geo?.type || '').toLowerCase() === 'point' &&
+                    Array.isArray(geo?.coordinates) &&
+                    geo.coordinates.length >= 2 &&
+                    Number.isFinite(Number(geo.coordinates[0])) &&
+                    Number.isFinite(Number(geo.coordinates[1]))
+            );
+        if (!latestPoint) return;
+
+        const lon = Number(latestPoint.coordinates[0]);
+        const lat = Number(latestPoint.coordinates[1]);
+        const dateIso = toIsoOrNA(latestPoint?.date);
+
+        mapped.push({
+            id: `eonet-fire-${event.id || index}`,
+            name: event.title || 'Wildfire Event',
+            lat,
+            lon,
+            confidence: 'N/A',
+            brightness: 'N/A',
+            frp: 'N/A',
+            timestamp: dateIso,
+            dayNight: 'N/A',
+            satellite: 'N/A',
+            source: 'NASA EONET Open Events (Wildfires)',
+            reference: event?.link || API_URLS.EONET_OPEN_EVENTS,
+            style: { color: '#ef4444', code: 'WF' },
+            _score: dateIso !== 'N/A' ? Date.parse(dateIso) : 0,
+        });
+    });
+
+    return mapped
+        .sort((a, b) => b._score - a._score)
+        .slice(0, MAX_EONET_POINTS);
+}
+
+function toIsoOrNA(value) {
+    const ts = Date.parse(String(value || ''));
+    return Number.isFinite(ts) ? new Date(ts).toISOString() : 'N/A';
+}
+
 async function fetchTextWithTimeout(url, timeoutMs = REQUEST_TIMEOUT_MS) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
@@ -173,6 +232,21 @@ async function fetchTextWithTimeout(url, timeoutMs = REQUEST_TIMEOUT_MS) {
         });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         return await response.text();
+    } finally {
+        clearTimeout(timeoutId);
+    }
+}
+
+async function fetchJsonWithTimeout(url, timeoutMs = REQUEST_TIMEOUT_MS) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+        const response = await fetch(url, {
+            signal: controller.signal,
+            cache: 'no-store',
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return await response.json();
     } finally {
         clearTimeout(timeoutId);
     }
@@ -298,7 +372,11 @@ export default function FireHotspotsLayer({ viewer }) {
             }
 
             const csvText = await fetchFireCsv();
-            const hotspots = normalizeHotspots(csvText);
+            let hotspots = normalizeHotspots(csvText);
+            if (!hotspots.length) {
+                const eonetPayload = await fetchJsonWithTimeout(API_URLS.EONET_OPEN_EVENTS);
+                hotspots = normalizeEonetWildfireEvents(eonetPayload);
+            }
             if (!hotspots.length) throw new Error('No fire hotspots available');
 
             upsertHotspots(hotspots);
