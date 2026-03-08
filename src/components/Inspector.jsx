@@ -125,11 +125,12 @@ export default function Inspector() {
 
     const renderCCTVMedia = (maxView = false) => {
         const hasAnyImageSource = Boolean(inspector.url || inspector.fallbackUrl || imageSrc);
+        const embedUrl = inspector.videoUrl || inspector.url || inspector.detailsUrl || '';
 
-        if (mediaType === 'embed' && inspector.videoUrl && !videoFailed) {
+        if (mediaType === 'embed' && embedUrl && !videoFailed) {
             return (
                 <iframe
-                    src={inspector.videoUrl}
+                    src={embedUrl}
                     title="CCTV Live Feed"
                     className={`w-full border-0 ${maxView ? 'aspect-video max-h-[85vh]' : 'aspect-video'}`}
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"

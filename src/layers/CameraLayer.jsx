@@ -35,6 +35,27 @@ function splitCatalogPayload(payload) {
         .filter(Boolean);
 }
 
+function inferMediaTypeFromUrls({ url, videoUrl }) {
+    const combined = `${videoUrl || ''} ${url || ''}`.toLowerCase();
+    if (!combined.trim()) return 'image';
+    if (
+        combined.includes('.m3u8') ||
+        combined.includes('.mp4') ||
+        combined.includes('.webm')
+    ) {
+        return 'video';
+    }
+    if (
+        combined.includes('.htm') ||
+        combined.includes('.html') ||
+        combined.includes('youtube.com/embed') ||
+        combined.includes('player?url=')
+    ) {
+        return 'embed';
+    }
+    return 'image';
+}
+
 function normalizeCaltransFeed(text) {
     const feeds = [];
     const seen = new Set();
@@ -67,6 +88,8 @@ function normalizeCaltransFeed(text) {
         seen.add(key);
 
         const stillImageUrl = `https://cwwp2.dot.ca.gov/data/${district}/cctv/image/${slug}/${slug}.jpg`;
+        const videoPageUrl = pageUrl;
+        const mediaType = inferMediaTypeFromUrls({ url: stillImageUrl, videoUrl: videoPageUrl });
 
         feeds.push({
             id: `caltrans-${key}`,
@@ -74,10 +97,11 @@ function normalizeCaltransFeed(text) {
             lat,
             lng,
             url: stillImageUrl,
+            videoUrl: videoPageUrl,
             fallbackUrl: stillImageUrl,
             detailsUrl: pageUrl,
             city: 'California',
-            mediaType: 'image',
+            mediaType,
             refreshSeconds: 5,
             provider: 'Caltrans',
         });
@@ -106,6 +130,7 @@ function normalizeOntarioFeeds(payload) {
         const viewUrl = firstEnabledView.Url.startsWith('http')
             ? firstEnabledView.Url
             : `https://511on.ca${firstEnabledView.Url}`;
+        const mediaType = inferMediaTypeFromUrls({ url: viewUrl, videoUrl: null });
 
         feeds.push({
             id: `ontario-${cam.Id}-${firstEnabledView.Id || 'main'}`,
@@ -116,7 +141,7 @@ function normalizeOntarioFeeds(payload) {
             fallbackUrl: viewUrl,
             detailsUrl: viewUrl,
             city: 'Ontario',
-            mediaType: 'image',
+            mediaType,
             refreshSeconds: 5,
             provider: 'Ontario 511',
         });
@@ -146,7 +171,7 @@ function normalizeTflFeeds(payload) {
 
         const imageUrl = metadata.imageUrl || '';
         const videoUrl = metadata.videoUrl || '';
-        const mediaType = videoUrl ? 'video' : 'image';
+        const mediaType = inferMediaTypeFromUrls({ url: imageUrl, videoUrl });
         const primaryUrl = imageUrl || videoUrl;
 
         if (!primaryUrl) continue;
@@ -292,7 +317,7 @@ export default function CameraLayer({ viewer }) {
                 WORLDCAMS_FEEDS,
                 CAMERA_FEEDS.map((feed) => ({
                     ...feed,
-                    mediaType: feed.mediaType || 'image',
+                    mediaType: feed.mediaType || inferMediaTypeFromUrls(feed),
                     refreshSeconds: feed.refreshSeconds || 5,
                     provider: feed.provider || 'Public',
                 })),
