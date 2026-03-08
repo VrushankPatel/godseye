@@ -258,11 +258,13 @@ const AIRCRAFT_SOURCES = [
 ];
 
 export default function AircraftLayer({ viewer }) {
-    const isEnabled = useStore((s) => s.layers.aircraft.enabled);
+    const aircraftEnabled = useStore((s) => s.layers.aircraft.enabled);
+    const militaryActivityEnabled = useStore((s) => s.layers.militaryActivity.enabled);
     const flightFilters = useStore((s) => s.flightFilters);
     const trackedTarget = useStore((s) => s.trackedTarget);
     const updateData = useStore((s) => s.updateLayerData);
     const setStatus = useStore((s) => s.setLayerStatus);
+    const setAircraftFeedData = useStore((s) => s.setAircraftFeedData);
 
     const entitiesRef = useRef(new Map());
     const flightStateRef = useRef(new Map());
@@ -271,6 +273,7 @@ export default function AircraftLayer({ viewer }) {
     const animationTimerRef = useRef(null);
     const mountedRef = useRef(true);
     const planeIconRef = useRef(null);
+    const shouldIngest = aircraftEnabled || militaryActivityEnabled;
 
     const clearEntities = useCallback(() => {
         entitiesRef.current.forEach((entity) => viewer.entities.remove(entity));
@@ -434,7 +437,7 @@ export default function AircraftLayer({ viewer }) {
     }, [clearEntities, setStatus, updateData, viewer]);
 
     const pollAircraft = useCallback(async () => {
-        if (!isEnabled || !mountedRef.current) return;
+        if (!shouldIngest || !mountedRef.current) return;
 
         const results = await Promise.allSettled(
             AIRCRAFT_SOURCES.map(async (source) => {
@@ -472,16 +475,37 @@ export default function AircraftLayer({ viewer }) {
 
         const flights = Array.from(merged.values());
         rawFlightsRef.current = flights;
+        setAircraftFeedData(flights);
 
         if (!flights.length) {
             clearEntities();
-            updateData('aircraft', []);
-            setStatus('aircraft', 'error');
+            if (aircraftEnabled) {
+                updateData('aircraft', []);
+                setStatus('aircraft', 'error');
+            } else {
+                updateData('aircraft', []);
+                setStatus('aircraft', 'idle');
+            }
             return;
         }
 
-        handleData(flights);
-    }, [clearEntities, handleData, isEnabled, setStatus, updateData]);
+        if (aircraftEnabled) {
+            handleData(flights);
+        } else {
+            // Keep ingesting raw feed for military layer while aircraft visuals stay hidden.
+            clearEntities();
+            updateData('aircraft', []);
+            setStatus('aircraft', 'idle');
+        }
+    }, [
+        aircraftEnabled,
+        clearEntities,
+        handleData,
+        setAircraftFeedData,
+        setStatus,
+        shouldIngest,
+        updateData,
+    ]);
 
     useEffect(() => {
         if (!planeIconRef.current) {
@@ -490,13 +514,13 @@ export default function AircraftLayer({ viewer }) {
     }, []);
 
     useEffect(() => {
-        if (!isEnabled) return;
+        if (!aircraftEnabled) return;
         if (!rawFlightsRef.current.length) return;
         handleData(rawFlightsRef.current);
-    }, [flightFilters, handleData, isEnabled]);
+    }, [flightFilters, handleData, aircraftEnabled]);
 
     useEffect(() => {
-        if (!isEnabled) return;
+        if (!aircraftEnabled) return;
         const trackedEntityId = (
             trackedTarget?.type === 'aircraft' &&
             typeof trackedTarget.entityId === 'string' &&
@@ -505,24 +529,33 @@ export default function AircraftLayer({ viewer }) {
             ? trackedTarget.entityId
             : null;
         applyTrackedVisibility(trackedEntityId);
-    }, [trackedTarget, applyTrackedVisibility, isEnabled]);
+    }, [trackedTarget, applyTrackedVisibility, aircraftEnabled]);
 
     useEffect(() => {
         mountedRef.current = true;
 
-        if (!isEnabled) {
+        if (!shouldIngest) {
             clearInterval(pollTimerRef.current);
             clearInterval(animationTimerRef.current);
             clearEntities();
             updateData('aircraft', []);
             setStatus('aircraft', 'idle');
+            setAircraftFeedData([]);
             return;
         }
 
-        setStatus('aircraft', 'loading');
+        if (aircraftEnabled) {
+            setStatus('aircraft', 'loading');
+        } else {
+            setStatus('aircraft', 'idle');
+            clearEntities();
+            updateData('aircraft', []);
+        }
         pollAircraft();
         pollTimerRef.current = setInterval(pollAircraft, POLL_INTERVALS.AIRCRAFT);
-        animationTimerRef.current = setInterval(animateFlights, ANIMATION_INTERVAL_MS);
+        if (aircraftEnabled) {
+            animationTimerRef.current = setInterval(animateFlights, ANIMATION_INTERVAL_MS);
+        }
 
         return () => {
             mountedRef.current = false;
@@ -532,7 +565,17 @@ export default function AircraftLayer({ viewer }) {
                 clearEntities();
             }
         };
-    }, [isEnabled, pollAircraft, animateFlights, clearEntities, updateData, setStatus, viewer]);
+    }, [
+        aircraftEnabled,
+        animateFlights,
+        clearEntities,
+        pollAircraft,
+        setAircraftFeedData,
+        setStatus,
+        shouldIngest,
+        updateData,
+        viewer,
+    ]);
 
     return null;
 }

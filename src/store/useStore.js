@@ -101,6 +101,13 @@ const useStore = create((set, get) => ({
             },
         })),
 
+    // Raw aircraft feed data (used by dependent layers without forcing aircraft visuals on)
+    aircraftFeedData: [],
+    setAircraftFeedData: (data) =>
+        set({
+            aircraftFeedData: Array.isArray(data) ? data : [],
+        }),
+
     // Track target state (aircraft / satellite)
     trackedTarget: null,
     setTrackedTarget: (target) => set({ trackedTarget: target }),

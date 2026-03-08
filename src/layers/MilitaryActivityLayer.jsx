@@ -45,10 +45,7 @@ function getRotationFromHeading(heading) {
 
 export default function MilitaryActivityLayer({ viewer }) {
     const isEnabled = useStore((s) => s.layers.militaryActivity.enabled);
-    const aircraftEnabled = useStore((s) => s.layers.aircraft.enabled);
-    const aircraftStatus = useStore((s) => s.layers.aircraft.status);
-    const aircraftData = useStore((s) => s.layers.aircraft.data);
-    const toggleLayer = useStore((s) => s.toggleLayer);
+    const aircraftFeedData = useStore((s) => s.aircraftFeedData);
     const updateData = useStore((s) => s.updateLayerData);
     const setStatus = useStore((s) => s.setLayerStatus);
 
@@ -67,14 +64,6 @@ export default function MilitaryActivityLayer({ viewer }) {
     }, []);
 
     useEffect(() => {
-        if (!isEnabled) return;
-        if (aircraftEnabled) return;
-
-        // Military activity relies on live ADS-B data from the aircraft ingest pipeline.
-        toggleLayer('aircraft');
-    }, [isEnabled, aircraftEnabled, toggleLayer]);
-
-    useEffect(() => {
         if (!isEnabled) {
             clearLayer();
             updateData('militaryActivity', []);
@@ -82,12 +71,12 @@ export default function MilitaryActivityLayer({ viewer }) {
             return;
         }
 
-        if (!aircraftEnabled || aircraftStatus === 'loading') {
+        if (!Array.isArray(aircraftFeedData) || !aircraftFeedData.length) {
             setStatus('militaryActivity', 'loading');
             return;
         }
 
-        const militaryFlights = (Array.isArray(aircraftData) ? aircraftData : [])
+        const militaryFlights = aircraftFeedData
             .filter((flight) => String(flight.flightClass || '').toLowerCase() === 'military');
 
         const currentIds = new Set();
@@ -152,17 +141,11 @@ export default function MilitaryActivityLayer({ viewer }) {
         }
 
         updateData('militaryActivity', militaryFlights);
-        if (!militaryFlights.length && aircraftStatus === 'error') {
-            setStatus('militaryActivity', 'error');
-        } else {
-            setStatus('militaryActivity', 'active');
-        }
+        setStatus('militaryActivity', 'active');
         viewer.scene.requestRender();
     }, [
         isEnabled,
-        aircraftEnabled,
-        aircraftStatus,
-        aircraftData,
+        aircraftFeedData,
         clearLayer,
         setStatus,
         updateData,
