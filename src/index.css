@@ -432,7 +432,7 @@ body {
 }
 
 .mission-hud-right--offset {
-  right: 356px;
+  right: calc(22.5rem + max(18px, env(safe-area-inset-right)) + 18px);
 }
 
 @media (max-width: 1220px) {
@@ -516,7 +516,7 @@ body {
 }
 
 .flight-filter-panel--offset {
-  right: 356px;
+  right: calc(22.5rem + max(18px, env(safe-area-inset-right)) + 18px);
 }
 
 .flight-filter-header {
