@@ -49,6 +49,8 @@ export const API_URLS = {
     NDBC_LATEST_OBS_PROXY:
         'https://api.allorigins.win/raw?url=' +
         encodeURIComponent('https://www.ndbc.noaa.gov/data/latest_obs/latest_obs.txt'),
+    NDBC_LATEST_OBS_PROXY_ALT:
+        'https://r.jina.ai/http://www.ndbc.noaa.gov/data/latest_obs/latest_obs.txt',
     // Smithsonian / USGS weekly volcanic activity feed
     VOLCANO_WEEKLY_RSS: 'https://volcano.si.edu/news/WeeklyVolcanoRSS.xml',
     VOLCANO_WEEKLY_RSS_PROXY:
@@ -62,6 +64,7 @@ export const API_URLS = {
     METAR_GLOBAL:
         'https://aviationweather.gov/api/data/metar?bbox=-180,-90,180,90&hours=2&format=json',
     METAR_PROXY_BASE: 'https://api.allorigins.win/raw?url=',
+    METAR_PROXY_ALT_BASE: 'https://r.jina.ai/http://aviationweather.gov/api/data/metar?bbox=',
     // NASA FIRMS global active fire detections (MODIS, last 24h)
     FIRE_HOTSPOTS_CSV:
         'https://firms.modaps.eosdis.nasa.gov/data/active_fire/c6.1/csv/MODIS_C6_1_Global_24h.csv',
@@ -75,6 +78,16 @@ export const API_URLS = {
     // Global AIRMET/SIGMET polygons and metadata (aviation hazards)
     AIRSIGMET: 'https://aviationweather.gov/api/data/airsigmet?format=json',
     SIGMET: 'https://aviationweather.gov/api/data/sigmet?format=json',
+    AIRSIGMET_PROXY:
+        'https://api.allorigins.win/raw?url=' +
+        encodeURIComponent('https://aviationweather.gov/api/data/airsigmet?format=json'),
+    SIGMET_PROXY:
+        'https://api.allorigins.win/raw?url=' +
+        encodeURIComponent('https://aviationweather.gov/api/data/sigmet?format=json'),
+    AIRSIGMET_PROXY_ALT:
+        'https://r.jina.ai/http://aviationweather.gov/api/data/airsigmet?format=json',
+    SIGMET_PROXY_ALT:
+        'https://r.jina.ai/http://aviationweather.gov/api/data/sigmet?format=json',
     // NOAA / NWS CAP alerts (official active watches/warnings/advisories)
     NWS_ALERTS_ACTIVE: 'https://api.weather.gov/alerts/active?status=actual',
     // GDACS - global disaster alert feed (earthquakes, cyclones, floods, wildfires, drought, volcanoes)
@@ -128,29 +141,29 @@ export const SHADER_MODES = [
 
 // ── Layer Definitions ─────────────────────────────────
 export const LAYER_DEFS = {
-    aircraft: { label: 'AIRCRAFT', color: '#00b4ff', icon: '✈' },
-    satellites: { label: 'SATELLITES', color: '#ffaa00', icon: '🛰' },
-    seismic: { label: 'SEISMIC', color: '#ff3333', icon: '◉' },
-    airports: { label: 'AIRPORTS', color: '#93c5fd', icon: '🛬' },
-    hazards: { label: 'HAZARDS', color: '#ff8a3d', icon: '☣' },
-    disasters: { label: 'DISASTERS', color: '#ff6f61', icon: '☄' },
-    conflicts: { label: 'CONFLICTS', color: '#ff4d6d', icon: '⚔' },
-    oceanBuoys: { label: 'OCEAN BUOYS', color: '#38bdf8', icon: '⚓' },
-    volcanoes: { label: 'VOLCANOES', color: '#ff4d4d', icon: '🌋' },
-    spaceWeather: { label: 'SPACE WX', color: '#a3e635', icon: '☀' },
-    metar: { label: 'METAR WX', color: '#60a5fa', icon: '⛅' },
-    fireHotspots: { label: 'FIRE HOTSPOTS', color: '#ff5b24', icon: '🔥' },
-    aviationHazards: { label: 'AIR HAZARDS', color: '#ff8b3d', icon: '✹' },
-    solarFlares: { label: 'SOLAR FLARES', color: '#ffcc66', icon: '☀' },
-    seismicStations: { label: 'SEIS STATIONS', color: '#22d3ee', icon: '📡' },
-    weather: { label: 'WEATHER', color: '#7dd3fc', icon: '☁' },
-    airQuality: { label: 'AIR QUALITY', color: '#84cc16', icon: 'AQ' },
-    cctv: { label: 'CCTV', color: '#00ff41', icon: '📹' },
-    traffic: { label: 'TRAFFIC', color: '#ff69b4', icon: '🚗' },
-    militaryActivity: { label: 'MIL ACTIVITY', color: '#ff5b5b', icon: '⚠' },
-    militaryBases: { label: 'MIL BASES', color: '#f7c15a', icon: '⌂' },
-    forbiddenZones: { label: 'NO-GO ZONES', color: '#ff4d4d', icon: '⛔' },
-    airspace: { label: 'AIRSPACE', color: '#00ffff', icon: '⬡' },
+    aircraft: { label: 'AIRCRAFT', color: '#00b4ff', icon: '✈', description: 'Live ADS-B/Mode-S aircraft tracks.' },
+    satellites: { label: 'SATELLITES', color: '#ffaa00', icon: '🛰', description: 'Orbiting satellites propagated from TLE feeds.' },
+    seismic: { label: 'SEISMIC', color: '#ff3333', icon: '◉', description: 'Recent earthquake events with magnitude/depth.' },
+    airports: { label: 'AIRPORTS', color: '#93c5fd', icon: '🛬', description: 'Global airport infrastructure and metadata.' },
+    hazards: { label: 'HAZARDS', color: '#ff8a3d', icon: '☣', description: 'General hazard overlays from open feeds.' },
+    disasters: { label: 'DISASTERS', color: '#ff6f61', icon: '☄', description: 'Global disaster incidents and alerts.' },
+    conflicts: { label: 'CONFLICTS', color: '#ff4d6d', icon: '⚔', description: 'Open-source conflict and unrest event signals.' },
+    oceanBuoys: { label: 'OCEAN BUOYS', color: '#38bdf8', icon: '⚓', description: 'Buoy observations: waves, wind, pressure, sea temp.' },
+    volcanoes: { label: 'VOLCANOES', color: '#ff4d4d', icon: '🌋', description: 'Volcanic activity and monitoring notices.' },
+    spaceWeather: { label: 'SPACE WX', color: '#a3e635', icon: '☀', description: 'NOAA aurora probability model; strongest near poles.' },
+    metar: { label: 'METAR WX', color: '#60a5fa', icon: '⛅', description: 'Airport weather observations (VFR/MVFR/IFR/LIFR).' },
+    fireHotspots: { label: 'FIRE HOTSPOTS', color: '#ff5b24', icon: '🔥', description: 'Active thermal fire detections from satellites.' },
+    aviationHazards: { label: 'AIR HAZARDS', color: '#ff8b3d', icon: '✹', description: 'AIRMET/SIGMET polygons and aviation weather hazards.' },
+    solarFlares: { label: 'SOLAR FLARES', color: '#ffcc66', icon: '☀', description: 'Recent solar flare activity from SWPC feeds.' },
+    seismicStations: { label: 'SEIS STATIONS', color: '#22d3ee', icon: '📡', description: 'Seismometer station network locations.' },
+    weather: { label: 'WEATHER', color: '#7dd3fc', icon: '☁', description: 'Global sampled weather field with alert merge.' },
+    airQuality: { label: 'AIR QUALITY', color: '#84cc16', icon: 'AQ', description: 'Air quality indicators (AQI, PM2.5, ozone).' },
+    cctv: { label: 'CCTV', color: '#00ff41', icon: '📹', description: 'Public live camera feeds and refresh streams.' },
+    traffic: { label: 'TRAFFIC', color: '#ff69b4', icon: '🚗', description: 'Traffic flow animation and traffic-linked cams.' },
+    militaryActivity: { label: 'MIL ACTIVITY', color: '#ff5b5b', icon: '⚠', description: 'Likely military flights inferred from air traffic feed.' },
+    militaryBases: { label: 'MIL BASES', color: '#f7c15a', icon: '⌂', description: 'Public military installation locations.' },
+    forbiddenZones: { label: 'NO-GO ZONES', color: '#ff4d4d', icon: '⛔', description: 'Restricted/forbidden areas and access-limited zones.' },
+    airspace: { label: 'AIRSPACE', color: '#00ffff', icon: '⬡', description: 'No-fly/restricted airspace overlays.' },
 };
 
 // Keep these layers in the primary tactical list; everything else is grouped under "OTHERS".

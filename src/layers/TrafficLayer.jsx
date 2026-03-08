@@ -66,6 +66,7 @@ export default function TrafficLayer({ viewer }) {
 
     const clearLayer = useCallback(() => {
         clearInterval(animationTimerRef.current);
+        animationTimerRef.current = null;
         entitiesRef.current.forEach((entity) => viewer.entities.remove(entity));
         roadsRef.current.forEach((entity) => viewer.entities.remove(entity));
         entitiesRef.current = [];
@@ -73,12 +74,34 @@ export default function TrafficLayer({ viewer }) {
         vehiclesRef.current = [];
     }, [viewer]);
 
+    const setLayerVisible = useCallback((visible) => {
+        entitiesRef.current.forEach((entity) => {
+            entity.show = visible;
+        });
+        roadsRef.current.forEach((entity) => {
+            entity.show = visible;
+        });
+    }, []);
+
     useEffect(() => {
         if (!isEnabled) {
-            clearLayer();
+            clearInterval(animationTimerRef.current);
+            animationTimerRef.current = null;
+            setLayerVisible(false);
             setStatus('traffic', 'idle');
-            updateData('traffic', []);
             return;
+        }
+
+        if (entitiesRef.current.length || roadsRef.current.length) {
+            setLayerVisible(true);
+            setStatus('traffic', 'active');
+            animationTimerRef.current = setInterval(() => {
+                if (!viewer.isDestroyed()) viewer.scene.requestRender();
+            }, 66);
+            return () => {
+                clearInterval(animationTimerRef.current);
+                animationTimerRef.current = null;
+            };
         }
 
         setStatus('traffic', 'loading');
@@ -203,9 +226,17 @@ export default function TrafficLayer({ viewer }) {
         }, 66);
 
         return () => {
-            clearLayer();
+            clearInterval(animationTimerRef.current);
+            animationTimerRef.current = null;
         };
-    }, [isEnabled, viewer, updateData, setStatus, clearLayer]);
+    }, [isEnabled, viewer, updateData, setStatus, clearLayer, setLayerVisible]);
+
+    useEffect(
+        () => () => {
+            clearLayer();
+        },
+        [clearLayer]
+    );
 
     return null;
 }

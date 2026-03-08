@@ -145,6 +145,7 @@ async function fetchTextWithTimeout(url, timeoutMs = REQUEST_TIMEOUT_MS) {
 
 export default function OceanBuoysLayer({ viewer }) {
     const isEnabled = useStore((s) => s.layers.oceanBuoys.enabled);
+    const cachedBuoys = useStore((s) => s.layers.oceanBuoys.data);
     const updateData = useStore((s) => s.updateLayerData);
     const setStatus = useStore((s) => s.setLayerStatus);
 
@@ -158,6 +159,12 @@ export default function OceanBuoysLayer({ viewer }) {
         });
         entitiesRef.current.clear();
     }, [viewer]);
+
+    const setEntitiesVisible = useCallback((visible) => {
+        entitiesRef.current.forEach((entity) => {
+            entity.show = visible;
+        });
+    }, []);
 
     const getIcon = useCallback((style) => {
         const key = `${style.code}|${style.color}`;
@@ -262,10 +269,22 @@ export default function OceanBuoysLayer({ viewer }) {
             }
 
             let raw = '';
-            try {
-                raw = await fetchTextWithTimeout(API_URLS.NDBC_LATEST_OBS_PROXY);
-            } catch (proxyErr) {
-                raw = await fetchTextWithTimeout(API_URLS.NDBC_LATEST_OBS);
+            let lastError = null;
+            const candidates = [
+                API_URLS.NDBC_LATEST_OBS_PROXY,
+                API_URLS.NDBC_LATEST_OBS_PROXY_ALT,
+                API_URLS.NDBC_LATEST_OBS,
+            ];
+            for (const candidate of candidates) {
+                try {
+                    raw = await fetchTextWithTimeout(candidate);
+                    if (raw) break;
+                } catch (err) {
+                    lastError = err;
+                }
+            }
+            if (!raw && lastError) {
+                throw lastError;
             }
 
             const buoys = normalizeBuoyRows(raw);
@@ -289,11 +308,17 @@ export default function OceanBuoysLayer({ viewer }) {
         if (!isEnabled) {
             clearInterval(pollTimerRef.current);
             pollTimerRef.current = null;
-            clearEntities();
-            updateData('oceanBuoys', []);
+            setEntitiesVisible(false);
             setStatus('oceanBuoys', 'idle');
             viewer.scene.requestRender();
             return undefined;
+        }
+
+        if (Array.isArray(cachedBuoys) && cachedBuoys.length) {
+            upsertBuoys(cachedBuoys);
+            setEntitiesVisible(true);
+            setStatus('oceanBuoys', 'active');
+            viewer.scene.requestRender();
         }
 
         pollBuoys();
@@ -305,9 +330,25 @@ export default function OceanBuoysLayer({ viewer }) {
         return () => {
             clearInterval(pollTimerRef.current);
             pollTimerRef.current = null;
-            clearEntities();
         };
-    }, [clearEntities, isEnabled, pollBuoys, setStatus, updateData, viewer]);
+    }, [
+        cachedBuoys,
+        isEnabled,
+        pollBuoys,
+        setEntitiesVisible,
+        setStatus,
+        upsertBuoys,
+        viewer,
+    ]);
+
+    useEffect(
+        () => () => {
+            clearInterval(pollTimerRef.current);
+            pollTimerRef.current = null;
+            clearEntities();
+        },
+        [clearEntities]
+    );
 
     return null;
 }

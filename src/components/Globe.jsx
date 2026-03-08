@@ -45,6 +45,33 @@ const SATELLITE_TRACK_VIEWS = {
     WIDE: new Cesium.Cartesian3(-60000, 22000, 20000),
 };
 
+const ENTITY_ID_PREFIX_LAYER_MAP = [
+    ['aircraft-', 'aircraft'],
+    ['satellite-', 'satellites'],
+    ['seismic-', 'seismic'],
+    ['airport-', 'airports'],
+    ['seismic-station-', 'seismicStations'],
+    ['hazard-', 'hazards'],
+    ['disaster-', 'disasters'],
+    ['conflict-', 'conflicts'],
+    ['ocean-buoy-', 'oceanBuoys'],
+    ['volcano-', 'volcanoes'],
+    ['spacewx-', 'spaceWeather'],
+    ['metar-', 'metar'],
+    ['fire-', 'fireHotspots'],
+    ['airsigmet-', 'aviationHazards'],
+    ['sigmet-', 'aviationHazards'],
+    ['solar-flare-', 'solarFlares'],
+    ['weather-', 'weather'],
+    ['air-quality-', 'airQuality'],
+    ['cctv-', 'cctv'],
+    ['traffic-', 'traffic'],
+    ['mil-activity-', 'militaryActivity'],
+    ['mil-base-', 'militaryBases'],
+    ['forbidden-zone-', 'forbiddenZones'],
+    ['airspace-', 'airspace'],
+];
+
 function getTrackViewOffset(type, view) {
     if (type === 'satellites') {
         return SATELLITE_TRACK_VIEWS[view] || SATELLITE_TRACK_VIEWS.ORBIT;
@@ -77,6 +104,14 @@ function getTrackedHeadingDegrees(entity, time) {
     } catch (err) {
         return 0;
     }
+}
+
+function inferLayerTypeFromEntityId(entityId = '') {
+    const id = String(entityId);
+    for (const [prefix, layerType] of ENTITY_ID_PREFIX_LAYER_MAP) {
+        if (id.startsWith(prefix)) return layerType;
+    }
+    return 'unknown';
 }
 
 export default function Globe() {
@@ -242,28 +277,48 @@ export default function Globe() {
         }, Cesium.ScreenSpaceEventType.WHEEL);
 
         const parsePickedEntity = (pickedObject) => {
-            if (!(Cesium.defined(pickedObject) && pickedObject.id && pickedObject.id.properties)) {
+            if (!(Cesium.defined(pickedObject) && pickedObject.id)) {
                 return null;
             }
 
             const props = {};
-            const propertyNames = pickedObject.id.properties.propertyNames || [];
+            const propertyBag = pickedObject.id.properties;
+            const propertyNames = propertyBag?.propertyNames || [];
             const time = viewer.clock.currentTime;
 
             propertyNames.forEach((name) => {
                 try {
-                    const val = pickedObject.id.properties[name].getValue(time);
+                    const val = propertyBag[name].getValue(time);
                     if (val !== undefined) props[name] = val;
                 } catch (e) {
-                    props[name] = pickedObject.id.properties[name];
+                    props[name] = propertyBag[name];
                 }
             });
 
+            const entityId = pickedObject.id.id || null;
+            const positionProp = pickedObject.id.position;
+            const position =
+                typeof positionProp?.getValue === 'function'
+                    ? positionProp.getValue(time)
+                    : positionProp;
+            if (position && (!props.latitude || !props.longitude)) {
+                const carto = Cesium.Cartographic.fromCartesian(position);
+                if (carto) {
+                    if (!props.latitude) props.latitude = Cesium.Math.toDegrees(carto.latitude).toFixed(4);
+                    if (!props.longitude) props.longitude = Cesium.Math.toDegrees(carto.longitude).toFixed(4);
+                }
+            }
+
+            const inferredLayerType = props._layerType || inferLayerTypeFromEntityId(entityId);
+            if (inferredLayerType === 'traffic' && !props.status && String(entityId || '').startsWith('traffic-road-')) {
+                props.status = 'ROAD SEGMENT';
+            }
+
             return {
                 ...props,
-                type: props._layerType || 'unknown',
-                name: pickedObject.id.name || 'Unknown',
-                _entityId: pickedObject.id.id || null,
+                type: inferredLayerType,
+                name: pickedObject.id.name || String(entityId || 'Unknown'),
+                _entityId: entityId,
             };
         };
 

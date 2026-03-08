@@ -195,14 +195,33 @@ async function fetchJsonWithTimeout(url, timeoutMs = REQUEST_TIMEOUT_MS) {
             cache: 'no-store',
         });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        return await response.json();
+        const text = await response.text();
+        if (!text) return [];
+        const parsed = JSON.parse(text);
+        if (parsed && typeof parsed === 'object' && typeof parsed.contents === 'string') {
+            return JSON.parse(parsed.contents);
+        }
+        return parsed;
     } finally {
         clearTimeout(timeoutId);
     }
 }
 
+async function fetchFromCandidates(urls) {
+    let lastError = null;
+    for (const url of urls) {
+        try {
+            return await fetchJsonWithTimeout(url);
+        } catch (err) {
+            lastError = err;
+        }
+    }
+    throw lastError || new Error('All feed candidates failed');
+}
+
 export default function AviationHazardsLayer({ viewer }) {
     const isEnabled = useStore((s) => s.layers.aviationHazards.enabled);
+    const cachedHazards = useStore((s) => s.layers.aviationHazards.data);
     const updateData = useStore((s) => s.updateLayerData);
     const setStatus = useStore((s) => s.setLayerStatus);
 
@@ -218,6 +237,13 @@ export default function AviationHazardsLayer({ viewer }) {
         });
         entitiesRef.current.clear();
     }, [viewer]);
+
+    const setBundlesVisible = useCallback((visible) => {
+        entitiesRef.current.forEach((bundle) => {
+            if (bundle.polygon) bundle.polygon.show = visible;
+            if (bundle.marker) bundle.marker.show = visible;
+        });
+    }, []);
 
     const upsertHazards = useCallback(
         (hazards) => {
@@ -352,9 +378,21 @@ export default function AviationHazardsLayer({ viewer }) {
             }
 
             const [airSigmetRes, sigmetRes, metarRes] = await Promise.allSettled([
-                fetchJsonWithTimeout(API_URLS.AIRSIGMET),
-                fetchJsonWithTimeout(API_URLS.SIGMET),
-                fetchJsonWithTimeout(API_URLS.METAR_GLOBAL),
+                fetchFromCandidates([
+                    API_URLS.AIRSIGMET,
+                    API_URLS.AIRSIGMET_PROXY,
+                    API_URLS.AIRSIGMET_PROXY_ALT,
+                ]),
+                fetchFromCandidates([
+                    API_URLS.SIGMET,
+                    API_URLS.SIGMET_PROXY,
+                    API_URLS.SIGMET_PROXY_ALT,
+                ]),
+                fetchFromCandidates([
+                    API_URLS.METAR_GLOBAL,
+                    `${API_URLS.METAR_PROXY_BASE}${encodeURIComponent(API_URLS.METAR_GLOBAL)}`,
+                    `${API_URLS.METAR_PROXY_ALT_BASE}-180,-90,180,90&hours=2&format=json`,
+                ]),
             ]);
 
             const polygonRows = [
@@ -399,11 +437,17 @@ export default function AviationHazardsLayer({ viewer }) {
         if (!isEnabled) {
             clearInterval(pollTimerRef.current);
             pollTimerRef.current = null;
-            clearEntities();
-            updateData('aviationHazards', []);
+            setBundlesVisible(false);
             setStatus('aviationHazards', 'idle');
             viewer.scene.requestRender();
             return undefined;
+        }
+
+        if (Array.isArray(cachedHazards) && cachedHazards.length) {
+            upsertHazards(cachedHazards);
+            setBundlesVisible(true);
+            setStatus('aviationHazards', 'active');
+            viewer.scene.requestRender();
         }
 
         pollHazards();
@@ -415,9 +459,25 @@ export default function AviationHazardsLayer({ viewer }) {
         return () => {
             clearInterval(pollTimerRef.current);
             pollTimerRef.current = null;
-            clearEntities();
         };
-    }, [clearEntities, isEnabled, pollHazards, setStatus, updateData, viewer]);
+    }, [
+        cachedHazards,
+        isEnabled,
+        pollHazards,
+        setBundlesVisible,
+        setStatus,
+        upsertHazards,
+        viewer,
+    ]);
+
+    useEffect(
+        () => () => {
+            clearInterval(pollTimerRef.current);
+            pollTimerRef.current = null;
+            clearEntities();
+        },
+        [clearEntities]
+    );
 
     return null;
 }

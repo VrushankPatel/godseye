@@ -47,9 +47,24 @@ export default function LayerPanel() {
                         <span style={{ color: def.color }} className="text-lg w-5 text-center">
                             {def.icon}
                         </span>
-                        <span className={`text-sm tracking-wider ${layer.enabled ? 'text-white' : 'text-text-dim'}`}>
-                            {def.label}
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                            <span className={`text-sm tracking-wider ${layer.enabled ? 'text-white' : 'text-text-dim'}`}>
+                                {def.label}
+                            </span>
+                            {def.description && (
+                                <div className="relative group pointer-events-auto">
+                                    <span
+                                        className="inline-flex w-3.5 h-3.5 items-center justify-center rounded-full border border-electric-blue/40 text-[9px] text-electric-blue/85"
+                                        title={def.description}
+                                    >
+                                        i
+                                    </span>
+                                    <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 w-52 -translate-x-1/2 rounded border border-electric-blue/35 bg-[#041226]/95 p-2 text-[10px] leading-snug tracking-wide text-text-primary opacity-0 shadow-[0_0_14px_rgba(0,180,255,0.18)] transition-opacity group-hover:opacity-100">
+                                        {def.description}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     <div

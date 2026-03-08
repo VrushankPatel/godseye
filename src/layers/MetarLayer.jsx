@@ -143,7 +143,13 @@ async function fetchJsonWithTimeout(url, timeoutMs = REQUEST_TIMEOUT_MS) {
             cache: 'no-store',
         });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        return await response.json();
+        const text = await response.text();
+        if (!text) return [];
+        const parsed = JSON.parse(text);
+        if (parsed && typeof parsed === 'object' && typeof parsed.contents === 'string') {
+            return JSON.parse(parsed.contents);
+        }
+        return parsed;
     } finally {
         clearTimeout(timeoutId);
     }
@@ -151,20 +157,28 @@ async function fetchJsonWithTimeout(url, timeoutMs = REQUEST_TIMEOUT_MS) {
 
 async function fetchMetarRegion(bbox) {
     const directUrl = buildMetarUrl(bbox);
-    try {
-        const direct = await fetchJsonWithTimeout(directUrl);
-        if (Array.isArray(direct)) return direct;
-    } catch (err) {
-        // Browser CORS blocks are expected on direct requests.
-    }
+    const candidateUrls = [
+        directUrl,
+        `${API_URLS.METAR_PROXY_BASE}${encodeURIComponent(directUrl)}`,
+        `${API_URLS.METAR_PROXY_ALT_BASE}${bbox}&hours=2&format=json`,
+    ];
 
-    const proxyUrl = `${API_URLS.METAR_PROXY_BASE}${encodeURIComponent(directUrl)}`;
-    const proxied = await fetchJsonWithTimeout(proxyUrl);
-    return Array.isArray(proxied) ? proxied : [];
+    let lastError = null;
+    for (const candidateUrl of candidateUrls) {
+        try {
+            const result = await fetchJsonWithTimeout(candidateUrl);
+            if (Array.isArray(result)) return result;
+        } catch (err) {
+            lastError = err;
+        }
+    }
+    if (lastError) throw lastError;
+    return [];
 }
 
 export default function MetarLayer({ viewer }) {
     const isEnabled = useStore((s) => s.layers.metar.enabled);
+    const cachedStations = useStore((s) => s.layers.metar.data);
     const updateData = useStore((s) => s.updateLayerData);
     const setStatus = useStore((s) => s.setLayerStatus);
 
@@ -178,6 +192,12 @@ export default function MetarLayer({ viewer }) {
         });
         entitiesRef.current.clear();
     }, [viewer]);
+
+    const setEntitiesVisible = useCallback((visible) => {
+        entitiesRef.current.forEach((entity) => {
+            entity.show = visible;
+        });
+    }, []);
 
     const getIcon = useCallback((style) => {
         const key = `${style.code}|${style.color}`;
@@ -302,11 +322,17 @@ export default function MetarLayer({ viewer }) {
         if (!isEnabled) {
             clearInterval(pollTimerRef.current);
             pollTimerRef.current = null;
-            clearEntities();
-            updateData('metar', []);
+            setEntitiesVisible(false);
             setStatus('metar', 'idle');
             viewer.scene.requestRender();
             return undefined;
+        }
+
+        if (Array.isArray(cachedStations) && cachedStations.length) {
+            upsertStations(cachedStations);
+            setEntitiesVisible(true);
+            setStatus('metar', 'active');
+            viewer.scene.requestRender();
         }
 
         pollMetar();
@@ -318,9 +344,25 @@ export default function MetarLayer({ viewer }) {
         return () => {
             clearInterval(pollTimerRef.current);
             pollTimerRef.current = null;
-            clearEntities();
         };
-    }, [clearEntities, isEnabled, pollMetar, setStatus, updateData, viewer]);
+    }, [
+        cachedStations,
+        isEnabled,
+        pollMetar,
+        setEntitiesVisible,
+        setStatus,
+        upsertStations,
+        viewer,
+    ]);
+
+    useEffect(
+        () => () => {
+            clearInterval(pollTimerRef.current);
+            pollTimerRef.current = null;
+            clearEntities();
+        },
+        [clearEntities]
+    );
 
     return null;
 }
