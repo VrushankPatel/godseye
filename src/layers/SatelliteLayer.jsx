@@ -2,14 +2,13 @@ import React, { useEffect, useRef, useCallback } from 'react';
 import * as Cesium from 'cesium';
 import * as satellite from 'satellite.js';
 import useStore from '../store/useStore';
-import { API_URLS, POLL_INTERVALS } from '../constants/dataSources';
+import { POLL_INTERVALS } from '../constants/dataSources';
 
 const TLE_API_BASE = 'https://tle.ivanstanojevic.me/api/tle/';
 const PAGE_SIZE = 100;
 const MAX_FETCH_PAGES = 120; // up to ~12,000 records from fallback API
 const PAGE_FETCH_CONCURRENCY = 6;
 const MAX_RENDERED_SATELLITES = 12000;
-const MAX_CELESTRAK_RECORDS = 12000;
 
 const FALLBACK_TLE = `ISS (ZARYA)
 1 25544U 98067A   24068.31846065  .00017169  00000+0  31416-3 0  9997
@@ -66,37 +65,6 @@ function parseTleApiMember(member = []) {
     return records;
 }
 
-function parseTleTextRecords(text = '', maxRecords = MAX_CELESTRAK_RECORDS) {
-    const records = [];
-    const lines = text
-        .split('\n')
-        .map((line) => line.trim())
-        .filter(Boolean);
-
-    for (let i = 0; i + 2 < lines.length; i += 3) {
-        const name = lines[i];
-        const line1 = lines[i + 1];
-        const line2 = lines[i + 2];
-        if (!line1.startsWith('1 ') || !line2.startsWith('2 ')) continue;
-
-        try {
-            const satrec = satellite.twoline2satrec(line1, line2);
-            if (!satrec?.satnum) continue;
-            records.push({
-                id: String(satrec.satnum),
-                name,
-                satrec,
-            });
-        } catch (err) {
-            // Ignore malformed records.
-        }
-
-        if (records.length >= maxRecords) break;
-    }
-
-    return records;
-}
-
 function getTotalPages(view) {
     const last = view?.last;
     if (!last || typeof last !== 'string') return null;
@@ -111,15 +79,6 @@ async function fetchTlePage(page, signal) {
     });
     if (!response.ok) throw new Error(`TLE API HTTP ${response.status}`);
     return response.json();
-}
-
-async function fetchTleText(url, signal) {
-    const response = await fetch(url, {
-        signal,
-        cache: 'no-store',
-    });
-    if (!response.ok) throw new Error(`TLE text HTTP ${response.status}`);
-    return response.text();
 }
 
 function createSatelliteIconDataUri() {
@@ -256,40 +215,6 @@ export default function SatelliteLayer({ viewer }) {
         updateTimerRef.current = setInterval(updateSatellitePositions, POLL_INTERVALS.SATELLITES);
     }, [updateSatellitePositions]);
 
-    const loadFromCelestrak = useCallback(async (signal) => {
-        const sources = [
-            API_URLS.CELESTRAK_ACTIVE,
-            API_URLS.CELESTRAK_STATIONS,
-            API_URLS.CELESTRAK_STARLINK,
-            API_URLS.CELESTRAK_WEATHER,
-            API_URLS.CELESTRAK_GEO,
-            API_URLS.CELESTRAK_GPS_OPS,
-            API_URLS.CELESTRAK_SCIENCE,
-            API_URLS.CELESTRAK_COSMOS_DEBRIS,
-            API_URLS.CELESTRAK_IRIDIUM_DEBRIS,
-            API_URLS.CELESTRAK_FENGYUN_DEBRIS,
-        ];
-
-        const results = await Promise.allSettled(
-            sources.map((url) => fetchTleText(url, signal))
-        );
-
-        const merged = new Map();
-        for (const result of results) {
-            if (result.status !== 'fulfilled') continue;
-            const parsed = parseTleTextRecords(result.value, MAX_CELESTRAK_RECORDS);
-            for (const record of parsed) {
-                if (!merged.has(record.id)) {
-                    merged.set(record.id, record);
-                }
-                if (merged.size >= MAX_CELESTRAK_RECORDS) break;
-            }
-            if (merged.size >= MAX_CELESTRAK_RECORDS) break;
-        }
-
-        return Array.from(merged.values());
-    }, []);
-
     const loadFromPaginatedApi = useCallback(async (signal) => {
         const aggregate = [];
 
@@ -328,15 +253,7 @@ export default function SatelliteLayer({ viewer }) {
         abortRef.current = controller;
 
         try {
-            let records = await loadFromCelestrak(controller.signal);
-
-            // If CelesTrak is temporarily unavailable, fall back to paginated API.
-            if (records.length < 1000) {
-                const paginatedRecords = await loadFromPaginatedApi(controller.signal);
-                if (paginatedRecords.length > records.length) {
-                    records = paginatedRecords;
-                }
-            }
+            const records = await loadFromPaginatedApi(controller.signal);
 
             if (controller.signal.aborted || !isEnabled) return;
             if (!records.length) throw new Error('No satellite records available');
@@ -354,7 +271,7 @@ export default function SatelliteLayer({ viewer }) {
             setStatus('satellites', fallbackRecords.length ? 'active' : 'error');
             startPropagation();
         }
-    }, [isEnabled, loadFromCelestrak, loadFromPaginatedApi, setStatus, updateData, startPropagation]);
+    }, [isEnabled, loadFromPaginatedApi, setStatus, updateData, startPropagation]);
 
     useEffect(() => {
         if (!satelliteIconRef.current) {
