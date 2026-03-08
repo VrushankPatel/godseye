@@ -1,0 +1,24 @@
+{
+  "name": "godseye",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.2.1",
+    "tailwindcss": "^4.2.1",
+    "vite": "^7.3.1"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "^5.1.4",
+    "cesium": "^1.139.1",
+    "resium": "^1.19.4",
+    "satellite.js": "^6.0.2",
+    "vite-plugin-cesium": "^1.2.23",
+    "zustand": "^5.0.11"
+  }
+}

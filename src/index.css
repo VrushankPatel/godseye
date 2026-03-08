@@ -1,0 +1,371 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg-primary: #0a0a0f;
+  --color-bg-panel: rgba(10, 10, 15, 0.85);
+  --color-neon-green: #00ff41;
+  --color-neon-amber: #ffaa00;
+  --color-electric-blue: #00b4ff;
+  --color-neon-red: #ff3333;
+  --color-neon-cyan: #00ffff;
+  --color-text-primary: #e0e0e0;
+  --color-text-dim: #666680;
+  --color-border-panel: rgba(0, 180, 255, 0.15);
+  --font-mono: 'JetBrains Mono', 'Share Tech Mono', monospace;
+}
+
+/* ── Base ─────────────────────────────────────────── */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-family: var(--font-mono);
+  overflow: hidden;
+}
+
+/* ── Cesium Overrides ─────────────────────────────── */
+.cesium-viewer,
+.cesium-viewer-cesiumWidgetContainer,
+.cesium-widget,
+.cesium-widget canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.cesium-viewer .cesium-widget-credits,
+.cesium-viewer .cesium-viewer-toolbar,
+.cesium-viewer .cesium-viewer-animationContainer,
+.cesium-viewer .cesium-viewer-timelineContainer,
+.cesium-viewer .cesium-viewer-fullscreenContainer,
+.cesium-viewer .cesium-viewer-infoBoxContainer,
+.cesium-viewer .cesium-viewer-selectionIndicatorContainer,
+.cesium-viewer .cesium-viewer-geocoderContainer,
+.cesium-viewer .cesium-viewer-navigationHelpButtonContainer,
+.cesium-viewer .cesium-viewer-homeButtonContainer,
+.cesium-viewer .cesium-viewer-sceneModePicker,
+.cesium-viewer .cesium-viewer-projectionPicker,
+.cesium-viewer .cesium-viewer-baseLayerPickerContainer,
+.cesium-viewer-bottom {
+  display: none !important;
+}
+
+/* ── Glassmorphism Panel ──────────────────────────── */
+.glass-panel {
+  background: var(--color-bg-panel);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--color-border-panel);
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 180, 255, 0.02) 2px,
+    rgba(0, 180, 255, 0.02) 4px
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+.glass-panel > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Scrollbar ────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 180, 255, 0.3);
+  border-radius: 2px;
+}
+
+/* ── Toggle Switch ────────────────────────────────── */
+.toggle-switch {
+  width: 36px;
+  height: 18px;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  position: relative;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+.toggle-switch.active {
+  background: rgba(0, 255, 65, 0.15);
+  border-color: var(--color-neon-green);
+  box-shadow: 0 0 8px rgba(0, 255, 65, 0.3);
+}
+.toggle-switch::after {
+  content: '';
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #555;
+  top: 2px;
+  left: 2px;
+  transition: all 0.3s ease;
+}
+.toggle-switch.active::after {
+  left: 20px;
+  background: var(--color-neon-green);
+  box-shadow: 0 0 6px var(--color-neon-green);
+}
+
+/* ── Mode Button ──────────────────────────────────── */
+.mode-btn {
+  padding: 6px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--color-text-dim);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-radius: 2px;
+  white-space: nowrap;
+}
+.mode-btn:hover {
+  border-color: var(--color-electric-blue);
+  color: var(--color-text-primary);
+  background: rgba(0, 180, 255, 0.05);
+}
+.mode-btn.active {
+  border-color: var(--color-electric-blue);
+  color: var(--color-electric-blue);
+  background: rgba(0, 180, 255, 0.1);
+  box-shadow: 0 0 12px rgba(0, 180, 255, 0.2), inset 0 0 12px rgba(0, 180, 255, 0.05);
+  text-shadow: 0 0 8px rgba(0, 180, 255, 0.5);
+}
+
+/* ── Shader Overlays ──────────────────────────────── */
+.shader-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 5;
+  transition: opacity 0.5s ease;
+}
+
+/* NVG - Night Vision */
+.shader-nvg {
+  background: radial-gradient(ellipse at center, transparent 40%, rgba(0, 20, 0, 0.6) 100%);
+  mix-blend-mode: multiply;
+}
+.shader-nvg::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 1px,
+    rgba(0, 255, 65, 0.03) 1px,
+    rgba(0, 255, 65, 0.03) 2px
+  );
+  animation: nvg-scan 0.1s linear infinite;
+}
+.shader-nvg::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.9' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E");
+  opacity: 0.4;
+}
+
+/* FLIR - Thermal */
+.shader-flir {
+  background: radial-gradient(ellipse at center, transparent 40%, rgba(20, 0, 0, 0.5) 100%);
+}
+.shader-flir::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 3px,
+    rgba(255, 100, 0, 0.015) 3px,
+    rgba(255, 100, 0, 0.015) 4px
+  );
+}
+
+/* CRT */
+.shader-crt {
+  background: radial-gradient(ellipse at center, transparent 50%, rgba(0, 0, 0, 0.5) 100%);
+}
+.shader-crt::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 1px,
+    rgba(0, 0, 0, 0.15) 1px,
+    rgba(0, 0, 0, 0.15) 3px
+  );
+  animation: crt-flicker 0.05s linear infinite;
+}
+
+/* Anime */
+.shader-anime::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(255, 100, 200, 0.03) 0%, transparent 50%, rgba(100, 200, 255, 0.03) 100%);
+}
+
+@keyframes nvg-scan {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(2px); }
+}
+
+@keyframes crt-flicker {
+  0% { opacity: 0.95; }
+  50% { opacity: 1; }
+  100% { opacity: 0.95; }
+}
+
+/* ── CSS Filters for Globe Container ──────────────── */
+.globe-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.globe-container.mode-nvg {
+  filter: saturate(0) brightness(1.4) sepia(1) hue-rotate(70deg) contrast(1.3);
+}
+.globe-container.mode-flir {
+  filter: saturate(0) contrast(1.8) brightness(1.1) sepia(0.3) hue-rotate(-10deg);
+}
+.globe-container.mode-crt {
+  filter: saturate(0.6) contrast(1.2) brightness(0.9) sepia(0.4) hue-rotate(15deg);
+}
+.globe-container.mode-anime {
+  filter: saturate(1.8) contrast(1.5) brightness(1.1);
+}
+
+/* ── Animations ───────────────────────────────────── */
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.5); }
+}
+
+@keyframes slide-in-left {
+  from { transform: translateX(-100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slide-in-right {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slide-in-up {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes count-tick {
+  0% { transform: translateY(-100%); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+.animate-slide-left { animation: slide-in-left 0.5s ease-out forwards; }
+.animate-slide-right { animation: slide-in-right 0.5s ease-out forwards; }
+.animate-slide-up { animation: slide-in-up 0.4s ease-out forwards; }
+.animate-fade-in { animation: fade-in 0.6s ease-out forwards; }
+
+/* ── Pulsating Entity ─────────────────────────────── */
+@keyframes entity-pulse {
+  0%, 100% { box-shadow: 0 0 4px currentColor; }
+  50% { box-shadow: 0 0 16px currentColor, 0 0 32px currentColor; }
+}
+
+/* ── Inspector Feed ───────────────────────────────── */
+.feed-image {
+  width: 100%;
+  aspect-ratio: 16/9;
+  object-fit: cover;
+  border: 1px solid var(--color-border-panel);
+  border-radius: 2px;
+  background: #111;
+}
+
+.no-signal {
+  width: 100%;
+  aspect-ratio: 16/9;
+  background: repeating-linear-gradient(
+    0deg,
+    #111 0px,
+    #111 2px,
+    #1a1a1a 2px,
+    #1a1a1a 4px
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-neon-red);
+  font-size: 12px;
+  letter-spacing: 2px;
+  border: 1px solid rgba(255, 51, 51, 0.3);
+  border-radius: 2px;
+  animation: static-noise 0.3s steps(5) infinite;
+}
+
+@keyframes static-noise {
+  0% { background-position: 0 0; }
+  25% { background-position: 1px 1px; }
+  50% { background-position: -1px 0; }
+  75% { background-position: 0 -1px; }
+  100% { background-position: 1px -1px; }
+}
