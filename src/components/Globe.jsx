@@ -74,14 +74,16 @@ export default function Globe() {
                     negativeZ: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPj/HwADBwIAMCbHYQAAAABJRU5ErkJggg==',
                 },
             }),
-            skyAtmosphere: new Cesium.SkyAtmosphere(),
+            skyAtmosphere: false,
             scene3DOnly: true,
             shadows: false,
             requestRenderMode: false,
         });
 
-        // Set dark sky background
+        // Force a dark, eye-friendly space backdrop (no bright atmospheric blue)
         viewer.scene.backgroundColor = Cesium.Color.fromCssColorString('#0a0a0f');
+        viewer.scene.globe.showGroundAtmosphere = false;
+        viewer.scene.fog.enabled = false;
         viewer.scene.globe.enableLighting = true;
 
         // Tweak camera controls for a crisper, more pleasant dragging experience
