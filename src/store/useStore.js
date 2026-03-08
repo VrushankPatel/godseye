@@ -103,6 +103,8 @@ const useStore = create((set, get) => ({
     trackedTarget: null,
     setTrackedTarget: (target) => set({ trackedTarget: target }),
     clearTrackedTarget: () => set({ trackedTarget: null }),
+    trackingView: 'CHASE',
+    setTrackingView: (view) => set({ trackingView: view }),
     toggleTrackedTarget: (target) =>
         set((state) => {
             if (

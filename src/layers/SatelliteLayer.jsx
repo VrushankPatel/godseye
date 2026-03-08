@@ -122,6 +122,38 @@ async function fetchTleText(url, signal) {
     return response.text();
 }
 
+function createSatelliteIconDataUri() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 24;
+    canvas.height = 24;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+
+    ctx.translate(12, 12);
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = '#f8fbff';
+    ctx.fillStyle = '#ffaa00';
+
+    // Main body
+    ctx.fillRect(-3, -4, 6, 8);
+    ctx.strokeRect(-3, -4, 6, 8);
+
+    // Solar panels
+    ctx.fillStyle = '#00b4ff';
+    ctx.fillRect(-10, -3, 6, 6);
+    ctx.strokeRect(-10, -3, 6, 6);
+    ctx.fillRect(4, -3, 6, 6);
+    ctx.strokeRect(4, -3, 6, 6);
+
+    // Antenna
+    ctx.beginPath();
+    ctx.moveTo(0, 4);
+    ctx.lineTo(0, 8.5);
+    ctx.stroke();
+
+    return canvas.toDataURL('image/png');
+}
+
 export default function SatelliteLayer({ viewer }) {
     const isEnabled = useStore((s) => s.layers.satellites.enabled);
     const updateData = useStore((s) => s.updateLayerData);
@@ -131,6 +163,7 @@ export default function SatelliteLayer({ viewer }) {
     const satRecordsRef = useRef([]);
     const updateTimerRef = useRef(null);
     const abortRef = useRef(null);
+    const satelliteIconRef = useRef(null);
 
     const clearSatellites = useCallback(() => {
         clearInterval(updateTimerRef.current);
@@ -187,11 +220,10 @@ export default function SatelliteLayer({ viewer }) {
                     id: satId,
                     position,
                     name,
-                    point: {
-                        pixelSize: 4.2,
-                        color: Cesium.Color.fromCssColorString('#ffaa00').withAlpha(0.95),
-                        outlineColor: Cesium.Color.WHITE.withAlpha(0.75),
-                        outlineWidth: 1,
+                    billboard: {
+                        image: satelliteIconRef.current,
+                        scale: 0.46,
+                        alignedAxis: Cesium.Cartesian3.UNIT_Z,
                         disableDepthTestDistance: 9000000,
                     },
                     properties: {
@@ -316,6 +348,12 @@ export default function SatelliteLayer({ viewer }) {
             startPropagation();
         }
     }, [isEnabled, loadFromCelestrak, loadFromPaginatedApi, setStatus, updateData, startPropagation]);
+
+    useEffect(() => {
+        if (!satelliteIconRef.current) {
+            satelliteIconRef.current = createSatelliteIconDataUri();
+        }
+    }, []);
 
     useEffect(() => {
         if (!isEnabled) {

@@ -4,6 +4,17 @@ import { LAYER_DEFS } from '../constants/dataSources';
 
 const TRACKABLE_LAYER_TYPES = new Set(['aircraft', 'satellites']);
 const DEFAULT_REFRESH_SECONDS = 5;
+const AIRCRAFT_TRACK_VIEWS = [
+    { id: 'CHASE', label: 'Chase' },
+    { id: 'TOP', label: 'Top' },
+    { id: 'SIDE', label: 'Side' },
+    { id: 'CINEMATIC', label: 'Cinematic' },
+];
+const SATELLITE_TRACK_VIEWS = [
+    { id: 'ORBIT', label: 'Orbit' },
+    { id: 'NADIR', label: 'Nadir' },
+    { id: 'WIDE', label: 'Wide' },
+];
 
 function appendCacheBuster(url) {
     if (!url) return '';
@@ -38,6 +49,8 @@ export default function Inspector() {
     const clearInspector = useStore((s) => s.clearInspector);
     const trackedTarget = useStore((s) => s.trackedTarget);
     const toggleTrackedTarget = useStore((s) => s.toggleTrackedTarget);
+    const trackingView = useStore((s) => s.trackingView);
+    const setTrackingView = useStore((s) => s.setTrackingView);
     const [isMaximized, setIsMaximized] = useState(false);
     const [imageSrc, setImageSrc] = useState('');
     const [imageFailed, setImageFailed] = useState(false);
@@ -77,6 +90,9 @@ export default function Inspector() {
     const isTracked =
         isTrackable &&
         trackedTarget?.entityId === inspector._entityId;
+    const trackViewOptions = inspector.type === 'satellites'
+        ? SATELLITE_TRACK_VIEWS
+        : AIRCRAFT_TRACK_VIEWS;
 
     const handleImageError = () => {
         if (inspector.fallbackUrl && !imageSrc.startsWith(inspector.fallbackUrl)) {
@@ -89,6 +105,9 @@ export default function Inspector() {
 
     const handleTrackToggle = () => {
         if (!isTrackable) return;
+        if (!isTracked) {
+            setTrackingView(inspector.type === 'satellites' ? 'ORBIT' : 'CHASE');
+        }
         toggleTrackedTarget({
             entityId: inspector._entityId,
             type: inspector.type,
@@ -240,6 +259,29 @@ export default function Inspector() {
                             >
                                 {isTracked ? 'STOP TRACK' : 'TRACK TARGET'}
                             </button>
+                        )}
+
+                        {isTracked && (
+                            <div className="mt-2">
+                                <div className="text-[9px] text-text-dim tracking-widest uppercase mb-1">
+                                    Track View
+                                </div>
+                                <div className="grid grid-cols-2 gap-1.5">
+                                    {trackViewOptions.map((view) => (
+                                        <button
+                                            key={view.id}
+                                            onClick={() => setTrackingView(view.id)}
+                                            className={`border px-2 py-1.5 text-[10px] tracking-widest transition-colors ${
+                                                trackingView === view.id
+                                                    ? 'border-cyan-300/70 text-cyan-100 bg-cyan-500/20'
+                                                    : 'border-white/15 text-text-dim bg-white/5 hover:bg-white/10 hover:text-white'
+                                            }`}
+                                        >
+                                            {view.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
                         )}
 
                     </div>

@@ -345,7 +345,7 @@ export default function AircraftLayer({ viewer }) {
 
             const speedKmh = flight.velocityMps ? Math.round(flight.velocityMps * 3.6) : null;
             const heading = Number.isFinite(flight.headingDeg) ? Math.round(flight.headingDeg) : null;
-            const rotation = Cesium.Math.toRadians((heading || 0) - 90);
+            const rotation = Cesium.Math.toRadians(heading || 0);
 
             if (entitiesRef.current.has(id)) {
                 const entity = entitiesRef.current.get(id);
@@ -362,6 +362,7 @@ export default function AircraftLayer({ viewer }) {
                 entity.properties.altitude = `${Math.round(flight.altitudeM)} m`;
                 entity.properties.velocity = speedKmh !== null ? `${speedKmh} km/h` : 'N/A';
                 entity.properties.heading = heading !== null ? `${heading}°` : 'N/A';
+                entity.properties._headingDeg = heading !== null ? heading : 0;
             } else {
                 const entity = viewer.entities.add({
                     id: `aircraft-${id}`,
@@ -386,6 +387,7 @@ export default function AircraftLayer({ viewer }) {
                         altitude: `${Math.round(flight.altitudeM)} m`,
                         velocity: speedKmh !== null ? `${speedKmh} km/h` : 'N/A',
                         heading: heading !== null ? `${heading}°` : 'N/A',
+                        _headingDeg: heading !== null ? heading : 0,
                         latitude: flight.latitude.toFixed(4),
                         longitude: flight.longitude.toFixed(4),
                         status: 'AIRBORNE',

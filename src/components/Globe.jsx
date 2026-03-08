@@ -12,6 +12,54 @@ import TrafficLayer from '../layers/TrafficLayer';
 const TRACK_SAMPLE_INTERVAL_MS = 1000;
 const MAX_TRACK_POINTS = 220;
 const MIN_TRACK_POINT_DISTANCE_METERS = 250;
+const AIRCRAFT_MODEL_URI = '/models/Cesium_Air.glb';
+
+const AIRCRAFT_TRACK_VIEWS = {
+    CHASE: new Cesium.Cartesian3(-2200, 0, 700),
+    TOP: new Cesium.Cartesian3(0, 0, 4200),
+    SIDE: new Cesium.Cartesian3(0, 2400, 700),
+    CINEMATIC: new Cesium.Cartesian3(-4200, 1800, 1300),
+};
+
+const SATELLITE_TRACK_VIEWS = {
+    ORBIT: new Cesium.Cartesian3(-32000, 0, 11000),
+    NADIR: new Cesium.Cartesian3(0, 0, 36000),
+    WIDE: new Cesium.Cartesian3(-60000, 22000, 20000),
+};
+
+function getTrackViewOffset(type, view) {
+    if (type === 'satellites') {
+        return SATELLITE_TRACK_VIEWS[view] || SATELLITE_TRACK_VIEWS.ORBIT;
+    }
+    return AIRCRAFT_TRACK_VIEWS[view] || AIRCRAFT_TRACK_VIEWS.CHASE;
+}
+
+function readNumericProperty(property, time) {
+    if (property === undefined || property === null) return null;
+    try {
+        const value = typeof property.getValue === 'function' ? property.getValue(time) : property;
+        return Number.isFinite(value) ? value : null;
+    } catch (err) {
+        return null;
+    }
+}
+
+function getTrackedHeadingDegrees(entity, time) {
+    if (!entity?.properties) return 0;
+
+    const directHeading = readNumericProperty(entity.properties._headingDeg, time);
+    if (Number.isFinite(directHeading)) return directHeading;
+
+    try {
+        const textHeading = typeof entity.properties.heading?.getValue === 'function'
+            ? entity.properties.heading.getValue(time)
+            : entity.properties.heading;
+        const parsed = Number.parseFloat(String(textHeading || '0'));
+        return Number.isFinite(parsed) ? parsed : 0;
+    } catch (err) {
+        return 0;
+    }
+}
 
 export default function Globe() {
     const containerRef = useRef(null);
@@ -19,13 +67,69 @@ export default function Globe() {
     const trailEntityRef = useRef(null);
     const trailPositionsRef = useRef([]);
     const trailTimerRef = useRef(null);
+    const trackedAircraftEntityIdRef = useRef(null);
     const [viewerReady, setViewerReady] = useState(false);
     const setViewerRefStore = useStore((s) => s.setViewerRef);
     const isAutoRotating = useStore((s) => s.isAutoRotating);
     const setAutoRotating = useStore((s) => s.setAutoRotating);
     const setInspector = useStore((s) => s.setInspector);
     const trackedTarget = useStore((s) => s.trackedTarget);
+    const trackingView = useStore((s) => s.trackingView);
     const clearTrackedTarget = useStore((s) => s.clearTrackedTarget);
+
+    const restoreTrackedAircraftVisual = useCallback(() => {
+        const viewer = viewerRef.current;
+        const trackedAircraftId = trackedAircraftEntityIdRef.current;
+        trackedAircraftEntityIdRef.current = null;
+
+        if (!viewer || viewer.isDestroyed() || !trackedAircraftId) return;
+        const trackedEntity = viewer.entities.getById(trackedAircraftId);
+        if (!trackedEntity) return;
+
+        if (trackedEntity.billboard) {
+            trackedEntity.billboard.show = true;
+        }
+        trackedEntity.model = undefined;
+        trackedEntity.orientation = undefined;
+    }, []);
+
+    const applyTrackedAircraftVisual = useCallback((entity) => {
+        if (!entity) return;
+
+        if (
+            trackedAircraftEntityIdRef.current &&
+            trackedAircraftEntityIdRef.current !== entity.id
+        ) {
+            restoreTrackedAircraftVisual();
+        }
+
+        trackedAircraftEntityIdRef.current = entity.id;
+        if (entity.billboard) {
+            entity.billboard.show = false;
+        }
+
+        entity.model = {
+            uri: AIRCRAFT_MODEL_URI,
+            minimumPixelSize: 72,
+            maximumScale: 140,
+            incrementallyLoadTextures: true,
+            silhouetteColor: Cesium.Color.fromCssColorString('#00b4ff').withAlpha(0.55),
+            silhouetteSize: 1.2,
+            disableDepthTestDistance: 9000000,
+        };
+
+        entity.orientation = new Cesium.CallbackProperty((time, result) => {
+            const position = entity.position?.getValue
+                ? entity.position.getValue(time)
+                : entity.position;
+            if (!position) return undefined;
+
+            const headingDeg = getTrackedHeadingDegrees(entity, time);
+            const headingRad = Cesium.Math.toRadians(headingDeg);
+            const hpr = new Cesium.HeadingPitchRoll(headingRad, 0, 0);
+            return Cesium.Transforms.headingPitchRollQuaternion(position, hpr, Cesium.Ellipsoid.WGS84, undefined, result);
+        }, false);
+    }, [restoreTrackedAircraftVisual]);
 
     const removeTrail = useCallback(() => {
         clearInterval(trailTimerRef.current);
@@ -146,13 +250,14 @@ export default function Globe() {
         return () => {
             handler.destroy();
             removeTrail();
+            restoreTrackedAircraftVisual();
             if (viewerRef.current && !viewerRef.current.isDestroyed()) {
                 viewerRef.current.destroy();
             }
             viewerRef.current = null;
             setViewerRefStore(null);
         };
-    }, [removeTrail, setAutoRotating, setInspector, setViewerRefStore]);
+    }, [removeTrail, restoreTrackedAircraftVisual, setAutoRotating, setInspector, setViewerRefStore]);
 
     // Auto-rotation
     useEffect(() => {
@@ -183,6 +288,7 @@ export default function Globe() {
         if (!trackedTarget?.entityId) {
             viewer.trackedEntity = undefined;
             removeTrail();
+            restoreTrackedAircraftVisual();
             return;
         }
 
@@ -190,10 +296,17 @@ export default function Globe() {
         if (!targetEntity) {
             clearTrackedTarget();
             removeTrail();
+            restoreTrackedAircraftVisual();
             return;
         }
 
         setAutoRotating(false);
+        if (trackedTarget.type === 'aircraft') {
+            applyTrackedAircraftVisual(targetEntity);
+        } else {
+            restoreTrackedAircraftVisual();
+        }
+        targetEntity.viewFrom = Cesium.Cartesian3.clone(getTrackViewOffset(trackedTarget.type, trackingView));
         viewer.trackedEntity = targetEntity;
         removeTrail();
 
@@ -251,7 +364,25 @@ export default function Globe() {
             clearInterval(trailTimerRef.current);
             trailTimerRef.current = null;
         };
-    }, [trackedTarget, clearTrackedTarget, removeTrail, setAutoRotating]);
+    }, [
+        trackedTarget,
+        applyTrackedAircraftVisual,
+        clearTrackedTarget,
+        removeTrail,
+        restoreTrackedAircraftVisual,
+        setAutoRotating,
+    ]);
+
+    useEffect(() => {
+        const viewer = viewerRef.current;
+        if (!viewer || viewer.isDestroyed() || !trackedTarget?.entityId) return;
+
+        const targetEntity = viewer.entities.getById(trackedTarget.entityId);
+        if (!targetEntity) return;
+
+        targetEntity.viewFrom = Cesium.Cartesian3.clone(getTrackViewOffset(trackedTarget.type, trackingView));
+        viewer.scene.requestRender();
+    }, [trackedTarget, trackingView]);
 
     return (
         <>
