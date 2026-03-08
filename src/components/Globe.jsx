@@ -64,16 +64,6 @@ export default function Globe() {
             timeline: false,
             navigationHelpButton: false,
             creditContainer: document.createElement('div'), // hide credits
-            skyBox: new Cesium.SkyBox({
-                sources: {
-                    positiveX: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPj/HwADBwIAMCbHYQAAAABJRU5ErkJggg==',
-                    negativeX: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPj/HwADBwIAMCbHYQAAAABJRU5ErkJggg==',
-                    positiveY: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPj/HwADBwIAMCbHYQAAAABJRU5ErkJggg==',
-                    negativeY: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPj/HwADBwIAMCbHYQAAAABJRU5ErkJggg==',
-                    positiveZ: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPj/HwADBwIAMCbHYQAAAABJRU5ErkJggg==',
-                    negativeZ: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPj/HwADBwIAMCbHYQAAAABJRU5ErkJggg==',
-                },
-            }),
             skyAtmosphere: false,
             scene3DOnly: true,
             shadows: false,
@@ -82,6 +72,9 @@ export default function Globe() {
 
         // Force a dark, eye-friendly space backdrop (no bright atmospheric blue)
         viewer.scene.backgroundColor = Cesium.Color.fromCssColorString('#0a0a0f');
+        if (viewer.scene.skyBox) {
+            viewer.scene.skyBox.show = false;
+        }
         viewer.scene.globe.showGroundAtmosphere = false;
         viewer.scene.fog.enabled = false;
         viewer.scene.globe.enableLighting = true;
