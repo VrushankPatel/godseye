@@ -3,6 +3,11 @@
 Godseye 1.0 is a frontend-only geospatial intelligence dashboard inspired by WorldView-style OSINT interfaces.
 It renders a live 3D globe with real-time overlays for aircraft, satellites, seismic events, CCTV feeds, traffic simulation, and airspace zones.
 
+## Vibe Coding Alert
+
+This project is architected and directed by **Vrushank Patel**.
+Implementation support was provided by **Codex** as a programming assistant for selected tasks such as UI scaffolding, layout generation, iterative refactoring, and technical acceleration during development.
+
 ## Highlights
 
 - Fullscreen interactive 3D globe (CesiumJS)
