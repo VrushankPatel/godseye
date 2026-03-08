@@ -5,8 +5,8 @@ It renders a live 3D globe with real-time overlays for aircraft, satellites, sei
 
 ## Vibe Coding Alert
 
-This project is architected and directed by **Vrushank Patel**.
-Implementation support was provided by **Codex** as a programming assistant for selected tasks such as UI scaffolding, layout generation, iterative refactoring, and technical acceleration during development.
+I architected the project myself.
+I used **Codex** as a programming assistant for selected implementation tasks such as UI scaffolding, layout generation, iterative refactoring, and development acceleration.
 
 ## Highlights
 
