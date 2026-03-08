@@ -22,6 +22,7 @@ I used **Codex** as a programming assistant for selected implementation tasks su
   - Global seismic-station network layer (IRIS FDSN station metadata, active network coverage)
   - Natural hazards (NASA EONET live events: storms, wildfires, volcanoes, floods)
   - Global disaster alerts (GDACS: earthquakes, cyclones, floods, droughts, volcanoes, wildfires)
+  - Global conflict/war layer (Wikidata SPARQL, geocoded recent ongoing armed conflicts)
   - Official weather warnings layer (NOAA/NWS active watches, warnings, advisories)
   - Live ocean buoy telemetry (NOAA NDBC: wind, wave, pressure, air/water temp)
   - Global volcanic activity alerts (Smithsonian/USGS geotagged weekly activity feed)
@@ -71,6 +72,16 @@ npm run build
 npm run preview
 ```
 
+### Feed Audit (curl-based)
+
+```bash
+./scripts/feed_audit.sh
+```
+
+This runs direct API checks and prints live record counts by feed/region to help validate real-world coverage.
+
+Detailed research notes are in [`docs/FEED_RESEARCH.md`](./docs/FEED_RESEARCH.md).
+
 ## Project Structure
 
 ```text
@@ -87,11 +98,13 @@ src/
 
 - OpenSky Network (`/api/states/all`)
 - CelesTrak TLE sets
+- ADSB.lol mirror (`/v2/point`, keyless ADS-B stream mirror)
 - OurAirports global airports registry (`airports.csv`)
 - USGS Earthquake GeoJSON feeds
 - IRIS FDSN station feed (`fdsnws/station`) for global seismic network locations
 - NASA EONET open events feed
 - GDACS global disaster alert feed
+- Wikidata SPARQL endpoint (recent ongoing armed conflicts with coordinates)
 - NOAA/NWS active weather alerts feed (`api.weather.gov/alerts/active`)
 - NOAA NDBC latest buoy observations (`latest_obs.txt`, proxied for browser CORS)
 - Smithsonian GVP / USGS Weekly Volcanic Activity RSS (`WeeklyVolcanoRSS.xml`, georss points)
@@ -114,6 +127,7 @@ src/
 
 - Live military activity in this app is sourced from open ADS-B tracks and filtered/classified client-side (military callsign/operator/type heuristics).
 - Many conflict/event APIs require account authentication or keys (for example ACLED), so this build keeps the default experience keyless and frontend-only.
+- Conflict layer uses public Wikidata entries and should be treated as OSINT context, not authoritative military-grade intelligence.
 
 ## Feed Resilience
 

@@ -13,6 +13,7 @@ export const API_URLS = {
     // Radius 10000 (NM) gives near-global coverage in one request.
     AIRPLANES_GLOBAL: 'https://api.airplanes.live/v2/point/0/0/10000',
     ADSB_ONE_GLOBAL: 'https://api.adsb.one/v2/point/0/0/10000',
+    ADSB_LOL_GLOBAL: 'https://api.adsb.lol/v2/point/0/0/10000',
 
     // CelesTrak - TLE data for satellites
     // We proxy this as well to prevent "Feed Offline" errors from strict browser CORS
@@ -77,6 +78,7 @@ export const API_URLS = {
     NWS_ALERTS_ACTIVE: 'https://api.weather.gov/alerts/active?status=actual',
     // GDACS - global disaster alert feed (earthquakes, cyclones, floods, wildfires, drought, volcanoes)
     GDACS_EVENTS: 'https://www.gdacs.org/gdacsapi/api/events/geteventlist/SEARCH',
+    WIKIDATA_SPARQL: 'https://query.wikidata.org/sparql',
 
     // NTAD / ArcGIS military installations dataset (public, no key required)
     MILITARY_BASES_NTAD:
@@ -98,6 +100,7 @@ export const POLL_INTERVALS = {
     AIRPORTS: 86400000, // 24 hours
     HAZARDS: 120000,    // 2 minutes
     DISASTERS: 180000,  // 3 minutes
+    CONFLICTS: 900000, // 15 minutes
     WEATHER_ALERTS: 60000, // 1 minute
     OCEAN_BUOYS: 300000, // 5 minutes
     VOLCANOES: 3600000, // 1 hour
@@ -130,6 +133,7 @@ export const LAYER_DEFS = {
     airports: { label: 'AIRPORTS', color: '#93c5fd', icon: '🛬' },
     hazards: { label: 'HAZARDS', color: '#ff8a3d', icon: '☣' },
     disasters: { label: 'DISASTERS', color: '#ff6f61', icon: '☄' },
+    conflicts: { label: 'CONFLICTS', color: '#ff4d6d', icon: '⚔' },
     weatherAlerts: { label: 'WX ALERTS', color: '#f97316', icon: '⚡' },
     oceanBuoys: { label: 'OCEAN BUOYS', color: '#38bdf8', icon: '⚓' },
     volcanoes: { label: 'VOLCANOES', color: '#ff4d4d', icon: '🌋' },

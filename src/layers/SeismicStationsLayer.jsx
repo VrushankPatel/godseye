@@ -28,11 +28,7 @@ function toIsoOrNA(value) {
 }
 
 function buildIrisStationsQueryUrl() {
-    const today = new Date().toISOString().slice(0, 10);
-    const params = new URLSearchParams({
-        endafter: today,
-    });
-    return `${API_URLS.IRIS_STATIONS_TEXT}&${params.toString()}`;
+    return API_URLS.IRIS_STATIONS_TEXT;
 }
 
 function parseStationRows(rawText) {

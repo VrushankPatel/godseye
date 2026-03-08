@@ -36,7 +36,7 @@ const TRAFFIC_PATHS = [
 ];
 
 const VEHICLES_PER_PATH = 34;
-const MAX_TRAFFIC_FEEDS = 320;
+const MAX_TRAFFIC_FEEDS = 700;
 const TRAFFIC_KEYWORDS = [
     'traffic', 'road', 'highway', 'street', 'bridge', 'airport', 'train', 'station', 'port',
 ];

@@ -8,7 +8,7 @@ const TLE_API_BASE = 'https://tle.ivanstanojevic.me/api/tle/';
 const PAGE_SIZE = 100;
 const MAX_FETCH_PAGES = 120; // up to ~12,000 records from fallback API
 const PAGE_FETCH_CONCURRENCY = 6;
-const MAX_RENDERED_SATELLITES = 8000;
+const MAX_RENDERED_SATELLITES = 12000;
 const MAX_CELESTRAK_RECORDS = 12000;
 
 const FALLBACK_TLE = `ISS (ZARYA)

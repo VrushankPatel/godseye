@@ -14,6 +14,7 @@ const useStore = create((set, get) => ({
         seismicStations: { enabled: false, data: [], count: 0, status: 'idle' },
         hazards: { enabled: false, data: [], count: 0, status: 'idle' },
         disasters: { enabled: false, data: [], count: 0, status: 'idle' },
+        conflicts: { enabled: false, data: [], count: 0, status: 'idle' },
         weatherAlerts: { enabled: false, data: [], count: 0, status: 'idle' },
         oceanBuoys: { enabled: false, data: [], count: 0, status: 'idle' },
         volcanoes: { enabled: false, data: [], count: 0, status: 'idle' },

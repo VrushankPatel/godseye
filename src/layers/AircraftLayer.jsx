@@ -9,6 +9,7 @@ const REQUEST_TIMEOUT_MS = 10000;
 const EARTH_RADIUS_M = 6371000;
 const ANIMATION_INTERVAL_MS = 350;
 const MAX_EXTRAPOLATION_SECONDS = 45;
+const ROTATING_REGION_BATCH_SIZE = 2;
 
 const MILITARY_CALLSIGN_PREFIXES = [
     'RCH', 'CMB', 'KING', 'DUKE', 'NAVY', 'SPAR', 'NATO', 'QID', 'MMF', 'BAF', 'CNV',
@@ -251,9 +252,10 @@ function createPlaneIconDataUri() {
     return canvas.toDataURL('image/png');
 }
 
-const AIRCRAFT_SOURCES = [
+const BASE_AIRCRAFT_SOURCES = [
     { url: API_URLS.ADSB_ONE_GLOBAL, parser: (payload) => parseAdsbPayload(payload, 'ADSB.one') },
     { url: API_URLS.AIRPLANES_GLOBAL, parser: (payload) => parseAdsbPayload(payload, 'Airplanes.live') },
+    { url: API_URLS.ADSB_LOL_GLOBAL, parser: (payload) => parseAdsbPayload(payload, 'ADSB.lol') },
     // India-focused OpenSky window for stronger regional density.
     { url: API_URLS.OPENSKY_INDIA, parser: parseOpenSkyPayload },
     { url: API_URLS.OPENSKY_INDIA_PROXY, parser: parseOpenSkyPayload },
@@ -262,6 +264,49 @@ const AIRCRAFT_SOURCES = [
     // Proxy fallback for browsers/networks where direct OpenSky CORS is blocked.
     { url: API_URLS.OPENSKY_PROXY, parser: parseOpenSkyPayload },
 ];
+
+const ROTATING_REGIONAL_AIR_ZONES = [
+    { id: 'INDIA', lat: 22.6, lon: 79.0, radiusNm: 1800 },
+    { id: 'MIDDLE_EAST', lat: 25.2, lon: 46.8, radiusNm: 1700 },
+    { id: 'EAST_ASIA', lat: 35.7, lon: 116.8, radiusNm: 2000 },
+    { id: 'SE_ASIA', lat: 6.8, lon: 103.5, radiusNm: 1700 },
+    { id: 'AFRICA_NORTH', lat: 25.3, lon: 15.0, radiusNm: 1900 },
+    { id: 'AFRICA_SOUTH', lat: -18.0, lon: 24.0, radiusNm: 1900 },
+    { id: 'S_AMERICA', lat: -15.0, lon: -60.0, radiusNm: 2300 },
+    { id: 'OCEANIA', lat: -24.0, lon: 134.0, radiusNm: 2200 },
+    { id: 'NORTH_ATLANTIC', lat: 45.0, lon: -30.0, radiusNm: 1700 },
+];
+
+function buildRegionalPointSources(zones) {
+    return zones.flatMap((zone) => {
+        const suffix = `${zone.lat}/${zone.lon}/${zone.radiusNm}`;
+        return [
+            {
+                url: `https://api.adsb.one/v2/point/${suffix}`,
+                parser: (payload) => parseAdsbPayload(payload, `ADSB.one ${zone.id}`),
+            },
+            {
+                url: `https://api.airplanes.live/v2/point/${suffix}`,
+                parser: (payload) => parseAdsbPayload(payload, `Airplanes.live ${zone.id}`),
+            },
+            {
+                url: `https://api.adsb.lol/v2/point/${suffix}`,
+                parser: (payload) => parseAdsbPayload(payload, `ADSB.lol ${zone.id}`),
+            },
+        ];
+    });
+}
+
+function getRotatingZones(cycleIndex) {
+    if (!ROTATING_REGIONAL_AIR_ZONES.length) return [];
+    const zones = [];
+    const start = (cycleIndex * ROTATING_REGION_BATCH_SIZE) % ROTATING_REGIONAL_AIR_ZONES.length;
+    for (let i = 0; i < ROTATING_REGION_BATCH_SIZE; i += 1) {
+        const idx = (start + i) % ROTATING_REGIONAL_AIR_ZONES.length;
+        zones.push(ROTATING_REGIONAL_AIR_ZONES[idx]);
+    }
+    return zones;
+}
 
 export default function AircraftLayer({ viewer }) {
     const aircraftEnabled = useStore((s) => s.layers.aircraft.enabled);
@@ -279,6 +324,7 @@ export default function AircraftLayer({ viewer }) {
     const animationTimerRef = useRef(null);
     const mountedRef = useRef(true);
     const planeIconRef = useRef(null);
+    const sourceCycleRef = useRef(0);
     const shouldIngest = aircraftEnabled || militaryActivityEnabled;
 
     const clearEntities = useCallback(() => {
@@ -445,8 +491,15 @@ export default function AircraftLayer({ viewer }) {
     const pollAircraft = useCallback(async () => {
         if (!shouldIngest || !mountedRef.current) return;
 
+        const zones = getRotatingZones(sourceCycleRef.current);
+        sourceCycleRef.current += 1;
+        const aircraftSources = [
+            ...BASE_AIRCRAFT_SOURCES,
+            ...buildRegionalPointSources(zones),
+        ];
+
         const results = await Promise.allSettled(
-            AIRCRAFT_SOURCES.map(async (source) => {
+            aircraftSources.map(async (source) => {
                 const payload = await fetchJsonWithTimeout(source.url, REQUEST_TIMEOUT_MS);
                 return source.parser(payload);
             })
@@ -543,6 +596,7 @@ export default function AircraftLayer({ viewer }) {
         if (!shouldIngest) {
             clearInterval(pollTimerRef.current);
             clearInterval(animationTimerRef.current);
+            sourceCycleRef.current = 0;
             clearEntities();
             updateData('aircraft', []);
             setStatus('aircraft', 'idle');
