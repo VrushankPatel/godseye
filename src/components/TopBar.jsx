@@ -52,7 +52,13 @@ export default function TopBar() {
     };
 
     return (
-        <div className="absolute top-0 left-0 right-0 h-16 pointer-events-none z-10 flex justify-between items-start p-4">
+        <div
+            className="absolute top-0 left-0 right-0 h-16 pointer-events-none z-10 flex justify-between items-start pt-4"
+            style={{
+                paddingLeft: 'max(24px, env(safe-area-inset-left))',
+                paddingRight: 'max(24px, env(safe-area-inset-right))',
+            }}
+        >
 
             {/* Left: Branding & Classification */}
             <div className="flex flex-col gap-1 pointer-events-auto animate-slide-left">
