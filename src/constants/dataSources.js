@@ -19,6 +19,10 @@ export const API_URLS = {
     USGS_EARTHQUAKES_DAY: 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson',
     USGS_EARTHQUAKES_HOUR: 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson',
 
+    // NTAD / ArcGIS military installations dataset (public, no key required)
+    MILITARY_BASES_NTAD:
+        'https://services.arcgis.com/xOi1kZaI0eWDREZv/arcgis/rest/services/NTAD_Military_Bases/FeatureServer/0/query?where=1%3D1&outFields=OBJECTID,countryName,featureName,siteName,siteOperationalStatus,siteReportingComponent,stateNameCode&f=geojson&resultRecordCount=2000&outSR=4326&maxAllowableOffset=0.01',
+
     // GPSJam - GPS interference data
     GPSJAM: 'https://gpsjam.org',
 };
@@ -48,6 +52,8 @@ export const LAYER_DEFS = {
     seismic: { label: 'SEISMIC', color: '#ff3333', icon: '◉' },
     cctv: { label: 'CCTV', color: '#00ff41', icon: '📹' },
     traffic: { label: 'TRAFFIC', color: '#ff69b4', icon: '🚗' },
+    militaryActivity: { label: 'MIL ACTIVITY', color: '#ff5b5b', icon: '⚠' },
+    militaryBases: { label: 'MIL BASES', color: '#f7c15a', icon: '⌂' },
     airspace: { label: 'AIRSPACE', color: '#00ffff', icon: '⬡' },
 };
 

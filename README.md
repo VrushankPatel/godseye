@@ -19,6 +19,8 @@ Implementation support was provided by **Codex** as a programming assistant for 
   - CCTV (municipal + curated global feeds)
   - Seismic activity (USGS)
   - Traffic flow animation + traffic camera points
+  - Military activity (live military-class ADS-B tracks)
+  - Military bases (NTAD public installation dataset)
   - Airspace / restricted zones
 - Object inspector panel with metadata and media preview
 - Flight filtering controls (carrier / cargo / passenger patterns)
@@ -73,6 +75,12 @@ src/
 - USGS Earthquake GeoJSON feeds
 - Open/public municipal and curated world camera feeds
 - Open geospatial traffic/airspace datasets
+- NTAD Military Bases (ArcGIS public layer)
+
+## Military Activity Data Notes
+
+- Live military activity in this app is sourced from open ADS-B tracks and filtered/classified client-side (military callsign/operator/type heuristics).
+- Many conflict/event APIs require account authentication or keys (for example ACLED), so this build keeps the default experience keyless and frontend-only.
 
 ## Notes
 

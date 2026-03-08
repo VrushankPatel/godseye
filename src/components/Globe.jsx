@@ -8,6 +8,8 @@ import SeismicLayer from '../layers/SeismicLayer';
 import CameraLayer from '../layers/CameraLayer';
 import AirspaceLayer from '../layers/AirspaceLayer';
 import TrafficLayer from '../layers/TrafficLayer';
+import MilitaryActivityLayer from '../layers/MilitaryActivityLayer';
+import MilitaryBasesLayer from '../layers/MilitaryBasesLayer';
 
 const TRACK_SAMPLE_INTERVAL_MS = 1000;
 const MAX_TRACK_POINTS = 220;
@@ -397,6 +399,8 @@ export default function Globe() {
                     <SeismicLayer viewer={viewerRef.current} />
                     <CameraLayer viewer={viewerRef.current} />
                     <TrafficLayer viewer={viewerRef.current} />
+                    <MilitaryActivityLayer viewer={viewerRef.current} />
+                    <MilitaryBasesLayer viewer={viewerRef.current} />
                     <AirspaceLayer viewer={viewerRef.current} />
                 </>
             )}

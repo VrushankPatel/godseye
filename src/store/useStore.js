@@ -12,6 +12,8 @@ const useStore = create((set, get) => ({
         seismic: { enabled: false, data: [], count: 0, status: 'idle' },
         cctv: { enabled: false, data: [], count: 0, status: 'idle' },
         traffic: { enabled: false, data: [], count: 0, status: 'idle' },
+        militaryActivity: { enabled: false, data: [], count: 0, status: 'idle' },
+        militaryBases: { enabled: false, data: [], count: 0, status: 'idle' },
         airspace: { enabled: false, data: [], count: 0, status: 'idle' },
     },
 

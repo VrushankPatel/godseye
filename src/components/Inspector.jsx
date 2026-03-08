@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import useStore from '../store/useStore';
 import { LAYER_DEFS } from '../constants/dataSources';
 
-const TRACKABLE_LAYER_TYPES = new Set(['aircraft', 'satellites']);
+const TRACKABLE_LAYER_TYPES = new Set(['aircraft', 'satellites', 'militaryActivity']);
 const DEFAULT_REFRESH_SECONDS = 5;
 const AIRCRAFT_TRACK_VIEWS = [
     { id: 'CHASE', label: 'Chase' },
@@ -105,12 +105,13 @@ export default function Inspector() {
 
     const handleTrackToggle = () => {
         if (!isTrackable) return;
+        const normalizedTrackType = inspector.type === 'militaryActivity' ? 'aircraft' : inspector.type;
         if (!isTracked) {
-            setTrackingView(inspector.type === 'satellites' ? 'ORBIT' : 'CHASE');
+            setTrackingView(normalizedTrackType === 'satellites' ? 'ORBIT' : 'CHASE');
         }
         toggleTrackedTarget({
             entityId: inspector._entityId,
-            type: inspector.type,
+            type: normalizedTrackType,
             label: inspector.name || inspector.callsign || inspector.id || 'TARGET',
         });
     };
