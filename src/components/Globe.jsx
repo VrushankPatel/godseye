@@ -15,12 +15,13 @@ const TRACK_SAMPLE_INTERVAL_MS = 1000;
 const MAX_TRACK_POINTS = 220;
 const MIN_TRACK_POINT_DISTANCE_METERS = 250;
 const AIRCRAFT_MODEL_URI = '/models/Cesium_Air.glb';
+const TRACKED_AIRCRAFT_MODEL_HEADING_OFFSET_DEG = 180;
 
 const AIRCRAFT_TRACK_VIEWS = {
-    CHASE: new Cesium.Cartesian3(-2200, 0, 700),
+    CHASE: new Cesium.Cartesian3(2200, 0, 700),
     TOP: new Cesium.Cartesian3(0, 0, 4200),
-    SIDE: new Cesium.Cartesian3(0, 2400, 700),
-    CINEMATIC: new Cesium.Cartesian3(-4200, 1800, 1300),
+    SIDE: new Cesium.Cartesian3(0, -2400, 700),
+    CINEMATIC: new Cesium.Cartesian3(4200, -1800, 1300),
 };
 
 const SATELLITE_TRACK_VIEWS = {
@@ -127,7 +128,9 @@ export default function Globe() {
             if (!position) return undefined;
 
             const headingDeg = getTrackedHeadingDegrees(entity, time);
-            const headingRad = Cesium.Math.toRadians(headingDeg);
+            const headingRad = Cesium.Math.toRadians(
+                headingDeg + TRACKED_AIRCRAFT_MODEL_HEADING_OFFSET_DEG
+            );
             const hpr = new Cesium.HeadingPitchRoll(headingRad, 0, 0);
             return Cesium.Transforms.headingPitchRollQuaternion(position, hpr, Cesium.Ellipsoid.WGS84, undefined, result);
         }, false);
