@@ -71,11 +71,15 @@ export default function Globe() {
     const trailPositionsRef = useRef([]);
     const trailTimerRef = useRef(null);
     const trackedAircraftEntityIdRef = useRef(null);
+    const hoveredEntityIdRef = useRef(null);
+    const lastHoverUpdateMsRef = useRef(0);
     const [viewerReady, setViewerReady] = useState(false);
     const setViewerRefStore = useStore((s) => s.setViewerRef);
     const isAutoRotating = useStore((s) => s.isAutoRotating);
     const setAutoRotating = useStore((s) => s.setAutoRotating);
     const setInspector = useStore((s) => s.setInspector);
+    const setHoverInfo = useStore((s) => s.setHoverInfo);
+    const clearHoverInfo = useStore((s) => s.clearHoverInfo);
     const trackedTarget = useStore((s) => s.trackedTarget);
     const trackingView = useStore((s) => s.trackingView);
     const clearTrackedTarget = useStore((s) => s.clearTrackedTarget);
@@ -222,47 +226,98 @@ export default function Globe() {
             setAutoRotating(false);
         }, Cesium.ScreenSpaceEventType.WHEEL);
 
+        const parsePickedEntity = (pickedObject) => {
+            if (!(Cesium.defined(pickedObject) && pickedObject.id && pickedObject.id.properties)) {
+                return null;
+            }
+
+            const props = {};
+            const propertyNames = pickedObject.id.properties.propertyNames || [];
+            const time = viewer.clock.currentTime;
+
+            propertyNames.forEach((name) => {
+                try {
+                    const val = pickedObject.id.properties[name].getValue(time);
+                    if (val !== undefined) props[name] = val;
+                } catch (e) {
+                    props[name] = pickedObject.id.properties[name];
+                }
+            });
+
+            return {
+                ...props,
+                type: props._layerType || 'unknown',
+                name: pickedObject.id.name || 'Unknown',
+                _entityId: pickedObject.id.id || null,
+            };
+        };
+
         // Entity click handler
         handler.setInputAction((click) => {
             const pickedObject = viewer.scene.pick(click.position);
-            if (Cesium.defined(pickedObject) && pickedObject.id && pickedObject.id.properties) {
-                const props = {};
-                const propertyNames = pickedObject.id.properties.propertyNames;
-                const time = viewer.clock.currentTime;
-
-                propertyNames.forEach((name) => {
-                    try {
-                        const val = pickedObject.id.properties[name].getValue(time);
-                        if (val !== undefined) props[name] = val;
-                    } catch (e) {
-                        // Fallback for simple properties
-                        props[name] = pickedObject.id.properties[name];
-                    }
-                });
-
-                setInspector({
-                    ...props,
-                    type: props._layerType || 'unknown',
-                    name: pickedObject.id.name || 'Unknown',
-                    _entityId: pickedObject.id.id || null,
-                });
+            const parsed = parsePickedEntity(pickedObject);
+            if (parsed) {
+                clearHoverInfo();
+                setInspector(parsed);
             } else {
                 // Clicked on empty space, close inspector
                 setInspector(null);
             }
         }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 
+        // Hover preview handler
+        handler.setInputAction((movement) => {
+            const screenPos = movement?.endPosition;
+            if (!screenPos) return;
+
+            const pickedObject = viewer.scene.pick(screenPos);
+            const parsed = parsePickedEntity(pickedObject);
+            if (!parsed) {
+                if (hoveredEntityIdRef.current !== null) {
+                    hoveredEntityIdRef.current = null;
+                    clearHoverInfo();
+                }
+                return;
+            }
+
+            const hoverEntityId = parsed._entityId || `${parsed.type}:${parsed.name}`;
+            const now = performance.now();
+            const shouldThrottle =
+                hoveredEntityIdRef.current === hoverEntityId &&
+                now - lastHoverUpdateMsRef.current < 33;
+            if (shouldThrottle) return;
+
+            hoveredEntityIdRef.current = hoverEntityId;
+            lastHoverUpdateMsRef.current = now;
+            setHoverInfo({
+                ...parsed,
+                screenX: screenPos.x,
+                screenY: screenPos.y,
+                timestamp: Date.now(),
+            });
+        }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+
         return () => {
             handler.destroy();
             removeTrail();
             restoreTrackedAircraftVisual();
+            hoveredEntityIdRef.current = null;
+            clearHoverInfo();
             if (viewerRef.current && !viewerRef.current.isDestroyed()) {
                 viewerRef.current.destroy();
             }
             viewerRef.current = null;
             setViewerRefStore(null);
         };
-    }, [removeTrail, restoreTrackedAircraftVisual, setAutoRotating, setInspector, setViewerRefStore]);
+    }, [
+        clearHoverInfo,
+        removeTrail,
+        restoreTrackedAircraftVisual,
+        setAutoRotating,
+        setHoverInfo,
+        setInspector,
+        setViewerRefStore,
+    ]);
 
     // Auto-rotation
     useEffect(() => {

@@ -4,6 +4,7 @@ import TopBar from './components/TopBar';
 import LayerPanel from './components/LayerPanel';
 import ShaderToolbar from './components/ShaderToolbar';
 import Inspector from './components/Inspector';
+import HoverTooltip from './components/HoverTooltip';
 import Reticle from './components/Reticle';
 import ShaderOverlay from './components/ShaderOverlay';
 import MissionHud from './components/MissionHud';
@@ -70,6 +71,7 @@ export default function App() {
             <LayerPanel />
             <ShaderToolbar />
             <Inspector />
+            <HoverTooltip />
             <MissionHud />
             <FlightFilterPanel />
         </div>

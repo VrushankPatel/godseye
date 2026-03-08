@@ -65,6 +65,9 @@ const useStore = create((set, get) => ({
     inspector: null,
     setInspector: (obj) => set({ inspector: obj }),
     clearInspector: () => set({ inspector: null }),
+    hoverInfo: null,
+    setHoverInfo: (obj) => set({ hoverInfo: obj }),
+    clearHoverInfo: () => set({ hoverInfo: null }),
 
     // Flight filters
     flightFilters: {
