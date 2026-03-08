@@ -382,10 +382,10 @@ body {
 .mission-hud-left {
   position: absolute;
   top: 92px;
-  left: 18px;
+  left: max(18px, env(safe-area-inset-left));
   transition: left 0.2s ease;
   max-width: 260px;
-  padding: 10px 12px;
+  padding: 12px 14px;
   border: 1px solid rgba(255, 170, 0, 0.18);
   background: linear-gradient(180deg, rgba(8, 10, 16, 0.72), rgba(8, 10, 16, 0.5));
   backdrop-filter: blur(6px);
@@ -419,13 +419,13 @@ body {
 .mission-hud-right {
   position: absolute;
   top: 98px;
-  right: 18px;
+  right: max(18px, env(safe-area-inset-right));
   transition: right 0.2s ease;
   width: 220px;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 10px;
+  padding: 12px;
   border: 1px solid rgba(0, 180, 255, 0.2);
   background: linear-gradient(180deg, rgba(8, 10, 16, 0.74), rgba(8, 10, 16, 0.52));
   backdrop-filter: blur(8px);
@@ -506,9 +506,9 @@ body {
 .flight-filter-panel {
   position: absolute;
   top: 278px;
-  right: 18px;
+  right: max(18px, env(safe-area-inset-right));
   width: 220px;
-  padding: 10px;
+  padding: 12px;
   border: 1px solid rgba(0, 180, 255, 0.22);
   background: linear-gradient(180deg, rgba(8, 10, 16, 0.76), rgba(8, 10, 16, 0.56));
   backdrop-filter: blur(8px);

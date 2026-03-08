@@ -4,6 +4,11 @@ export const API_URLS = {
     // CORS: Browser requests are blocked; this stays as a last-resort source.
     OPENSKY: 'https://opensky-network.org/api/states/all',
     OPENSKY_PROXY: 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://opensky-network.org/api/states/all'),
+    // India region bounding-box feed (lamin=6, lomin=68, lamax=36, lomax=98).
+    OPENSKY_INDIA: 'https://opensky-network.org/api/states/all?lamin=6&lomin=68&lamax=36&lomax=98',
+    OPENSKY_INDIA_PROXY:
+        'https://api.allorigins.win/raw?url=' +
+        encodeURIComponent('https://opensky-network.org/api/states/all?lamin=6&lomin=68&lamax=36&lomax=98'),
     // ADS-B public mirrors with CORS enabled and no auth requirement.
     // Radius 10000 (NM) gives near-global coverage in one request.
     AIRPLANES_GLOBAL: 'https://api.airplanes.live/v2/point/0/0/10000',
@@ -23,10 +28,63 @@ export const API_URLS = {
     USGS_EARTHQUAKES_DAY: 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson',
     USGS_EARTHQUAKES_HOUR: 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson',
     IRIS_EARTHQUAKES_TEXT: 'https://service.iris.edu/fdsnws/event/1/query?format=text',
+    IRIS_STATIONS_TEXT:
+        'https://service.iris.edu/fdsnws/station/1/query?format=text&level=station&nodata=404',
+    // OurAirports global airport registry (open data)
+    OURAIRPORTS_AIRPORTS_CSV:
+        'https://raw.githubusercontent.com/davidmegginson/ourairports-data/main/airports.csv',
+    OURAIRPORTS_AIRPORTS_CSV_PROXY:
+        'https://api.allorigins.win/raw?url=' +
+        encodeURIComponent(
+            'https://raw.githubusercontent.com/davidmegginson/ourairports-data/main/airports.csv'
+        ),
+    EONET_OPEN_EVENTS: 'https://eonet.gsfc.nasa.gov/api/v3/events?status=open&limit=1200',
+    OPEN_METEO_CURRENT:
+        'https://api.open-meteo.com/v1/forecast?current=temperature_2m,relative_humidity_2m,wind_speed_10m,wind_direction_10m,weather_code&timezone=GMT',
+    OPEN_METEO_AIR_QUALITY:
+        'https://air-quality-api.open-meteo.com/v1/air-quality?current=pm2_5,pm10,nitrogen_dioxide,ozone,us_aqi&timezone=GMT',
+    // NOAA NDBC latest buoy observations (text table)
+    NDBC_LATEST_OBS: 'https://www.ndbc.noaa.gov/data/latest_obs/latest_obs.txt',
+    NDBC_LATEST_OBS_PROXY:
+        'https://api.allorigins.win/raw?url=' +
+        encodeURIComponent('https://www.ndbc.noaa.gov/data/latest_obs/latest_obs.txt'),
+    // Smithsonian / USGS weekly volcanic activity feed
+    VOLCANO_WEEKLY_RSS: 'https://volcano.si.edu/news/WeeklyVolcanoRSS.xml',
+    VOLCANO_WEEKLY_RSS_PROXY:
+        'https://api.allorigins.win/raw?url=' +
+        encodeURIComponent('https://volcano.si.edu/news/WeeklyVolcanoRSS.xml'),
+    // NOAA SWPC aurora probability grid (global)
+    SWPC_AURORA_LATEST: 'https://services.swpc.noaa.gov/json/ovation_aurora_latest.json',
+    SWPC_XRAY_FLARES_7D:
+        'https://services.swpc.noaa.gov/json/goes/primary/xray-flares-7-day.json',
+    // Aviation weather METAR observations (official NOAA/NWS aviation weather API)
+    METAR_GLOBAL:
+        'https://aviationweather.gov/api/data/metar?bbox=-180,-90,180,90&hours=2&format=json',
+    METAR_PROXY_BASE: 'https://api.allorigins.win/raw?url=',
+    // NASA FIRMS global active fire detections (MODIS, last 24h)
+    FIRE_HOTSPOTS_CSV:
+        'https://firms.modaps.eosdis.nasa.gov/data/active_fire/c6.1/csv/MODIS_C6_1_Global_24h.csv',
+    FIRE_HOTSPOTS_PROXY:
+        'https://api.allorigins.win/raw?url=' +
+        encodeURIComponent(
+            'https://firms.modaps.eosdis.nasa.gov/data/active_fire/c6.1/csv/MODIS_C6_1_Global_24h.csv'
+        ),
+    FIRE_HOTSPOTS_PROXY_ALT:
+        'https://r.jina.ai/http://firms.modaps.eosdis.nasa.gov/data/active_fire/c6.1/csv/MODIS_C6_1_Global_24h.csv',
+    // Global AIRMET/SIGMET polygons and metadata (aviation hazards)
+    AIRSIGMET: 'https://aviationweather.gov/api/data/airsigmet?format=json',
+    // NOAA / NWS CAP alerts (official active watches/warnings/advisories)
+    NWS_ALERTS_ACTIVE: 'https://api.weather.gov/alerts/active?status=actual',
+    // GDACS - global disaster alert feed (earthquakes, cyclones, floods, wildfires, drought, volcanoes)
+    GDACS_EVENTS: 'https://www.gdacs.org/gdacsapi/api/events/geteventlist/SEARCH',
 
     // NTAD / ArcGIS military installations dataset (public, no key required)
     MILITARY_BASES_NTAD:
         'https://services.arcgis.com/xOi1kZaI0eWDREZv/arcgis/rest/services/NTAD_Military_Bases/FeatureServer/0/query?where=1%3D1&outFields=OBJECTID,countryName,featureName,siteName,siteOperationalStatus,siteReportingComponent,stateNameCode&f=geojson&resultRecordCount=2000&outSR=4326&maxAllowableOffset=0.01',
+    // Global supplemental military site snapshot generated from OpenStreetMap Overpass.
+    // Served locally to keep CORS and Overpass rate limits out of the runtime path.
+    MILITARY_BASES_OSM_SNAPSHOT: '/data/osmMilitarySites.json',
+    OSM_OVERPASS: 'https://overpass-api.de/api/interpreter',
 
     // GPSJam - GPS interference data
     GPSJAM: 'https://gpsjam.org',
@@ -37,6 +95,20 @@ export const POLL_INTERVALS = {
     AIRCRAFT: 15000,    // 15 seconds
     SATELLITES: 5000,   // 5 seconds (computed, not fetched)
     SEISMIC: 60000,     // 1 minute
+    AIRPORTS: 86400000, // 24 hours
+    HAZARDS: 120000,    // 2 minutes
+    DISASTERS: 180000,  // 3 minutes
+    WEATHER_ALERTS: 60000, // 1 minute
+    OCEAN_BUOYS: 300000, // 5 minutes
+    VOLCANOES: 3600000, // 1 hour
+    SPACE_WEATHER: 300000, // 5 minutes
+    METAR: 180000, // 3 minutes
+    FIRE_HOTSPOTS: 600000, // 10 minutes
+    AIR_HAZARDS: 300000, // 5 minutes
+    SOLAR_FLARES: 300000, // 5 minutes
+    SEISMIC_STATIONS: 43200000, // 12 hours
+    AIR_QUALITY: 600000, // 10 minutes
+    WEATHER: 600000,    // 10 minutes
     CCTV: 5000,         // 5 seconds for still images
 };
 
@@ -55,10 +127,25 @@ export const LAYER_DEFS = {
     aircraft: { label: 'AIRCRAFT', color: '#00b4ff', icon: '✈' },
     satellites: { label: 'SATELLITES', color: '#ffaa00', icon: '🛰' },
     seismic: { label: 'SEISMIC', color: '#ff3333', icon: '◉' },
+    airports: { label: 'AIRPORTS', color: '#93c5fd', icon: '🛬' },
+    hazards: { label: 'HAZARDS', color: '#ff8a3d', icon: '☣' },
+    disasters: { label: 'DISASTERS', color: '#ff6f61', icon: '☄' },
+    weatherAlerts: { label: 'WX ALERTS', color: '#f97316', icon: '⚡' },
+    oceanBuoys: { label: 'OCEAN BUOYS', color: '#38bdf8', icon: '⚓' },
+    volcanoes: { label: 'VOLCANOES', color: '#ff4d4d', icon: '🌋' },
+    spaceWeather: { label: 'SPACE WX', color: '#a3e635', icon: '☀' },
+    metar: { label: 'METAR WX', color: '#60a5fa', icon: '⛅' },
+    fireHotspots: { label: 'FIRE HOTSPOTS', color: '#ff5b24', icon: '🔥' },
+    aviationHazards: { label: 'AIR HAZARDS', color: '#ff8b3d', icon: '✹' },
+    solarFlares: { label: 'SOLAR FLARES', color: '#ffcc66', icon: '☀' },
+    seismicStations: { label: 'SEIS STATIONS', color: '#22d3ee', icon: '📡' },
+    weather: { label: 'WEATHER', color: '#7dd3fc', icon: '☁' },
+    airQuality: { label: 'AIR QUALITY', color: '#84cc16', icon: 'AQ' },
     cctv: { label: 'CCTV', color: '#00ff41', icon: '📹' },
     traffic: { label: 'TRAFFIC', color: '#ff69b4', icon: '🚗' },
     militaryActivity: { label: 'MIL ACTIVITY', color: '#ff5b5b', icon: '⚠' },
     militaryBases: { label: 'MIL BASES', color: '#f7c15a', icon: '⌂' },
+    forbiddenZones: { label: 'NO-GO ZONES', color: '#ff4d4d', icon: '⛔' },
     airspace: { label: 'AIRSPACE', color: '#00ffff', icon: '⬡' },
 };
 

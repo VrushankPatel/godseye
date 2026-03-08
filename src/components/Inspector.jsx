@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import useStore from '../store/useStore';
 import { LAYER_DEFS } from '../constants/dataSources';
 
@@ -15,6 +15,8 @@ const SATELLITE_TRACK_VIEWS = [
     { id: 'NADIR', label: 'Nadir' },
     { id: 'WIDE', label: 'Wide' },
 ];
+const CALTRANS_PAGE_PROXY = 'https://api.allorigins.win/raw?url=';
+const CALTRANS_STREAM_CACHE = new Map();
 
 function appendCacheBuster(url) {
     if (!url) return '';
@@ -44,6 +46,32 @@ function resolveMediaType(inspector) {
     return 'embed';
 }
 
+function isHlsUrl(url) {
+    return /\.m3u8(\?|$)/i.test(String(url || ''));
+}
+
+function unwrapWorldcamsPlayer(url) {
+    if (!url) return '';
+    try {
+        const parsed = new URL(url);
+        const isWorldcamsPlayer =
+            parsed.hostname.includes('worldcams.tv') &&
+            parsed.pathname.includes('/player');
+        if (!isWorldcamsPlayer) return '';
+        const nested = parsed.searchParams.get('url');
+        if (!nested) return '';
+        return nested;
+    } catch (err) {
+        return '';
+    }
+}
+
+function extractCaltransStreamUrl(html) {
+    if (!html) return '';
+    const match = String(html).match(/var\s+videoStreamURL\s*=\s*"([^"]+)"/i);
+    return match?.[1] || '';
+}
+
 export default function Inspector() {
     const inspector = useStore((s) => s.inspector);
     const clearInspector = useStore((s) => s.clearInspector);
@@ -55,18 +83,40 @@ export default function Inspector() {
     const [imageSrc, setImageSrc] = useState('');
     const [imageFailed, setImageFailed] = useState(false);
     const [videoFailed, setVideoFailed] = useState(false);
+    const [resolvedStreamUrl, setResolvedStreamUrl] = useState('');
+    const [isResolvingStream, setIsResolvingStream] = useState(false);
+    const [streamResolveFailed, setStreamResolveFailed] = useState(false);
+    const hlsVideoRef = useRef(null);
 
     const mediaType = useMemo(() => resolveMediaType(inspector), [inspector]);
+    const embeddedWorldcamsUrl = useMemo(
+        () => unwrapWorldcamsPlayer(inspector?.videoUrl || ''),
+        [inspector?.videoUrl]
+    );
+    const effectiveStreamUrl = useMemo(() => {
+        if (resolvedStreamUrl) return resolvedStreamUrl;
+        if (embeddedWorldcamsUrl) return embeddedWorldcamsUrl;
+        if (isHlsUrl(inspector?.videoUrl || '')) return inspector.videoUrl;
+        return '';
+    }, [resolvedStreamUrl, embeddedWorldcamsUrl, inspector?.videoUrl]);
+    const effectiveMediaType = useMemo(() => {
+        if (effectiveStreamUrl) return 'video';
+        if (mediaType === 'caltrans') return 'video';
+        return mediaType;
+    }, [effectiveStreamUrl, mediaType]);
 
     useEffect(() => {
         setIsMaximized(false);
         setImageSrc(appendCacheBuster(inspector?.url || inspector?.fallbackUrl || ''));
         setImageFailed(false);
         setVideoFailed(false);
+        setResolvedStreamUrl('');
+        setIsResolvingStream(false);
+        setStreamResolveFailed(false);
     }, [inspector]);
 
     useEffect(() => {
-        if (!inspector || inspector.type !== 'cctv' || mediaType !== 'image' || !inspector.url) return;
+        if (!inspector || inspector.type !== 'cctv' || effectiveMediaType !== 'image' || !inspector.url) return;
 
         const refreshSeconds = Math.max(
             2,
@@ -79,7 +129,114 @@ export default function Inspector() {
         }, refreshSeconds * 1000);
 
         return () => clearInterval(timer);
-    }, [inspector, mediaType]);
+    }, [inspector, effectiveMediaType]);
+
+    useEffect(() => {
+        if (!inspector || inspector.type !== 'cctv') return;
+        if (inspector.provider !== 'Caltrans') return;
+        if (!inspector.streamCapable) return;
+        if (effectiveStreamUrl || streamResolveFailed) return;
+
+        const detailsUrl = inspector.detailsUrl || inspector.videoUrl;
+        if (!detailsUrl) return;
+        if (CALTRANS_STREAM_CACHE.has(detailsUrl)) {
+            setResolvedStreamUrl(CALTRANS_STREAM_CACHE.get(detailsUrl));
+            setIsResolvingStream(false);
+            setStreamResolveFailed(false);
+            return;
+        }
+
+        const controller = new AbortController();
+        let cancelled = false;
+
+        const resolveCaltransStream = async () => {
+            try {
+                setIsResolvingStream(true);
+                const response = await fetch(
+                    `${CALTRANS_PAGE_PROXY}${encodeURIComponent(detailsUrl)}`,
+                    { signal: controller.signal, cache: 'no-store' }
+                );
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const html = await response.text();
+                if (cancelled) return;
+
+                const streamUrl = extractCaltransStreamUrl(html);
+                if (!streamUrl) throw new Error('No stream URL found');
+                CALTRANS_STREAM_CACHE.set(detailsUrl, streamUrl);
+                setResolvedStreamUrl(streamUrl);
+                setVideoFailed(false);
+                setStreamResolveFailed(false);
+            } catch (err) {
+                if (cancelled || controller.signal.aborted) return;
+                setStreamResolveFailed(true);
+            } finally {
+                if (!cancelled) {
+                    setIsResolvingStream(false);
+                }
+            }
+        };
+
+        resolveCaltransStream();
+
+        return () => {
+            cancelled = true;
+            controller.abort();
+        };
+    }, [
+        inspector,
+        effectiveStreamUrl,
+        streamResolveFailed,
+    ]);
+
+    useEffect(() => {
+        const videoEl = hlsVideoRef.current;
+        if (!videoEl) return;
+        if (!effectiveStreamUrl || !isHlsUrl(effectiveStreamUrl)) return;
+
+        let cancelled = false;
+        let hlsInstance = null;
+
+        const setupHls = async () => {
+            if (videoEl.canPlayType('application/vnd.apple.mpegurl')) {
+                videoEl.src = effectiveStreamUrl;
+                return;
+            }
+
+            try {
+                const module = await import('hls.js');
+                if (cancelled) return;
+                const Hls = module.default;
+                if (Hls?.isSupported?.()) {
+                    hlsInstance = new Hls({
+                        enableWorker: true,
+                        lowLatencyMode: true,
+                    });
+                    hlsInstance.loadSource(effectiveStreamUrl);
+                    hlsInstance.attachMedia(videoEl);
+                    hlsInstance.on(Hls.Events.ERROR, (_, data) => {
+                        if (data?.fatal) {
+                            setVideoFailed(true);
+                        }
+                    });
+                } else {
+                    videoEl.src = effectiveStreamUrl;
+                }
+            } catch (err) {
+                if (!cancelled) {
+                    setVideoFailed(true);
+                }
+            }
+        };
+
+        setupHls();
+
+        return () => {
+            cancelled = true;
+            if (hlsInstance) {
+                hlsInstance.destroy();
+            }
+        };
+    }, [effectiveStreamUrl, inspector?.id]);
 
     if (!inspector) return null;
 
@@ -127,7 +284,20 @@ export default function Inspector() {
         const hasAnyImageSource = Boolean(inspector.url || inspector.fallbackUrl || imageSrc);
         const embedUrl = inspector.videoUrl || inspector.url || inspector.detailsUrl || '';
 
-        if (mediaType === 'embed' && embedUrl && !videoFailed) {
+        if (
+            inspector.provider === 'Caltrans' &&
+            inspector.streamCapable &&
+            isResolvingStream &&
+            !effectiveStreamUrl
+        ) {
+            return (
+                <div className="w-full py-10 text-center text-cyan-200 border border-cyan-500/30 bg-cyan-900/10 tracking-widest text-xs">
+                    RESOLVING LIVE STREAM...
+                </div>
+            );
+        }
+
+        if (effectiveMediaType === 'embed' && embedUrl && !videoFailed) {
             return (
                 <iframe
                     src={embedUrl}
@@ -139,15 +309,17 @@ export default function Inspector() {
             );
         }
 
-        if (mediaType === 'video' && inspector.videoUrl && !videoFailed) {
+        if (effectiveMediaType === 'video' && (effectiveStreamUrl || inspector.videoUrl) && !videoFailed) {
+            const streamUrl = effectiveStreamUrl || inspector.videoUrl;
+            const isHlsStream = isHlsUrl(streamUrl);
             return (
                 <video
-                    src={inspector.videoUrl}
+                    ref={isHlsStream ? hlsVideoRef : null}
+                    src={isHlsStream ? undefined : streamUrl}
                     className={`w-full bg-black ${maxView ? 'max-h-[85vh]' : 'aspect-video'}`}
                     autoPlay
                     muted
                     controls
-                    loop
                     playsInline
                     onError={handleVideoError}
                 />
@@ -184,10 +356,13 @@ export default function Inspector() {
 
     return (
         <>
-            <div className="absolute right-4 top-24 w-80 pointer-events-none z-10 animate-slide-right">
+            <div
+                className="absolute top-24 w-80 pointer-events-none z-10 animate-slide-right"
+                style={{ right: 'max(16px, env(safe-area-inset-right))' }}
+            >
                 <div className="glass-panel w-full flex flex-col pointer-events-auto shadow-[0_0_20px_rgba(0,180,255,0.15)]">
 
-                    <div className="p-3 border-b border-border-panel flex justify-between items-center bg-black/40">
+                    <div className="px-4 py-3.5 border-b border-border-panel flex justify-between items-center bg-black/40">
                         <div className="flex items-center gap-2">
                             <span style={{ color: def.color }} className="text-lg">{def.icon}</span>
                             <h2 className="text-sm tracking-widest text-text-primary">{def.label} TRK</h2>

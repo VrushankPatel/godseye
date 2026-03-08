@@ -61,8 +61,15 @@ function isStillImageUrl(url) {
     return /\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i.test(String(url).toLowerCase());
 }
 
+function isCaltransLocationPageUrl(url) {
+    if (!url) return false;
+    return /cwwp2\.dot\.ca\.gov\/vm\/loc\/.+\.htm$/i.test(String(url));
+}
+
 function isLiveCapableFeed(feed) {
     if (!feed) return false;
+    if (feed.provider === 'Caltrans' && feed.streamCapable === false) return false;
+    if (feed.streamCapable) return true;
     if (feed.videoUrl) return true;
     if (feed.mediaType === 'video' || feed.mediaType === 'embed') return true;
     if (feed.url && !isStillImageUrl(feed.url)) return true;
@@ -88,6 +95,8 @@ function normalizeCaltransFeed(text) {
         const lng = Number(parts[1]);
         const lat = Number(parts[2]);
         const name = parts[3] || `Caltrans Camera ${i + 1}`;
+        const streamFlag = String(parts[4] || '0').trim();
+        const streamCapable = streamFlag === '1';
 
         if (!Number.isFinite(lat) || !Number.isFinite(lng) || !pageUrl.startsWith('https://')) {
             continue;
@@ -101,8 +110,7 @@ function normalizeCaltransFeed(text) {
         seen.add(key);
 
         const stillImageUrl = `https://cwwp2.dot.ca.gov/data/${district}/cctv/image/${slug}/${slug}.jpg`;
-        const videoPageUrl = pageUrl;
-        const mediaType = inferMediaTypeFromUrls({ url: stillImageUrl, videoUrl: videoPageUrl });
+        const mediaType = streamCapable ? 'caltrans' : 'image';
 
         feeds.push({
             id: `caltrans-${key}`,
@@ -110,11 +118,12 @@ function normalizeCaltransFeed(text) {
             lat,
             lng,
             url: stillImageUrl,
-            videoUrl: videoPageUrl,
+            videoUrl: streamCapable ? pageUrl : null,
             fallbackUrl: stillImageUrl,
             detailsUrl: pageUrl,
             city: 'California',
             mediaType,
+            streamCapable,
             refreshSeconds: 5,
             provider: 'Caltrans',
         });
@@ -330,9 +339,25 @@ export default function CameraLayer({ viewer }) {
                 WORLDCAMS_FEEDS,
                 CAMERA_FEEDS.map((feed) => ({
                     ...feed,
-                    mediaType: feed.mediaType || inferMediaTypeFromUrls(feed),
+                    provider: feed.provider || (
+                        isCaltransLocationPageUrl(feed.videoUrl || feed.detailsUrl || feed.url || '')
+                            ? 'Caltrans'
+                            : 'Public'
+                    ),
+                    streamCapable: Boolean(feed.streamCapable),
+                    videoUrl: (
+                        isCaltransLocationPageUrl(feed.videoUrl || feed.detailsUrl || '')
+                        && !feed.streamCapable
+                    )
+                        ? null
+                        : (feed.videoUrl || null),
+                    mediaType: (
+                        isCaltransLocationPageUrl(feed.videoUrl || feed.detailsUrl || '')
+                        && !feed.streamCapable
+                    )
+                        ? 'image'
+                        : (feed.mediaType || inferMediaTypeFromUrls(feed)),
                     refreshSeconds: feed.refreshSeconds || 5,
-                    provider: feed.provider || 'Public',
                 })),
             ]);
 
@@ -379,6 +404,7 @@ export default function CameraLayer({ viewer }) {
                         fallbackUrl: cam.fallbackUrl || cam.url || null,
                         detailsUrl: cam.detailsUrl || null,
                         mediaType: cam.mediaType || 'image',
+                        streamCapable: Boolean(cam.streamCapable),
                         refreshSeconds: cam.refreshSeconds || 5,
                         status: cam.url || cam.videoUrl ? 'LIVE' : 'NO FEED URL',
                     },

@@ -37,3 +37,4 @@ coverage
 .cache
 .eslintcache
 .parcel-cache
+.firebase/

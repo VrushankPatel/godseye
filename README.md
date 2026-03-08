@@ -17,10 +17,25 @@ I used **Codex** as a programming assistant for selected implementation tasks su
   - Aircraft (OpenSky, continuously updated)
   - Satellites (CelesTrak + browser propagation)
   - CCTV (municipal + curated global feeds)
+  - Global airport infrastructure layer (OurAirports large/medium/scheduled-service airports)
   - Seismic activity (USGS)
+  - Global seismic-station network layer (IRIS FDSN station metadata, active network coverage)
+  - Natural hazards (NASA EONET live events: storms, wildfires, volcanoes, floods)
+  - Global disaster alerts (GDACS: earthquakes, cyclones, floods, droughts, volcanoes, wildfires)
+  - Official weather warnings layer (NOAA/NWS active watches, warnings, advisories)
+  - Live ocean buoy telemetry (NOAA NDBC: wind, wave, pressure, air/water temp)
+  - Global volcanic activity alerts (Smithsonian/USGS geotagged weekly activity feed)
+  - Space-weather aurora intensity map (NOAA SWPC global Ovation probability grid)
+  - METAR station intelligence (airport observations with IFR/MVFR/VFR category)
+  - Global active-fire detections (NASA FIRMS MODIS thermal hotspots, last 24h)
+  - Aviation hazard polygons (AIRMET/SIGMET convective, turbulence, icing, IFR zones)
+  - Solar flare activity layer (NOAA SWPC GOES X-ray flare events)
+  - Global weather conditions (Open-Meteo live current observations across major world nodes)
+  - Global air quality intelligence (Open-Meteo AQI + PM2.5/PM10/NO2/O3 at major world nodes)
   - Traffic flow animation + traffic camera points
   - Military activity (live military-class ADS-B tracks)
-  - Military bases (NTAD public installation dataset)
+  - Military bases (NTAD + OSM global military-site feed)
+  - No-go / forbidden zones with restriction metadata
   - Airspace / restricted zones
 - Object inspector panel with metadata and media preview
 - Flight filtering controls (carrier / cargo / passenger patterns)
@@ -72,10 +87,26 @@ src/
 
 - OpenSky Network (`/api/states/all`)
 - CelesTrak TLE sets
+- OurAirports global airports registry (`airports.csv`)
 - USGS Earthquake GeoJSON feeds
+- IRIS FDSN station feed (`fdsnws/station`) for global seismic network locations
+- NASA EONET open events feed
+- GDACS global disaster alert feed
+- NOAA/NWS active weather alerts feed (`api.weather.gov/alerts/active`)
+- NOAA NDBC latest buoy observations (`latest_obs.txt`, proxied for browser CORS)
+- Smithsonian GVP / USGS Weekly Volcanic Activity RSS (`WeeklyVolcanoRSS.xml`, georss points)
+- NOAA SWPC aurora model grid (`ovation_aurora_latest.json`, global probability cells)
+- NOAA AviationWeather METAR API (`/api/data/metar`, regional pulls + proxy fallback)
+- NASA FIRMS MODIS global 24h active-fire CSV (direct + proxy failover ingest)
+- NOAA AviationWeather AIRSIGMET API (`/api/data/airsigmet`, polygon hazard overlays)
+- NOAA SWPC GOES X-ray flare feed (`xray-flares-7-day.json`, class-ranked events)
+- Open-Meteo current weather API
+- Open-Meteo air-quality API
 - Open/public municipal and curated world camera feeds
 - Open geospatial traffic/airspace datasets
 - NTAD Military Bases (ArcGIS public layer)
+- OpenStreetMap Overpass military/landuse feed (`military=*`, `landuse=military`) via bundled global snapshot (`/public/data/osmMilitarySites.json`)
+- Curated global no-go/restricted location dataset (publicly documented exclusion/protection zones)
 - IRIS FDSN event feed fallback (`service.iris.edu`)
 - NASA TV / ISS live stream
 

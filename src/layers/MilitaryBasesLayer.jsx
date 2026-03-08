@@ -4,7 +4,24 @@ import useStore from '../store/useStore';
 import { API_URLS } from '../constants/dataSources';
 
 const REFRESH_INTERVAL_MS = 10 * 60 * 1000;
-const MAX_BASES = 2000;
+const MAX_BASES = 8000;
+const MAX_OSM_BASES = 6200;
+
+const REGION_LABELS = {
+    africa_east: 'AFRICA (EAST)',
+    africa_north: 'AFRICA (NORTH)',
+    africa_south: 'AFRICA (SOUTH)',
+    africa_west: 'AFRICA (WEST)',
+    east_asia: 'ASIA (EAST)',
+    middle_east: 'MIDDLE EAST',
+    north_america: 'NORTH AMERICA',
+    oceania: 'OCEANIA',
+    south_america: 'SOUTH AMERICA',
+    south_asia: 'ASIA (SOUTH)',
+};
+
+let osmSnapshotCache = null;
+let osmSnapshotRequest = null;
 
 function createMilitaryBaseIconDataUri() {
     const canvas = document.createElement('canvas');
@@ -18,7 +35,6 @@ function createMilitaryBaseIconDataUri() {
     ctx.strokeStyle = 'rgba(255,255,255,0.9)';
     ctx.lineWidth = 1.1;
 
-    // Shield-style icon so bases are visually distinct from aircraft/satellites.
     ctx.beginPath();
     ctx.moveTo(0, -9);
     ctx.lineTo(7.4, -4.2);
@@ -85,7 +101,7 @@ function extractPointFromGeometry(geometry) {
     return null;
 }
 
-function normalizeBaseFeature(feature) {
+function normalizeNtdBase(feature) {
     const props = feature?.properties || {};
     const point = extractPointFromGeometry(feature?.geometry);
     if (!point) return null;
@@ -96,7 +112,7 @@ function normalizeBaseFeature(feature) {
     const component = String(props.siteReportingComponent || 'unknown').toUpperCase();
 
     return {
-        id: String(objectId),
+        id: `ntad-${objectId}`,
         name: featureName,
         country: props.countryName ? String(props.countryName).toUpperCase() : 'UNKNOWN',
         state: props.stateNameCode ? String(props.stateNameCode).toUpperCase() : 'N/A',
@@ -104,7 +120,93 @@ function normalizeBaseFeature(feature) {
         component,
         lat: point.lat,
         lng: point.lng,
+        source: 'NTAD Military Bases',
+        sourceRef: API_URLS.MILITARY_BASES_NTAD,
     };
+}
+
+function normalizeOsmBase(site) {
+    if (!site || !Number.isFinite(site.lat) || !Number.isFinite(site.lng)) return null;
+    const regionLabel = REGION_LABELS[site.region] || 'GLOBAL';
+    const country = site.country
+        ? String(site.country).toUpperCase()
+        : regionLabel;
+    const status = site.status ? String(site.status).toUpperCase() : 'ACTIVE';
+    const component = site.militaryType ? String(site.militaryType).toUpperCase() : 'MILITARY';
+
+    return {
+        id: site.id || `osm-${site.lat}:${site.lng}`,
+        name: site.name || 'OSM Military Site',
+        country,
+        region: regionLabel,
+        state: 'N/A',
+        status,
+        component,
+        operator: site.operator || 'N/A',
+        lat: site.lat,
+        lng: site.lng,
+        source: site.source || 'OpenStreetMap Overpass',
+        sourceRef: site.osmUrl || 'https://www.openstreetmap.org',
+    };
+}
+
+function mergeAndDedupeBases(baseGroups) {
+    const merged = [];
+    const seen = new Set();
+
+    for (const group of baseGroups) {
+        for (const base of group) {
+            if (!base || !Number.isFinite(base.lat) || !Number.isFinite(base.lng)) continue;
+            const key = `${(base.name || 'site').toLowerCase()}:${base.lat.toFixed(4)}:${base.lng.toFixed(4)}`;
+            if (seen.has(key)) continue;
+            seen.add(key);
+            merged.push(base);
+
+            if (merged.length >= MAX_BASES) {
+                return merged;
+            }
+        }
+    }
+
+    return merged;
+}
+
+async function loadOsmSnapshot() {
+    if (Array.isArray(osmSnapshotCache) && osmSnapshotCache.length) {
+        return osmSnapshotCache;
+    }
+
+    if (!osmSnapshotRequest) {
+        osmSnapshotRequest = fetch(API_URLS.MILITARY_BASES_OSM_SNAPSHOT, {
+            cache: 'force-cache',
+        })
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error(`OSM military snapshot HTTP ${response.status}`);
+                }
+                return response.json();
+            })
+            .then((payload) => (Array.isArray(payload) ? payload : []))
+            .catch((err) => {
+                osmSnapshotRequest = null;
+                console.warn('Military bases OSM snapshot unavailable', err);
+                return [];
+            });
+    }
+
+    const snapshot = await osmSnapshotRequest;
+    if (Array.isArray(snapshot) && snapshot.length) {
+        osmSnapshotCache = snapshot;
+    }
+    return Array.isArray(snapshot) ? snapshot : [];
+}
+
+async function buildOsmBaseList() {
+    const snapshot = await loadOsmSnapshot();
+    return snapshot
+        .slice(0, Math.min(MAX_OSM_BASES, snapshot.length))
+        .map(normalizeOsmBase)
+        .filter(Boolean);
 }
 
 export default function MilitaryBasesLayer({ viewer }) {
@@ -146,9 +248,14 @@ export default function MilitaryBasesLayer({ viewer }) {
                 entity.properties.country = base.country;
                 entity.properties.state = base.state;
                 entity.properties.component = base.component;
+                entity.properties.category = base.component;
                 entity.properties.status = base.status;
+                entity.properties.region = base.region || 'N/A';
+                entity.properties.operator = base.operator || 'N/A';
                 entity.properties.latitude = base.lat.toFixed(4);
                 entity.properties.longitude = base.lng.toFixed(4);
+                entity.properties.source = base.source;
+                entity.properties.reference = base.sourceRef || 'N/A';
                 return;
             }
 
@@ -168,10 +275,14 @@ export default function MilitaryBasesLayer({ viewer }) {
                     country: base.country,
                     state: base.state,
                     component: base.component,
+                    category: base.component,
                     status: base.status,
+                    region: base.region || 'N/A',
+                    operator: base.operator || 'N/A',
                     latitude: base.lat.toFixed(4),
                     longitude: base.lng.toFixed(4),
-                    source: 'NTAD Military Bases',
+                    source: base.source,
+                    reference: base.sourceRef || 'N/A',
                 },
             });
 
@@ -204,14 +315,18 @@ export default function MilitaryBasesLayer({ viewer }) {
                 signal: controller.signal,
                 cache: 'no-store',
             });
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
-            const payload = await response.json();
-            const features = Array.isArray(payload?.features) ? payload.features : [];
-            const bases = features
-                .map(normalizeBaseFeature)
-                .filter(Boolean)
-                .slice(0, MAX_BASES);
+            const ntadBases = [];
+            if (response.ok) {
+                const payload = await response.json();
+                const features = Array.isArray(payload?.features) ? payload.features : [];
+                ntadBases.push(...features.map(normalizeNtdBase).filter(Boolean));
+            }
+
+            // Keep OSM-first merge order so global Asia/Africa coverage remains visible
+            // even when rendering caps are reached on lower-end devices.
+            const osmBases = await buildOsmBaseList();
+            const bases = mergeAndDedupeBases([osmBases, ntadBases]);
 
             if (controller.signal.aborted || !isEnabled) return;
 
@@ -221,10 +336,11 @@ export default function MilitaryBasesLayer({ viewer }) {
             viewer.scene.requestRender();
         } catch (err) {
             if (controller.signal.aborted) return;
-            if (!entitiesRef.current.size) {
-                setStatus('militaryBases', 'error');
-                updateData('militaryBases', []);
-            }
+
+            const fallbackBases = mergeAndDedupeBases([await buildOsmBaseList()]);
+            upsertEntities(fallbackBases);
+            updateData('militaryBases', fallbackBases);
+            setStatus('militaryBases', fallbackBases.length ? 'active' : 'error');
         }
     }, [isEnabled, setStatus, updateData, upsertEntities, viewer]);
 

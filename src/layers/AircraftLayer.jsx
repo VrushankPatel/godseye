@@ -254,6 +254,12 @@ function createPlaneIconDataUri() {
 const AIRCRAFT_SOURCES = [
     { url: API_URLS.ADSB_ONE_GLOBAL, parser: (payload) => parseAdsbPayload(payload, 'ADSB.one') },
     { url: API_URLS.AIRPLANES_GLOBAL, parser: (payload) => parseAdsbPayload(payload, 'Airplanes.live') },
+    // India-focused OpenSky window for stronger regional density.
+    { url: API_URLS.OPENSKY_INDIA, parser: parseOpenSkyPayload },
+    { url: API_URLS.OPENSKY_INDIA_PROXY, parser: parseOpenSkyPayload },
+    // Try direct OpenSky first (works when browser/network permits CORS).
+    { url: API_URLS.OPENSKY, parser: parseOpenSkyPayload },
+    // Proxy fallback for browsers/networks where direct OpenSky CORS is blocked.
     { url: API_URLS.OPENSKY_PROXY, parser: parseOpenSkyPayload },
 ];
 

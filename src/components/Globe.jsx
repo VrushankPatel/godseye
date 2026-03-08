@@ -5,11 +5,26 @@ import { DEFAULT_CAMERA } from '../constants/dataSources';
 import AircraftLayer from '../layers/AircraftLayer';
 import SatelliteLayer from '../layers/SatelliteLayer';
 import SeismicLayer from '../layers/SeismicLayer';
+import AirportsLayer from '../layers/AirportsLayer';
+import SeismicStationsLayer from '../layers/SeismicStationsLayer';
+import HazardsLayer from '../layers/HazardsLayer';
+import DisasterLayer from '../layers/DisasterLayer';
+import WeatherAlertsLayer from '../layers/WeatherAlertsLayer';
+import OceanBuoysLayer from '../layers/OceanBuoysLayer';
+import VolcanoesLayer from '../layers/VolcanoesLayer';
+import SpaceWeatherLayer from '../layers/SpaceWeatherLayer';
+import MetarLayer from '../layers/MetarLayer';
+import FireHotspotsLayer from '../layers/FireHotspotsLayer';
+import AviationHazardsLayer from '../layers/AviationHazardsLayer';
+import SolarFlaresLayer from '../layers/SolarFlaresLayer';
+import WeatherLayer from '../layers/WeatherLayer';
+import AirQualityLayer from '../layers/AirQualityLayer';
 import CameraLayer from '../layers/CameraLayer';
 import AirspaceLayer from '../layers/AirspaceLayer';
 import TrafficLayer from '../layers/TrafficLayer';
 import MilitaryActivityLayer from '../layers/MilitaryActivityLayer';
 import MilitaryBasesLayer from '../layers/MilitaryBasesLayer';
+import ForbiddenZonesLayer from '../layers/ForbiddenZonesLayer';
 
 const TRACK_SAMPLE_INTERVAL_MS = 1000;
 const MAX_TRACK_POINTS = 220;
@@ -440,7 +455,14 @@ export default function Globe() {
         const targetEntity = viewer.entities.getById(trackedTarget.entityId);
         if (!targetEntity) return;
 
-        targetEntity.viewFrom = Cesium.Cartesian3.clone(getTrackViewOffset(trackedTarget.type, trackingView));
+        targetEntity.viewFrom = Cesium.Cartesian3.clone(
+            getTrackViewOffset(trackedTarget.type, trackingView)
+        );
+
+        // Cesium does not always apply viewFrom changes on an already-tracked entity.
+        // Rebind tracking to force camera offset refresh for Top/Side/Cinematic controls.
+        viewer.trackedEntity = undefined;
+        viewer.trackedEntity = targetEntity;
         viewer.scene.requestRender();
     }, [trackedTarget, trackingView]);
 
@@ -455,10 +477,25 @@ export default function Globe() {
                     <AircraftLayer viewer={viewerRef.current} />
                     <SatelliteLayer viewer={viewerRef.current} />
                     <SeismicLayer viewer={viewerRef.current} />
+                    <AirportsLayer viewer={viewerRef.current} />
+                    <SeismicStationsLayer viewer={viewerRef.current} />
+                    <HazardsLayer viewer={viewerRef.current} />
+                    <DisasterLayer viewer={viewerRef.current} />
+                    <WeatherAlertsLayer viewer={viewerRef.current} />
+                    <OceanBuoysLayer viewer={viewerRef.current} />
+                    <VolcanoesLayer viewer={viewerRef.current} />
+                    <SpaceWeatherLayer viewer={viewerRef.current} />
+                    <MetarLayer viewer={viewerRef.current} />
+                    <FireHotspotsLayer viewer={viewerRef.current} />
+                    <AviationHazardsLayer viewer={viewerRef.current} />
+                    <SolarFlaresLayer viewer={viewerRef.current} />
+                    <WeatherLayer viewer={viewerRef.current} />
+                    <AirQualityLayer viewer={viewerRef.current} />
                     <CameraLayer viewer={viewerRef.current} />
                     <TrafficLayer viewer={viewerRef.current} />
                     <MilitaryActivityLayer viewer={viewerRef.current} />
                     <MilitaryBasesLayer viewer={viewerRef.current} />
+                    <ForbiddenZonesLayer viewer={viewerRef.current} />
                     <AirspaceLayer viewer={viewerRef.current} />
                 </>
             )}
