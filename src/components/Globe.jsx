@@ -713,8 +713,9 @@ export default function Globe() {
         hideNonTrackedEntities();
 
         // Light-weight interval catches entities that layers add later
-        // (e.g. aircraft polling). 2 s is inexpensive and non-blocking.
-        const intervalId = setInterval(hideNonTrackedEntities, 2000);
+        // (e.g. aircraft polling). 500 ms keeps newly-loaded data hidden
+        // almost instantly without blocking the main thread.
+        const intervalId = setInterval(hideNonTrackedEntities, 500);
 
         return () => {
             clearInterval(intervalId);
