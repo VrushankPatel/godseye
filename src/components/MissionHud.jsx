@@ -71,9 +71,8 @@ export default function MissionHud() {
     return (
         <>
             <div
-                className={`mission-hud-left pointer-events-none z-10 ${
-                    layerPanelOpen ? 'mission-hud-left--offset' : ''
-                }`}
+                className={`mission-hud-left glass-panel pointer-events-none z-10 ${layerPanelOpen ? 'mission-hud-left--offset' : ''
+                    }`}
             >
                 <div className="mission-label">TOP SECRET // SI-TK // NOFORN</div>
                 <div className="mission-title">{activeShader} MODE</div>
@@ -82,9 +81,8 @@ export default function MissionHud() {
 
             {metrics.length > 0 && (
                 <div
-                    className={`mission-hud-right pointer-events-auto z-10 ${
-                        inspector ? 'mission-hud-right--offset' : ''
-                    }`}
+                    className={`mission-hud-right pointer-events-auto z-10 ${inspector ? 'mission-hud-right--offset' : ''
+                        }`}
                 >
                     {metrics.map((metric) => (
                         <div key={metric.key} className="mission-metric">

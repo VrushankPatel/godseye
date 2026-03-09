@@ -72,18 +72,16 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 2px,
-    rgba(0, 180, 255, 0.02) 2px,
-    rgba(0, 180, 255, 0.02) 4px
-  );
+  background: repeating-linear-gradient(0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 180, 255, 0.02) 2px,
+      rgba(0, 180, 255, 0.02) 4px);
   pointer-events: none;
   z-index: 0;
 }
 
-.glass-panel > * {
+.glass-panel>* {
   position: relative;
   z-index: 1;
 }
@@ -92,9 +90,11 @@ body {
 ::-webkit-scrollbar {
   width: 4px;
 }
+
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
   background: rgba(0, 180, 255, 0.3);
   border-radius: 2px;
@@ -112,11 +112,13 @@ body {
   transition: all 0.3s ease;
   flex-shrink: 0;
 }
+
 .toggle-switch.active {
   background: rgba(0, 255, 65, 0.15);
   border-color: var(--color-neon-green);
   box-shadow: 0 0 8px rgba(0, 255, 65, 0.3);
 }
+
 .toggle-switch::after {
   content: '';
   position: absolute;
@@ -128,6 +130,7 @@ body {
   left: 2px;
   transition: all 0.3s ease;
 }
+
 .toggle-switch.active::after {
   left: 20px;
   background: var(--color-neon-green);
@@ -149,11 +152,13 @@ body {
   border-radius: 2px;
   white-space: nowrap;
 }
+
 .mode-btn:hover {
   border-color: var(--color-electric-blue);
   color: var(--color-text-primary);
   background: rgba(0, 180, 255, 0.05);
 }
+
 .mode-btn.active {
   border-color: var(--color-electric-blue);
   color: var(--color-electric-blue);
@@ -179,6 +184,7 @@ body {
   background: radial-gradient(ellipse at center, transparent 40%, rgba(0, 20, 0, 0.6) 100%);
   mix-blend-mode: multiply;
 }
+
 .shader-nvg::before {
   content: '';
   position: absolute;
@@ -186,15 +192,14 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 1px,
-    rgba(0, 255, 65, 0.03) 1px,
-    rgba(0, 255, 65, 0.03) 2px
-  );
+  background: repeating-linear-gradient(0deg,
+      transparent,
+      transparent 1px,
+      rgba(0, 255, 65, 0.03) 1px,
+      rgba(0, 255, 65, 0.03) 2px);
   animation: nvg-scan 0.1s linear infinite;
 }
+
 .shader-nvg::after {
   content: '';
   position: absolute;
@@ -210,6 +215,7 @@ body {
 .shader-flir {
   background: radial-gradient(ellipse at center, transparent 40%, rgba(20, 0, 0, 0.5) 100%);
 }
+
 .shader-flir::before {
   content: '';
   position: absolute;
@@ -217,19 +223,18 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 3px,
-    rgba(255, 100, 0, 0.015) 3px,
-    rgba(255, 100, 0, 0.015) 4px
-  );
+  background: repeating-linear-gradient(0deg,
+      transparent,
+      transparent 3px,
+      rgba(255, 100, 0, 0.015) 3px,
+      rgba(255, 100, 0, 0.015) 4px);
 }
 
 /* CRT */
 .shader-crt {
   background: radial-gradient(ellipse at center, transparent 50%, rgba(0, 0, 0, 0.5) 100%);
 }
+
 .shader-crt::before {
   content: '';
   position: absolute;
@@ -237,15 +242,14 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 1px,
-    rgba(0, 0, 0, 0.15) 1px,
-    rgba(0, 0, 0, 0.15) 3px
-  );
+  background: repeating-linear-gradient(0deg,
+      transparent,
+      transparent 1px,
+      rgba(0, 0, 0, 0.15) 1px,
+      rgba(0, 0, 0, 0.15) 3px);
   animation: crt-flicker 0.05s linear infinite;
 }
+
 .shader-crt::after {
   content: '';
   position: absolute;
@@ -267,14 +271,27 @@ body {
 }
 
 @keyframes nvg-scan {
-  0% { transform: translateY(0); }
-  100% { transform: translateY(2px); }
+  0% {
+    transform: translateY(0);
+  }
+
+  100% {
+    transform: translateY(2px);
+  }
 }
 
 @keyframes crt-flicker {
-  0% { opacity: 0.95; }
-  50% { opacity: 1; }
-  100% { opacity: 0.95; }
+  0% {
+    opacity: 0.95;
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0.95;
+  }
 }
 
 /* ── CSS Filters for Globe Container ──────────────── */
@@ -293,56 +310,119 @@ body {
 .globe-container.mode-nvg {
   filter: saturate(0) brightness(1.4) sepia(1) hue-rotate(70deg) contrast(1.3);
 }
+
 .globe-container.mode-flir {
   filter: saturate(0) contrast(1.8) brightness(1.1) sepia(0.3) hue-rotate(-10deg);
 }
+
 .globe-container.mode-crt {
   filter: saturate(0.6) contrast(1.2) brightness(0.9) sepia(0.4) hue-rotate(15deg);
 }
+
 .globe-container.mode-anime {
   filter: saturate(1.8) contrast(1.5) brightness(1.1);
 }
 
 /* ── Animations ───────────────────────────────────── */
 @keyframes pulse-glow {
-  0%, 100% { opacity: 0.6; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.5); }
+
+  0%,
+  100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.5);
+  }
 }
 
 @keyframes slide-in-left {
-  from { transform: translateX(-100%); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 @keyframes slide-in-right {
-  from { transform: translateX(100%); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 @keyframes slide-in-up {
-  from { transform: translateY(100%); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 @keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes count-tick {
-  0% { transform: translateY(-100%); opacity: 0; }
-  100% { transform: translateY(0); opacity: 1; }
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
-.animate-slide-left { animation: slide-in-left 0.5s ease-out forwards; }
-.animate-slide-right { animation: slide-in-right 0.5s ease-out forwards; }
-.animate-slide-up { animation: slide-in-up 0.4s ease-out forwards; }
-.animate-fade-in { animation: fade-in 0.6s ease-out forwards; }
+.animate-slide-left {
+  animation: slide-in-left 0.5s ease-out forwards;
+}
+
+.animate-slide-right {
+  animation: slide-in-right 0.5s ease-out forwards;
+}
+
+.animate-slide-up {
+  animation: slide-in-up 0.4s ease-out forwards;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.6s ease-out forwards;
+}
 
 /* ── Pulsating Entity ─────────────────────────────── */
 @keyframes entity-pulse {
-  0%, 100% { box-shadow: 0 0 4px currentColor; }
-  50% { box-shadow: 0 0 16px currentColor, 0 0 32px currentColor; }
+
+  0%,
+  100% {
+    box-shadow: 0 0 4px currentColor;
+  }
+
+  50% {
+    box-shadow: 0 0 16px currentColor, 0 0 32px currentColor;
+  }
 }
 
 /* ── Inspector Feed ───────────────────────────────── */
@@ -358,13 +438,11 @@ body {
 .no-signal {
   width: 100%;
   aspect-ratio: 16/9;
-  background: repeating-linear-gradient(
-    0deg,
-    #111 0px,
-    #111 2px,
-    #1a1a1a 2px,
-    #1a1a1a 4px
-  );
+  background: repeating-linear-gradient(0deg,
+      #111 0px,
+      #111 2px,
+      #1a1a1a 2px,
+      #1a1a1a 4px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -377,11 +455,25 @@ body {
 }
 
 @keyframes static-noise {
-  0% { background-position: 0 0; }
-  25% { background-position: 1px 1px; }
-  50% { background-position: -1px 0; }
-  75% { background-position: 0 -1px; }
-  100% { background-position: 1px -1px; }
+  0% {
+    background-position: 0 0;
+  }
+
+  25% {
+    background-position: 1px 1px;
+  }
+
+  50% {
+    background-position: -1px 0;
+  }
+
+  75% {
+    background-position: 0 -1px;
+  }
+
+  100% {
+    background-position: 1px -1px;
+  }
 }
 
 /* ── Mission HUD ─────────────────────────────────── */
@@ -393,8 +485,7 @@ body {
   max-width: 260px;
   padding: 12px 14px;
   border: 1px solid rgba(255, 170, 0, 0.18);
-  background: linear-gradient(180deg, rgba(8, 10, 16, 0.72), rgba(8, 10, 16, 0.5));
-  backdrop-filter: blur(6px);
+  /* background removed because we are using glass-panel in the component now */
   font-size: 10px;
   letter-spacing: 0.16em;
   color: #b4b7c9;
@@ -428,6 +519,9 @@ body {
   right: max(18px, env(safe-area-inset-right));
   transition: right 0.2s ease;
   width: 220px;
+  max-height: 240px;
+  overflow-y: auto;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -435,6 +529,10 @@ body {
   border: 1px solid rgba(0, 180, 255, 0.2);
   background: linear-gradient(180deg, rgba(8, 10, 16, 0.74), rgba(8, 10, 16, 0.52));
   backdrop-filter: blur(8px);
+}
+
+.mission-hud-right::-webkit-scrollbar {
+  width: 2px;
 }
 
 .mission-hud-right--offset {
@@ -477,7 +575,7 @@ body {
 
 .mission-cities {
   position: absolute;
-  bottom: 94px;
+  bottom: 115px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -511,7 +609,7 @@ body {
 /* ── Flight Filters ─────────────────────────────── */
 .flight-filter-panel {
   position: absolute;
-  top: 278px;
+  top: 360px;
   right: max(18px, env(safe-area-inset-right));
   width: 220px;
   padding: 12px;
@@ -599,6 +697,6 @@ body {
 
   .flight-filter-panel--offset {
     right: 18px;
-    top: 372px;
+    top: 450px;
   }
 }

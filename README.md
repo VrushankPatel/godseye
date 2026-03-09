@@ -42,6 +42,7 @@ I used **Codex** as a programming assistant for selected implementation tasks su
   - Airspace / restricted zones
 - Object inspector panel with metadata and media preview
 - Flight filtering controls (carrier / cargo / passenger patterns)
+- Optimized responsive glass-panel HUD (prevents data-feed overlap on crowded screens)
 
 ## Tech Stack
 

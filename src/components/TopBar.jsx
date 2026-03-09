@@ -34,6 +34,7 @@ export default function TopBar() {
     const [sloganIndex, setSloganIndex] = useState(0);
     const activeFeedCount = useStore((s) => s.getActiveFeedCount());
     const totalEntityCount = useStore((s) => s.getTotalEntityCount());
+    const toggleLayerPanel = useStore((s) => s.toggleLayerPanel);
 
     useEffect(() => {
         const timer = setInterval(() => setTime(new Date()), 1000);
@@ -78,7 +79,7 @@ export default function TopBar() {
             </div>
 
             {/* Top Center: Classification Banner */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 bg-neon-red/10 border border-neon-red/30 px-8 py-1 rounded-b text-[10px] tracking-[0.2em] text-neon-red font-bold uppercase backdrop-blur-md hidden md:block">
+            <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-neon-red/10 border border-neon-red/30 px-8 py-1 rounded text-[10px] tracking-[0.2em] text-neon-red font-bold uppercase backdrop-blur-md hidden md:block mt-safe">
                 TOP SECRET // SI-TK // NOFORN
             </div>
 
@@ -89,7 +90,11 @@ export default function TopBar() {
                     REC {formatUTC(time)}
                 </div>
 
-                <div className="glass-panel px-3 py-1.5 mt-2 flex gap-4 text-xs tracking-wider text-text-dim">
+                <div
+                    className="glass-panel px-3 py-1.5 mt-2 flex gap-4 text-xs tracking-wider text-text-dim cursor-pointer hover:border-electric-blue/50 hover:bg-electric-blue/5 transition-all"
+                    onClick={toggleLayerPanel}
+                    title="Toggle Data Feeds Panel"
+                >
                     <div>
                         FEEDS <span className="text-white ml-1">{activeFeedCount}</span>
                     </div>
