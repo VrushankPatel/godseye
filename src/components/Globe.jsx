@@ -664,55 +664,62 @@ export default function Globe() {
         const trackedEntityId = trackedTarget?.entityId || null;
 
         const restoreEntityVisibility = () => {
+            viewer.entities.suspendEvents();
             for (const [id, wasVisible] of visibilitySnapshot.entries()) {
                 const entity = viewer.entities.getById(id);
                 if (entity) {
-                    entity.show = wasVisible;
+                    entity.show = typeof wasVisible === 'boolean' ? wasVisible : true;
                 }
             }
+            viewer.entities.resumeEvents();
             visibilitySnapshot.clear();
             viewer.scene.requestRender();
         };
 
+        // When hide is turned off, restore everything and bail out
         if (!focusHideEntities) {
             restoreEntityVisibility();
             return;
         }
 
-        const enforceTargetOnlyVisibility = () => {
+        // If there is nothing to focus on, don't hide anything — it would
+        // blank the entire globe and leave the user stuck.
+        if (!trackedEntityId) {
+            return;
+        }
+
+        const hideNonTrackedEntities = () => {
+            if (viewer.isDestroyed()) return;
             const entities = viewer.entities.values;
             viewer.entities.suspendEvents();
             for (let i = 0; i < entities.length; i++) {
                 const entity = entities[i];
                 const id = String(entity.id || '');
-                const isTracked = Boolean(trackedEntityId && id === trackedEntityId);
-                const isTrail = Boolean(trackedEntityId && id === `track-trail-${trackedEntityId}`);
-                const targetShow = isTracked || isTrail;
+                const isTracked = id === trackedEntityId;
+                const isTrail = id === `track-trail-${trackedEntityId}`;
+                const shouldShow = isTracked || isTrail;
 
-                // Check if the current show state differs from the desired one
-                const currentShow = entity.show;
-                const currentShowBool = typeof currentShow?.getValue === 'function' ? currentShow.getValue(viewer.clock.currentTime) : Boolean(currentShow ?? true);
-
-                if (currentShowBool !== targetShow) {
+                // Only mutate when needed to avoid unnecessary work
+                if (entity.show !== shouldShow) {
                     if (!visibilitySnapshot.has(id)) {
-                        visibilitySnapshot.set(id, currentShow === undefined || currentShow === null ? true : currentShow);
+                        visibilitySnapshot.set(id, entity.show ?? true);
                     }
-                    entity.show = targetShow;
+                    entity.show = shouldShow;
                 }
             }
             viewer.entities.resumeEvents();
             viewer.scene.requestRender();
         };
 
-        enforceTargetOnlyVisibility();
+        // Run once immediately
+        hideNonTrackedEntities();
 
-        // Safely re-enforce when the collection changes (new entities spawned)
-        const removeCollectionChanged = viewer.entities.collectionChanged.addEventListener(enforceTargetOnlyVisibility);
+        // Light-weight interval catches entities that layers add later
+        // (e.g. aircraft polling). 2 s is inexpensive and non-blocking.
+        const intervalId = setInterval(hideNonTrackedEntities, 2000);
 
         return () => {
-            if (typeof removeCollectionChanged === 'function') {
-                removeCollectionChanged();
-            }
+            clearInterval(intervalId);
             if (!useStore.getState().focusHideEntities) {
                 restoreEntityVisibility();
             }
