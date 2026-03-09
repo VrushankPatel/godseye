@@ -143,7 +143,7 @@ export default function SatelliteLayer({ viewer }) {
         const activeRecords = satRecordsRef.current.slice(0, MAX_RENDERED_SATELLITES);
 
         activeRecords.forEach(({ id, name, satrec }) => {
-            const satId = `sat-${id}`;
+            const satId = `satellite-${id}`;
             currentIds.add(satId);
 
             const positionAndVelocity = satellite.propagate(satrec, now);
@@ -207,6 +207,9 @@ export default function SatelliteLayer({ viewer }) {
                 entitiesRef.current.delete(id);
             }
         }
+
+        // Force Cesium to redraw so updated positions are immediately visible
+        viewer.scene.requestRender();
     }, [viewer]);
 
     const startPropagation = useCallback(() => {
