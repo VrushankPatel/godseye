@@ -32,7 +32,14 @@ const TRACK_SAMPLE_INTERVAL_MS = 1000;
 const MAX_TRACK_POINTS = 220;
 const MIN_TRACK_POINT_DISTANCE_METERS = 250;
 const AIRCRAFT_MODEL_URI = '/models/Cesium_Air.glb';
-const TRACKED_AIRCRAFT_MODEL_HEADING_OFFSET_DEG = 90;
+const TRACKED_AIRCRAFT_MODEL_HEADING_OFFSET_DEG = 0;
+const MIN_CAMERA_HEIGHT_M = 2500;
+const MAX_CAMERA_HEIGHT_M = 23000000;
+const AUTO_RECENTER_HEIGHT_M = 6000000;
+const AUTO_RECENTER_MIN_INTERVAL_MS = 1500;
+const ZOOM_SNAP_PITCH_THRESHOLD_RAD = Cesium.Math.toRadians(-72);
+const LABEL_COUNTRY_MIN_HEIGHT_M = 2200000;
+const LABEL_CITY_MAX_HEIGHT_M = 5200000;
 
 const AIRCRAFT_TRACK_VIEWS = {
     CHASE: new Cesium.Cartesian3(2200, 0, 700),
@@ -129,6 +136,9 @@ export default function Globe() {
     const trackedAircraftEntityIdRef = useRef(null);
     const hoveredEntityIdRef = useRef(null);
     const lastHoverUpdateMsRef = useRef(0);
+    const labelLayersRef = useRef({ country: null, city: null });
+    const cameraRecenterStateRef = useRef({ lastAppliedMs: 0 });
+    const focusHiddenSnapshotRef = useRef(new Map());
     const [viewerReady, setViewerReady] = useState(false);
     const setViewerRefStore = useStore((s) => s.setViewerRef);
     const isAutoRotating = useStore((s) => s.isAutoRotating);
@@ -139,6 +149,7 @@ export default function Globe() {
     const trackedTarget = useStore((s) => s.trackedTarget);
     const trackingView = useStore((s) => s.trackingView);
     const clearTrackedTarget = useStore((s) => s.clearTrackedTarget);
+    const focusHideEntities = useStore((s) => s.focusHideEntities);
 
     const restoreTrackedAircraftVisual = useCallback(() => {
         const viewer = viewerRef.current;
@@ -253,6 +264,33 @@ export default function Globe() {
         viewer.scene.screenSpaceCameraController.inertiaTranslate = 0;
         viewer.scene.screenSpaceCameraController.inertiaZoom = 0;
         viewer.scene.screenSpaceCameraController.enableTilt = true;
+        viewer.scene.screenSpaceCameraController.minimumZoomDistance = MIN_CAMERA_HEIGHT_M;
+        viewer.scene.screenSpaceCameraController.maximumZoomDistance = MAX_CAMERA_HEIGHT_M;
+        viewer.scene.screenSpaceCameraController.enableCollisionDetection = true;
+
+        // Ensure touch gestures route to Cesium (including pinch on touch devices).
+        viewer.scene.canvas.style.touchAction = 'none';
+
+        // Zoom-aware labels: country/continent when zoomed out, cities when zoomed in.
+        try {
+            const countryLabelProvider = new Cesium.UrlTemplateImageryProvider({
+                url: 'https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Reference_Overlay/MapServer/tile/{z}/{y}/{x}',
+                maximumLevel: 8,
+                credit: 'Esri',
+            });
+            const cityLabelProvider = new Cesium.UrlTemplateImageryProvider({
+                url: 'https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
+                maximumLevel: 15,
+                credit: 'Esri',
+            });
+            const countryLayer = viewer.imageryLayers.addImageryProvider(countryLabelProvider);
+            const cityLayer = viewer.imageryLayers.addImageryProvider(cityLabelProvider);
+            countryLayer.alpha = 0.86;
+            cityLayer.alpha = 0.92;
+            labelLayersRef.current = { country: countryLayer, city: cityLayer };
+        } catch (err) {
+            labelLayersRef.current = { country: null, city: null };
+        }
 
         // Set initial camera position
         viewer.camera.flyTo({
@@ -272,6 +310,93 @@ export default function Globe() {
         viewerRef.current = viewer;
         setViewerRefStore(viewer);
         setViewerReady(true);
+
+        const updateZoomLabelVisibility = () => {
+            const height = viewer.camera.positionCartographic?.height || DEFAULT_CAMERA.height;
+            const { country, city } = labelLayersRef.current;
+            if (country) {
+                country.show = height >= LABEL_COUNTRY_MIN_HEIGHT_M;
+            }
+            if (city) {
+                city.show = height <= LABEL_CITY_MAX_HEIGHT_M;
+            }
+        };
+        updateZoomLabelVisibility();
+
+        let lastGestureScale = 1;
+
+        const handleNativeWheel = (event) => {
+            if (!event.ctrlKey) return;
+            event.preventDefault();
+            setAutoRotating(false);
+
+            const height = viewer.camera.positionCartographic?.height || DEFAULT_CAMERA.height;
+            const step = Math.max(2500, Math.min(1800000, height * 0.12));
+            if (event.deltaY > 0) {
+                viewer.camera.zoomOut(step);
+            } else {
+                viewer.camera.zoomIn(step);
+            }
+            viewer.scene.requestRender();
+        };
+
+        const handleGestureStart = (event) => {
+            event.preventDefault();
+            lastGestureScale = event.scale || 1;
+            setAutoRotating(false);
+        };
+
+        const handleGestureChange = (event) => {
+            event.preventDefault();
+            const currentScale = event.scale || 1;
+            const delta = currentScale - lastGestureScale;
+            lastGestureScale = currentScale;
+            if (Math.abs(delta) < 0.005) return;
+
+            const height = viewer.camera.positionCartographic?.height || DEFAULT_CAMERA.height;
+            const step = Math.max(2200, Math.min(1800000, height * 0.09));
+            if (delta > 0) {
+                viewer.camera.zoomIn(step);
+            } else {
+                viewer.camera.zoomOut(step);
+            }
+            viewer.scene.requestRender();
+        };
+        viewer.scene.canvas.addEventListener('wheel', handleNativeWheel, { passive: false });
+        viewer.scene.canvas.addEventListener('gesturestart', handleGestureStart, { passive: false });
+        viewer.scene.canvas.addEventListener('gesturechange', handleGestureChange, { passive: false });
+
+        const handleCameraChanged = () => {
+            updateZoomLabelVisibility();
+            if (viewer.trackedEntity) return;
+
+            const carto = viewer.camera.positionCartographic;
+            if (!carto) return;
+            const height = carto.height || 0;
+            if (height < AUTO_RECENTER_HEIGHT_M) return;
+            if (viewer.camera.pitch <= ZOOM_SNAP_PITCH_THRESHOLD_RAD) return;
+
+            const now = Date.now();
+            if (now - cameraRecenterStateRef.current.lastAppliedMs < AUTO_RECENTER_MIN_INTERVAL_MS) {
+                return;
+            }
+            cameraRecenterStateRef.current.lastAppliedMs = now;
+
+            viewer.camera.flyTo({
+                destination: Cesium.Cartesian3.fromDegrees(
+                    Cesium.Math.toDegrees(carto.longitude),
+                    Cesium.Math.toDegrees(carto.latitude),
+                    Math.min(height, MAX_CAMERA_HEIGHT_M)
+                ),
+                orientation: {
+                    heading: viewer.camera.heading,
+                    pitch: Cesium.Math.toRadians(-88),
+                    roll: 0,
+                },
+                duration: 0.55,
+            });
+        };
+        viewer.camera.changed.addEventListener(handleCameraChanged);
 
         // Stop auto-rotation on user interaction
         const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
@@ -374,6 +499,10 @@ export default function Globe() {
         }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
 
         return () => {
+            viewer.scene.canvas.removeEventListener('wheel', handleNativeWheel);
+            viewer.scene.canvas.removeEventListener('gesturestart', handleGestureStart);
+            viewer.scene.canvas.removeEventListener('gesturechange', handleGestureChange);
+            viewer.camera.changed.removeEventListener(handleCameraChanged);
             handler.destroy();
             removeTrail();
             restoreTrackedAircraftVisual();
@@ -526,6 +655,53 @@ export default function Globe() {
         viewer.trackedEntity = targetEntity;
         viewer.scene.requestRender();
     }, [trackedTarget, trackingView]);
+
+    useEffect(() => {
+        const viewer = viewerRef.current;
+        if (!viewer || viewer.isDestroyed()) return;
+
+        const visibilitySnapshot = focusHiddenSnapshotRef.current;
+        const trackedEntityId = trackedTarget?.entityId || null;
+
+        const restoreEntityVisibility = () => {
+            for (const [id, wasVisible] of visibilitySnapshot.entries()) {
+                const entity = viewer.entities.getById(id);
+                if (entity) {
+                    entity.show = wasVisible;
+                }
+            }
+            visibilitySnapshot.clear();
+            viewer.scene.requestRender();
+        };
+
+        if (!focusHideEntities) {
+            restoreEntityVisibility();
+            return;
+        }
+
+        const enforceTargetOnlyVisibility = () => {
+            for (const entity of viewer.entities.values) {
+                const id = String(entity.id || '');
+                if (!visibilitySnapshot.has(id)) {
+                    visibilitySnapshot.set(id, Boolean(entity.show ?? true));
+                }
+                const keepTrail = trackedEntityId && id === `track-trail-${trackedEntityId}`;
+                entity.show = Boolean(trackedEntityId && id === trackedEntityId) || keepTrail;
+            }
+        };
+
+        enforceTargetOnlyVisibility();
+        const removePostRender = viewer.scene.postRender.addEventListener(enforceTargetOnlyVisibility);
+
+        return () => {
+            if (typeof removePostRender === 'function') {
+                removePostRender();
+            }
+            if (!useStore.getState().focusHideEntities) {
+                restoreEntityVisibility();
+            }
+        };
+    }, [focusHideEntities, trackedTarget]);
 
     return (
         <>

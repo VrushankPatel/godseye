@@ -6,11 +6,18 @@ export default function ShaderToolbar() {
     const activeShader = useStore((s) => s.activeShader);
     const setShader = useStore((s) => s.setShader);
     const enableAllLayers = useStore((s) => s.enableAllLayers);
+    const enableSurveillanceLayers = useStore((s) => s.enableSurveillanceLayers);
+    const focusMode = useStore((s) => s.focusMode);
+    const toggleFocusMode = useStore((s) => s.toggleFocusMode);
+    const focusHideEntities = useStore((s) => s.focusHideEntities);
+    const setFocusHideEntities = useStore((s) => s.setFocusHideEntities);
 
     const handleModeClick = (modeId) => {
         setShader(modeId);
         if (modeId === 'GOD') {
             enableAllLayers();
+        } else if (modeId === 'SURVEILLANCE') {
+            enableSurveillanceLayers();
         }
     };
 
@@ -33,6 +40,27 @@ export default function ShaderToolbar() {
                             {mode.label}
                         </button>
                     ))}
+                </div>
+
+                <div className="flex items-center gap-2 pt-1">
+                    <button
+                        onClick={toggleFocusMode}
+                        className={`mode-btn !px-3 !py-1.5 !text-[10px] ${
+                            focusMode ? 'active' : ''
+                        }`}
+                    >
+                        FOCUS MODE
+                    </button>
+                    {focusMode && (
+                        <button
+                            onClick={() => setFocusHideEntities(!focusHideEntities)}
+                            className={`mode-btn !px-3 !py-1.5 !text-[10px] ${
+                                focusHideEntities ? 'active' : ''
+                            }`}
+                        >
+                            {focusHideEntities ? 'SHOW ENTITIES' : 'HIDE ENTITIES'}
+                        </button>
+                    )}
                 </div>
 
             </div>

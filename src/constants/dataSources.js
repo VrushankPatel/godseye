@@ -155,6 +155,7 @@ export const SHADER_MODES = [
     { id: 'CRT', label: 'CRT', key: '4', color: '#ffaa00' },
     { id: 'ANIME', label: 'Anime', key: '5', color: '#ff69b4' },
     { id: 'GOD', label: 'God', key: '6', color: '#00ffff' },
+    { id: 'SURVEILLANCE', label: 'Surv', key: '7', color: '#7dd3fc' },
 ];
 
 // ── Layer Definitions ─────────────────────────────────

@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { SURVEILLANCE_PRIMARY_LAYERS } from '../constants/dataSources';
 
 const useStore = create((set, get) => ({
     // Shader mode
@@ -51,6 +52,19 @@ const useStore = create((set, get) => ({
             const newLayers = {};
             Object.keys(state.layers).forEach((key) => {
                 newLayers[key] = { ...state.layers[key], enabled: true };
+            });
+            return { layers: newLayers };
+        }),
+
+    enableSurveillanceLayers: () =>
+        set((state) => {
+            const enabledSet = new Set(SURVEILLANCE_PRIMARY_LAYERS);
+            const newLayers = {};
+            Object.keys(state.layers).forEach((key) => {
+                newLayers[key] = {
+                    ...state.layers[key],
+                    enabled: enabledSet.has(key),
+                };
             });
             return { layers: newLayers };
         }),
@@ -149,6 +163,11 @@ const useStore = create((set, get) => ({
     // Globe state
     isAutoRotating: true,
     setAutoRotating: (val) => set({ isAutoRotating: val }),
+    focusMode: false,
+    toggleFocusMode: () => set((state) => ({ focusMode: !state.focusMode })),
+    setFocusMode: (value) => set({ focusMode: Boolean(value) }),
+    focusHideEntities: false,
+    setFocusHideEntities: (value) => set({ focusHideEntities: Boolean(value) }),
 
     // Cesium viewer reference
     viewerRef: null,

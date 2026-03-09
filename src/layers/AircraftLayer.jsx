@@ -9,7 +9,7 @@ const REQUEST_TIMEOUT_MS = 10000;
 const EARTH_RADIUS_M = 6371000;
 const ANIMATION_INTERVAL_MS = 350;
 const MAX_EXTRAPOLATION_SECONDS = 45;
-const ROTATING_REGION_BATCH_SIZE = 2;
+const ROTATING_REGION_BATCH_SIZE = 5;
 
 const MILITARY_CALLSIGN_PREFIXES = [
     'RCH', 'CMB', 'KING', 'DUKE', 'NAVY', 'SPAR', 'NATO', 'QID', 'MMF', 'BAF', 'CNV',
@@ -255,18 +255,22 @@ function createPlaneIconDataUri() {
 const BASE_AIRCRAFT_SOURCES = [
     { url: API_URLS.ADSB_ONE_GLOBAL, parser: (payload) => parseAdsbPayload(payload, 'ADSB.one') },
     { url: API_URLS.AIRPLANES_GLOBAL, parser: (payload) => parseAdsbPayload(payload, 'Airplanes.live') },
-    { url: API_URLS.ADSB_LOL_GLOBAL, parser: (payload) => parseAdsbPayload(payload, 'ADSB.lol') },
-    // India-focused OpenSky window for stronger regional density.
-    { url: API_URLS.OPENSKY_INDIA, parser: parseOpenSkyPayload },
-    { url: API_URLS.OPENSKY_INDIA_PROXY, parser: parseOpenSkyPayload },
-    // Try direct OpenSky first (works when browser/network permits CORS).
-    { url: API_URLS.OPENSKY, parser: parseOpenSkyPayload },
-    // Proxy fallback for browsers/networks where direct OpenSky CORS is blocked.
-    { url: API_URLS.OPENSKY_PROXY, parser: parseOpenSkyPayload },
+];
+
+const CORE_REGIONAL_AIR_ZONES = [
+    { id: 'INDIA_NORTH', lat: 28.6, lon: 77.2, radiusNm: 900 },
+    { id: 'INDIA_SOUTH', lat: 13.0, lon: 80.2, radiusNm: 900 },
+    { id: 'EUROPE_CORE', lat: 50.0, lon: 10.0, radiusNm: 1200 },
+    { id: 'N_AMERICA', lat: 39.0, lon: -97.0, radiusNm: 1700 },
+    { id: 'S_AMERICA', lat: -15.0, lon: -60.0, radiusNm: 1400 },
+    { id: 'EAST_ASIA', lat: 35.7, lon: 116.8, radiusNm: 1400 },
+    { id: 'SE_ASIA', lat: 6.8, lon: 103.5, radiusNm: 1200 },
+    { id: 'AFRICA', lat: 2.0, lon: 20.0, radiusNm: 1700 },
+    { id: 'OCEANIA', lat: -24.0, lon: 134.0, radiusNm: 1500 },
 ];
 
 const ROTATING_REGIONAL_AIR_ZONES = [
-    { id: 'INDIA', lat: 22.6, lon: 79.0, radiusNm: 1800 },
+    { id: 'INDIA', lat: 22.6, lon: 79.0, radiusNm: 1700 },
     { id: 'MIDDLE_EAST', lat: 25.2, lon: 46.8, radiusNm: 1700 },
     { id: 'EAST_ASIA', lat: 35.7, lon: 116.8, radiusNm: 2000 },
     { id: 'SE_ASIA', lat: 6.8, lon: 103.5, radiusNm: 1700 },
@@ -288,10 +292,6 @@ function buildRegionalPointSources(zones) {
             {
                 url: `https://api.airplanes.live/v2/point/${suffix}`,
                 parser: (payload) => parseAdsbPayload(payload, `Airplanes.live ${zone.id}`),
-            },
-            {
-                url: `https://api.adsb.lol/v2/point/${suffix}`,
-                parser: (payload) => parseAdsbPayload(payload, `ADSB.lol ${zone.id}`),
             },
         ];
     });
@@ -493,9 +493,12 @@ export default function AircraftLayer({ viewer }) {
 
         const zones = getRotatingZones(sourceCycleRef.current);
         sourceCycleRef.current += 1;
+        const coreRegionalSources = buildRegionalPointSources(CORE_REGIONAL_AIR_ZONES);
+        const rotatingRegionalSources = buildRegionalPointSources(zones);
         const aircraftSources = [
             ...BASE_AIRCRAFT_SOURCES,
-            ...buildRegionalPointSources(zones),
+            ...coreRegionalSources,
+            ...rotatingRegionalSources,
         ];
 
         const results = await Promise.allSettled(

@@ -8,10 +8,12 @@ const CALTRANS_CCTV_CATALOG_URL = 'https://cwwp2.dot.ca.gov/vm/js/cctv08.js';
 // Ontario 511 camera API does not expose permissive browser CORS headers,
 // so we access it via a public CORS proxy in this frontend-only build.
 const ONTARIO_511_CAMERAS_URL = `https://api.allorigins.win/raw?url=${encodeURIComponent('https://511on.ca/api/v2/get/cameras')}`;
+const ALBERTA_511_CAMERAS_URL = `https://api.allorigins.win/raw?url=${encodeURIComponent('https://511.alberta.ca/api/v2/get/cameras')}`;
 const TFL_JAMCAMS_URL = 'https://api.tfl.gov.uk/Place/Type/JamCam?app_key=';
 
 const MAX_CALTRANS_CAMERAS = 2400;
 const MAX_ONTARIO_CAMERAS = 850;
+const MAX_ALBERTA_CAMERAS = 800;
 const MAX_TFL_CAMERAS = 850;
 const MAX_TOTAL_CAMERAS = 6500;
 const REQUEST_TIMEOUT_MS = 12000;
@@ -134,7 +136,7 @@ function normalizeCaltransFeed(text) {
     return feeds;
 }
 
-function normalizeOntarioFeeds(payload) {
+function normalize511Feeds(payload, provider = '511', region = 'Unknown', maxFeeds = 700) {
     const parsed = parseJsonPayload(payload);
     if (!Array.isArray(parsed)) return [];
 
@@ -155,20 +157,20 @@ function normalizeOntarioFeeds(payload) {
         const mediaType = inferMediaTypeFromUrls({ url: viewUrl, videoUrl: null });
 
         feeds.push({
-            id: `ontario-${cam.Id}-${firstEnabledView.Id || 'main'}`,
+            id: `${provider.toLowerCase().replace(/\s+/g, '-')}-${cam.Id}-${firstEnabledView.Id || 'main'}`,
             name: cam.Location || `${cam.Roadway || 'Road'} ${cam.Direction || ''}`.trim(),
             lat,
             lng,
             url: viewUrl,
             fallbackUrl: viewUrl,
             detailsUrl: viewUrl,
-            city: 'Ontario',
+            city: region,
             mediaType,
             refreshSeconds: 5,
-            provider: 'Ontario 511',
+            provider,
         });
 
-        if (feeds.length >= MAX_ONTARIO_CAMERAS) break;
+        if (feeds.length >= maxFeeds) break;
     }
 
     return feeds;
@@ -313,9 +315,10 @@ export default function CameraLayer({ viewer }) {
             setStatus('cctv', 'loading');
             clearEntities();
 
-            const [caltransRes, ontarioRes, tflRes] = await Promise.allSettled([
+            const [caltransRes, ontarioRes, albertaRes, tflRes] = await Promise.allSettled([
                 fetchWithTimeout(CALTRANS_CCTV_CATALOG_URL),
                 fetchWithTimeout(ONTARIO_511_CAMERAS_URL),
+                fetchWithTimeout(ALBERTA_511_CAMERAS_URL),
                 fetchWithTimeout(TFL_JAMCAMS_URL),
             ]);
 
@@ -325,7 +328,11 @@ export default function CameraLayer({ viewer }) {
                     : [];
             const ontarioFeeds =
                 ontarioRes.status === 'fulfilled'
-                    ? normalizeOntarioFeeds(ontarioRes.value)
+                    ? normalize511Feeds(ontarioRes.value, 'Ontario 511', 'Ontario', MAX_ONTARIO_CAMERAS)
+                    : [];
+            const albertaFeeds =
+                albertaRes.status === 'fulfilled'
+                    ? normalize511Feeds(albertaRes.value, 'Alberta 511', 'Alberta', MAX_ALBERTA_CAMERAS)
                     : [];
             const tflFeeds =
                 tflRes.status === 'fulfilled'
@@ -335,6 +342,7 @@ export default function CameraLayer({ viewer }) {
             let feeds = mergeFeeds([
                 caltransFeeds,
                 ontarioFeeds,
+                albertaFeeds,
                 tflFeeds,
                 WORLDCAMS_FEEDS,
                 CAMERA_FEEDS.map((feed) => ({

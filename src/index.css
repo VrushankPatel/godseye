@@ -282,6 +282,12 @@ body {
   width: 100%;
   height: 100%;
   position: relative;
+  touch-action: none;
+  overscroll-behavior: none;
+}
+
+.globe-container canvas {
+  touch-action: none;
 }
 
 .globe-container.mode-nvg {

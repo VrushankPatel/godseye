@@ -4,7 +4,8 @@ import useStore from '../store/useStore';
 import { LAYER_DEFS, SURVEILLANCE_PRIMARY_LAYERS } from '../constants/dataSources';
 
 const CITY_PRESETS = [
-    { name: 'London', longitude: -0.1276, latitude: 51.5072, height: 180000 },
+    { name: 'Global', longitude: 10, latitude: 20, height: 9000000, pitch: -90 },
+    { name: 'London', longitude: -0.1276, latitude: 51.5072, height: 180000, pitch: -65 },
     { name: 'New York', longitude: -74.006, latitude: 40.7128, height: 220000 },
     { name: 'Tokyo', longitude: 139.6917, latitude: 35.6895, height: 220000 },
     { name: 'Dubai', longitude: 55.2708, latitude: 25.2048, height: 220000 },
@@ -60,7 +61,7 @@ export default function MissionHud() {
             destination: Cesium.Cartesian3.fromDegrees(city.longitude, city.latitude, city.height),
             orientation: {
                 heading: Cesium.Math.toRadians(0),
-                pitch: Cesium.Math.toRadians(-65),
+                pitch: Cesium.Math.toRadians(city.pitch ?? -65),
                 roll: 0,
             },
             duration: 1.8,

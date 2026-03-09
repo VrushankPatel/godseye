@@ -4,7 +4,7 @@ import useStore from '../store/useStore';
 export default function ShaderOverlay() {
     const activeShader = useStore((s) => s.activeShader);
 
-    if (activeShader === 'DEFAULT' || activeShader === 'GOD') {
+    if (activeShader === 'DEFAULT' || activeShader === 'GOD' || activeShader === 'SURVEILLANCE') {
         return null;
     }
 
