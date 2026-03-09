@@ -680,22 +680,38 @@ export default function Globe() {
         }
 
         const enforceTargetOnlyVisibility = () => {
-            for (const entity of viewer.entities.values) {
+            const entities = viewer.entities.values;
+            viewer.entities.suspendEvents();
+            for (let i = 0; i < entities.length; i++) {
+                const entity = entities[i];
                 const id = String(entity.id || '');
-                if (!visibilitySnapshot.has(id)) {
-                    visibilitySnapshot.set(id, Boolean(entity.show ?? true));
+                const isTracked = Boolean(trackedEntityId && id === trackedEntityId);
+                const isTrail = Boolean(trackedEntityId && id === `track-trail-${trackedEntityId}`);
+                const targetShow = isTracked || isTrail;
+
+                // Check if the current show state differs from the desired one
+                const currentShow = entity.show;
+                const currentShowBool = typeof currentShow?.getValue === 'function' ? currentShow.getValue(viewer.clock.currentTime) : Boolean(currentShow ?? true);
+
+                if (currentShowBool !== targetShow) {
+                    if (!visibilitySnapshot.has(id)) {
+                        visibilitySnapshot.set(id, currentShow === undefined || currentShow === null ? true : currentShow);
+                    }
+                    entity.show = targetShow;
                 }
-                const keepTrail = trackedEntityId && id === `track-trail-${trackedEntityId}`;
-                entity.show = Boolean(trackedEntityId && id === trackedEntityId) || keepTrail;
             }
+            viewer.entities.resumeEvents();
+            viewer.scene.requestRender();
         };
 
         enforceTargetOnlyVisibility();
-        const removePostRender = viewer.scene.postRender.addEventListener(enforceTargetOnlyVisibility);
+
+        // Safely re-enforce when the collection changes (new entities spawned)
+        const removeCollectionChanged = viewer.entities.collectionChanged.addEventListener(enforceTargetOnlyVisibility);
 
         return () => {
-            if (typeof removePostRender === 'function') {
-                removePostRender();
+            if (typeof removeCollectionChanged === 'function') {
+                removeCollectionChanged();
             }
             if (!useStore.getState().focusHideEntities) {
                 restoreEntityVisibility();
