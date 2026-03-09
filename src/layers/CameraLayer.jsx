@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useCallback } from 'react';
 import * as Cesium from 'cesium';
 import useStore from '../store/useStore';
 import { CAMERA_FEEDS } from '../constants/staticData';
+import { WORLDCAMS_FEEDS } from '../constants/worldcamsFeeds';
 import { discoverAllFeeds } from '../services/feedDiscovery';
 
 const CALTRANS_CCTV_CATALOG_URL = 'https://cwwp2.dot.ca.gov/vm/js/cctv08.js';
@@ -288,7 +289,7 @@ export default function CameraLayer({ viewer }) {
             const albertaFeeds = albertaRes.status === 'fulfilled' ? normalize511Feeds(albertaRes.value, 'Alberta 511', 'Alberta', MAX_ALBERTA_CAMERAS) : [];
             const tflFeeds = tflRes.status === 'fulfilled' ? normalizeTflFeeds(tflRes.value) : [];
 
-            let govFeeds = mergeFeeds([caltransFeeds, ontarioFeeds, albertaFeeds, tflFeeds, CAMERA_FEEDS]);
+            let govFeeds = mergeFeeds([caltransFeeds, ontarioFeeds, albertaFeeds, tflFeeds, WORLDCAMS_FEEDS, CAMERA_FEEDS]);
             govFeeds = govFeeds.filter((f) => Boolean(f.videoUrl || f.url || f.fallbackUrl));
 
             if (cancelled || !isEnabled || viewer.isDestroyed()) return;
