@@ -1,274 +1,61 @@
-// Backup list of publicly accessible traffic camera feeds.
-// Primary ingestion is loaded dynamically from Caltrans catalog in CameraLayer.
-// YouTube IDs verified as LIVE 24/7 streams — last checked 2026-03-10.
+// Minimal seed list of known-reliable camera feeds.
+// Dynamic feeds are discovered at runtime by feedDiscovery.js.
+// These serve as fallback if all dynamic sources fail.
 export const CAMERA_FEEDS = [
     // ── SPACE ──────────────────────────────────────────
     {
-        id: 'nasa-iss-live',
-        name: 'NASA ISS Live Stream',
-        lat: 29.5593, lng: -95.0839,
-        url: null,
+        id: 'nasa-iss-live', name: 'NASA ISS Live Stream',
+        lat: 29.5593, lng: -95.0839, url: null, seed: true,
         videoUrl: 'https://www.youtube.com/embed/21X5lGlDOfg?autoplay=1&rel=0',
-        city: 'Houston', mediaType: 'embed', refreshSeconds: 20,
-        provider: 'NASA TV', type: 'space',
+        city: 'Houston', mediaType: 'embed', provider: 'NASA TV', type: 'space',
     },
-
-    // ── INDIA (Verified Live Temple Darshan) ──────────
+    // ── INDIA (SVBC is an official 24/7 channel) ──────
     {
-        id: 'india-varanasi-kashi',
-        name: 'Varanasi — Kashi Vishwanath Temple Live',
-        lat: 25.3109, lng: 83.0107,
-        url: null,
-        videoUrl: 'https://www.youtube.com/embed/80pL3f-HHlM?autoplay=1&rel=0',
-        city: 'Varanasi', mediaType: 'embed', provider: 'Temple Darshan', type: 'landmark',
-    },
-    {
-        id: 'india-tirupati-svbc',
-        name: 'Tirupati — SVBC TTD Live Darshan',
-        lat: 13.6833, lng: 79.3474,
-        url: null,
+        id: 'india-tirupati-svbc', name: 'Tirupati — SVBC TTD Live Darshan',
+        lat: 13.6833, lng: 79.3474, url: null, seed: true,
         videoUrl: 'https://www.youtube.com/embed/eTWaPQW7rdk?autoplay=1&rel=0',
         city: 'Tirupati', mediaType: 'embed', provider: 'SVBC Official', type: 'landmark',
     },
+    // ── JAPAN ──────────────────────────────────────────
     {
-        id: 'india-ahmedabad-swaminarayan',
-        name: 'Ahmedabad — Kalupur Swaminarayan Mandir Live',
-        lat: 23.0258, lng: 72.5873,
-        url: null,
-        videoUrl: 'https://www.youtube.com/embed/Fan10DHHH1g?autoplay=1&rel=0',
-        city: 'Ahmedabad', mediaType: 'embed', provider: 'Swaminarayan', type: 'landmark',
-    },
-
-    // ── JAPAN (Verified Live) ─────────────────────────
-    {
-        id: 'tokyo-shibuya-crossing-1',
-        name: 'Tokyo — Shibuya Scramble Crossing Live',
-        lat: 35.6595, lng: 139.7004,
-        url: null,
-        videoUrl: 'https://www.youtube.com/embed/dfVK7ld38Ys?autoplay=1&rel=0',
-        city: 'Tokyo', mediaType: 'embed', provider: 'TOKYO Live Camera', type: 'city',
-    },
-    {
-        id: 'tokyo-shibuya-crossing-2',
-        name: 'Tokyo — Shibuya Crossing Wide',
-        lat: 35.6598, lng: 139.7006,
-        url: null,
-        videoUrl: 'https://www.youtube.com/embed/8H3nRCFVR6Y?autoplay=1&rel=0',
+        id: 'tokyo-shibuya-crossing', name: 'Tokyo — Shibuya Crossing Live',
+        lat: 35.6595, lng: 139.7004, url: null, seed: true,
+        videoUrl: 'https://www.youtube.com/embed/3q2CnFMbhJc?autoplay=1&rel=0',
         city: 'Tokyo', mediaType: 'embed', provider: 'ShibuyaCam', type: 'city',
     },
+    // ── USA ────────────────────────────────────────────
     {
-        id: 'tokyo-shibuya-sky',
-        name: 'Tokyo — SHIBUYA SKY Live View',
-        lat: 35.6580, lng: 139.7016,
-        url: null,
-        videoUrl: 'https://www.youtube.com/embed/3Q5wZeTuttw?autoplay=1&rel=0',
-        city: 'Tokyo', mediaType: 'embed', provider: 'SHIBUYA SKY', type: 'city',
-    },
-
-    // ── USA (Verified Live) ───────────────────────────
-    {
-        id: 'nyc-times-square-4k',
-        name: 'New York — Times Square 4K Live',
-        lat: 40.7580, lng: -73.9855,
-        url: null,
-        videoUrl: 'https://www.youtube.com/embed/rnXIjl_Rzy4?autoplay=1&rel=0',
+        id: 'nyc-times-square', name: 'New York — Times Square',
+        lat: 40.7580, lng: -73.9855, url: null, seed: true,
+        videoUrl: 'https://www.youtube.com/embed/eJ7ZkQ5TC08?autoplay=1&rel=0',
         city: 'New York', mediaType: 'embed', provider: 'EarthCam', type: 'city',
     },
     {
-        id: 'nyc-times-square-2',
-        name: 'New York — Times Square 24/7',
-        lat: 40.7582, lng: -73.9858,
-        url: null,
-        videoUrl: 'https://www.youtube.com/embed/VGnFLdQW39A?autoplay=1&rel=0',
-        city: 'New York', mediaType: 'embed', provider: 'NYC Live', type: 'city',
-    },
-    {
-        id: 'nyc-broadway',
-        name: 'New York — 1560 Broadway Live',
-        lat: 40.7589, lng: -73.9851,
-        url: null,
-        videoUrl: 'https://www.youtube.com/embed/4qyZLflp-sI?autoplay=1&rel=0',
-        city: 'New York', mediaType: 'embed', provider: 'Broadway Cam', type: 'city',
-    },
-    {
-        id: 'la-venice-beach',
-        name: 'Los Angeles — Venice Beach Live',
-        lat: 33.9850, lng: -118.4695,
-        url: null,
+        id: 'la-venice-beach', name: 'Los Angeles — Venice Beach Live',
+        lat: 33.9850, lng: -118.4695, url: null, seed: true,
         videoUrl: 'https://www.youtube.com/embed/EO_1LWqsCNE?autoplay=1&rel=0',
         city: 'Los Angeles', mediaType: 'embed', provider: 'Venice Beach Cam', type: 'city',
     },
-
-    // ── EUROPE (Verified Live) ────────────────────────
+    // ── AUSTRALIA ──────────────────────────────────────
     {
-        id: 'uk-bradford-city',
-        name: 'Bradford — City Centre Webcam Live',
-        lat: 53.7960, lng: -1.7594,
-        url: null,
-        videoUrl: 'https://www.youtube.com/embed/LsGSKkvVFOQ?autoplay=1&rel=0',
-        city: 'Bradford', mediaType: 'embed', provider: 'Bradford Cam', type: 'city',
-    },
-    {
-        id: 'europe-multi-city',
-        name: 'European Webcam Journey — Multi-City Live',
-        lat: 48.8566, lng: 2.3522,
-        url: null,
-        videoUrl: 'https://www.youtube.com/embed/w9ICwT2WZy8?autoplay=1&rel=0',
-        city: 'Europe', mediaType: 'embed', provider: 'Multi-City', type: 'city',
-    },
-
-    // ── MIDDLE EAST (Verified Live) ───────────────────
-    {
-        id: 'dubai-palm-skyline',
-        name: 'Dubai — Fairmont The Palm Skyline Live',
-        lat: 25.1124, lng: 55.1390,
-        url: null,
-        videoUrl: 'https://www.youtube.com/embed/7dE4IjDQJmE?autoplay=1&rel=0',
-        city: 'Dubai', mediaType: 'embed', provider: 'Fairmont', type: 'landmark',
-    },
-
-    // ── SOUTH KOREA (Verified Live) ───────────────────
-    {
-        id: 'seoul-hangang-river',
-        name: 'Seoul — Hangang River & Skyline Live',
-        lat: 37.5172, lng: 126.9935,
-        url: null,
-        videoUrl: 'https://www.youtube.com/embed/-JhoMGoAfFc?autoplay=1&rel=0',
-        city: 'Seoul', mediaType: 'embed', provider: 'Hangang Cam', type: 'city',
-    },
-    {
-        id: 'seoul-station-plaza',
-        name: 'Seoul — Station Plaza Live',
-        lat: 37.5547, lng: 126.9706,
-        url: null,
-        videoUrl: 'https://www.youtube.com/embed/DSgn-lTHJzM?autoplay=1&rel=0',
-        city: 'Seoul', mediaType: 'embed', provider: 'Seoul Cam', type: 'city',
-    },
-    {
-        id: 'seoul-skyline',
-        name: 'Seoul — Skyline Live View',
-        lat: 37.5665, lng: 126.9780,
-        url: null,
-        videoUrl: 'https://www.youtube.com/embed/ahSMyLJcp48?autoplay=1&rel=0',
-        city: 'Seoul', mediaType: 'embed', provider: 'Seoul Live', type: 'city',
-    },
-
-    // ── AUSTRALIA (Verified Live) ─────────────────────
-    {
-        id: 'sydney-harbour-4k',
-        name: 'Sydney — Harbour 4K Live',
-        lat: -33.8523, lng: 151.2108,
-        url: null,
+        id: 'sydney-harbour', name: 'Sydney — Harbour 4K Live',
+        lat: -33.8523, lng: 151.2108, url: null, seed: true,
         videoUrl: 'https://www.youtube.com/embed/5uZa3-RMFos?autoplay=1&rel=0',
         city: 'Sydney', mediaType: 'embed', provider: 'Sydney Cam', type: 'landmark',
     },
+    // ── SOUTH KOREA ────────────────────────────────────
     {
-        id: 'sydney-harbour-panning',
-        name: 'Sydney — Harbour Panning View Live',
-        lat: -33.8568, lng: 151.2153,
-        url: null,
-        videoUrl: 'https://www.youtube.com/embed/jshwkG1ZpP8?autoplay=1&rel=0',
-        city: 'Sydney', mediaType: 'embed', provider: 'Sydney Live', type: 'landmark',
+        id: 'seoul-hangang', name: 'Seoul — Hangang River & Skyline',
+        lat: 37.5172, lng: 126.9935, url: null, seed: true,
+        videoUrl: 'https://www.youtube.com/embed/-JhoMGoAfFc?autoplay=1&rel=0',
+        city: 'Seoul', mediaType: 'embed', provider: 'Hangang Cam', type: 'city',
     },
+    // ── DUBAI ──────────────────────────────────────────
     {
-        id: 'sydney-bridge-opera',
-        name: 'Sydney — Harbour Bridge & Opera House PTZ Live',
-        lat: -33.8559, lng: 151.2093,
-        url: null,
-        videoUrl: 'https://www.youtube.com/embed/7pcL-0Wo77U?autoplay=1&rel=0',
-        city: 'Sydney', mediaType: 'embed', provider: 'SydneyCam', type: 'landmark',
-    },
-    {
-        id: 'melbourne-city-life',
-        name: 'Melbourne — City Life Unfolded Live',
-        lat: -37.8136, lng: 144.9631,
-        url: null,
-        videoUrl: 'https://www.youtube.com/embed/yLSaCBV4mXI?autoplay=1&rel=0',
-        city: 'Melbourne', mediaType: 'embed', provider: 'Melbourne Cam', type: 'city',
-    },
-
-    // ── GLOBAL / ROTATING (Verified Live) ─────────────
-    {
-        id: 'world-live-cam',
-        name: 'World Live — Around the World Real-time',
-        lat: 0.0, lng: 0.0,
-        url: null,
-        videoUrl: 'https://www.youtube.com/embed/z7SiAaN4ogw?autoplay=1&rel=0',
-        city: 'Global', mediaType: 'embed', provider: 'World Cam', type: 'city',
-    },
-    {
-        id: 'top-live-webcams',
-        name: 'Top Live Webcams — 1200+ Rotating Feeds',
-        lat: 51.5074, lng: -0.1278,
-        url: null,
-        videoUrl: 'https://www.youtube.com/embed/EFum1rGUdkk?autoplay=1&rel=0',
-        city: 'Global', mediaType: 'embed', provider: 'Multi-Feed', type: 'city',
-    },
-
-    // ── US TRAFFIC CAMS (Caltrans originals) ──────────
-    {
-        id: 'caltrans-d1-us101-north-sr20',
-        name: 'US-101 North of SR-20',
-        lat: 39.250296, lng: -123.211287,
-        url: 'https://cwwp2.dot.ca.gov/data/d1/cctv/image/us101northofsr20lookingnorth/us101northofsr20lookingnorth.jpg',
-        videoUrl: 'https://cwwp2.dot.ca.gov/vm/loc/d1/us101northofsr20lookingnorth.htm',
-        city: 'California', type: 'traffic',
-    },
-    {
-        id: 'caltrans-d1-sr20-west-us101',
-        name: 'SR-20 West of US-101',
-        lat: 39.40581, lng: -123.36904,
-        url: 'https://cwwp2.dot.ca.gov/data/d1/cctv/image/sr20westofus101lookingeast/sr20westofus101lookingeast.jpg',
-        videoUrl: 'https://cwwp2.dot.ca.gov/vm/loc/d1/sr20westofus101lookingeast.htm',
-        city: 'California', type: 'traffic',
-    },
-    {
-        id: 'caltrans-d1-sr20-east-us101',
-        name: 'SR-20 East of US-101',
-        lat: 39.237775, lng: -123.167075,
-        url: 'https://cwwp2.dot.ca.gov/data/d1/cctv/image/sr20eastofus101lookingeast/sr20eastofus101lookingeast.jpg',
-        videoUrl: 'https://cwwp2.dot.ca.gov/vm/loc/d1/sr20eastofus101lookingeast.htm',
-        city: 'California', type: 'traffic',
-    },
-    {
-        id: 'caltrans-d1-us101-south-sr36',
-        name: 'US-101 South of SR-36',
-        lat: 40.525005, lng: -124.149926,
-        url: 'https://cwwp2.dot.ca.gov/data/d1/cctv/image/us101southofsr36lookingnorth/us101southofsr36lookingnorth.jpg',
-        videoUrl: 'https://cwwp2.dot.ca.gov/vm/loc/d1/us101southofsr36lookingnorth.htm',
-        city: 'California', type: 'traffic',
-    },
-    {
-        id: 'caltrans-d2-antlers-bridge',
-        name: 'Antlers Bridge',
-        lat: 40.88504, lng: -122.38379,
-        url: 'https://cwwp2.dot.ca.gov/data/d2/cctv/image/antlersbridge/antlersbridge.jpg',
-        videoUrl: 'https://cwwp2.dot.ca.gov/vm/loc/d2/antlersbridge.htm',
-        city: 'California', type: 'traffic',
-    },
-    {
-        id: 'caltrans-d2-black-butte',
-        name: 'Black Butte',
-        lat: 41.35411, lng: -122.3559,
-        url: 'https://cwwp2.dot.ca.gov/data/d2/cctv/image/blackbutte/blackbutte.jpg',
-        videoUrl: 'https://cwwp2.dot.ca.gov/vm/loc/d2/blackbutte.htm',
-        city: 'California', type: 'traffic',
-    },
-    {
-        id: 'caltrans-d2-fawndale',
-        name: 'Fawndale',
-        lat: 40.73079, lng: -122.32045,
-        url: 'https://cwwp2.dot.ca.gov/data/d2/cctv/image/fawndale/fawndale.jpg',
-        videoUrl: 'https://cwwp2.dot.ca.gov/vm/loc/d2/fawndale.htm',
-        city: 'California', type: 'traffic',
-    },
-    {
-        id: 'caltrans-d2-grass-lake',
-        name: 'Grass Lake',
-        lat: 41.63331, lng: -122.19312,
-        url: 'https://cwwp2.dot.ca.gov/data/d2/cctv/image/grasslake/grasslake.jpg',
-        videoUrl: 'https://cwwp2.dot.ca.gov/vm/loc/d2/grasslake.htm',
-        city: 'California', type: 'traffic',
+        id: 'dubai-skyline', name: 'Dubai — Palm Skyline Live',
+        lat: 25.1124, lng: 55.1390, url: null, seed: true,
+        videoUrl: 'https://www.youtube.com/embed/7dE4IjDQJmE?autoplay=1&rel=0',
+        city: 'Dubai', mediaType: 'embed', provider: 'Fairmont', type: 'landmark',
     },
 ];
 
