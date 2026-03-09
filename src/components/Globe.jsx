@@ -682,12 +682,6 @@ export default function Globe() {
             return;
         }
 
-        // If there is nothing to focus on, don't hide anything — it would
-        // blank the entire globe and leave the user stuck.
-        if (!trackedEntityId) {
-            return;
-        }
-
         const hideNonTrackedEntities = () => {
             if (viewer.isDestroyed()) return;
             const entities = viewer.entities.values;
@@ -695,9 +689,13 @@ export default function Globe() {
             for (let i = 0; i < entities.length; i++) {
                 const entity = entities[i];
                 const id = String(entity.id || '');
-                const isTracked = id === trackedEntityId;
-                const isTrail = id === `track-trail-${trackedEntityId}`;
-                const shouldShow = isTracked || isTrail;
+
+                // If we have a tracked target, show only it and its trail
+                // If no tracked target, hide everything
+                let shouldShow = false;
+                if (trackedEntityId) {
+                    shouldShow = id === trackedEntityId || id === `track-trail-${trackedEntityId}`;
+                }
 
                 // Only mutate when needed to avoid unnecessary work
                 if (entity.show !== shouldShow) {
