@@ -4,9 +4,14 @@ import useStore from '../store/useStore';
 export default function TopBar() {
     const getActiveFeedCount = useStore((s) => s.getActiveFeedCount);
     const getTotalEntityCount = useStore((s) => s.getTotalEntityCount);
+    const [timestamp, setTimestamp] = React.useState('');
 
-    const now = new Date();
-    const timestamp = now.toISOString().replace('T', ' ').substring(0, 19);
+    React.useEffect(() => {
+        const updateTime = () => setTimestamp(new Date().toISOString().replace('T', ' ').substring(0, 19));
+        updateTime();
+        const interval = setInterval(updateTime, 1000);
+        return () => clearInterval(interval);
+    }, []);
 
     return (
         <div className="top-bar">

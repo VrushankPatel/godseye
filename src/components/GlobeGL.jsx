@@ -75,11 +75,15 @@ export default function GlobeGL() {
     const setHoverInfo = useStore((s) => s.setHoverInfo);
     const clearHoverInfo = useStore((s) => s.clearHoverInfo);
     const isAutoRotating = useStore((s) => s.isAutoRotating);
+    const setAutoRotating = useStore((s) => s.setAutoRotating);
     const focusHideEntities = useStore((s) => s.focusHideEntities);
+    const focusMode = useStore((s) => s.focusMode);
+    const trackedTarget = useStore((s) => s.trackedTarget);
+    const setTrackedTarget = useStore((s) => s.setTrackedTarget);
 
     /* ── Aggregate all enabled layer data into points ── */
     const pointsData = useMemo(() => {
-        if (focusHideEntities) return [];
+        if (focusHideEntities && !trackedTarget) return [];
 
         const points = [];
         for (const [layerName, layerState] of Object.entries(layers)) {
@@ -89,6 +93,13 @@ export default function GlobeGL() {
             const size = LAYER_POINT_SIZE[layerName] || LAYER_POINT_SIZE.default;
 
             for (const item of layerState.data) {
+                if (focusHideEntities || (focusMode && trackedTarget)) {
+                    const itemId = item.id || '';
+                    if (trackedTarget && trackedTarget.entityId !== itemId) {
+                        continue;
+                    }
+                }
+
                 const lat = item.lat ?? item.latitude ?? item.geo_lat;
                 const lng = item.lng ?? item.lon ?? item.longitude ?? item.geo_lon;
                 if (lat == null || lng == null) continue;
@@ -97,7 +108,7 @@ export default function GlobeGL() {
                 points.push({
                     lat: Number(lat),
                     lng: Number(lng),
-                    alt: layerName === 'satellites' ? 0.08 : (item.alt_m ? Math.min(item.alt_m / 6371000, 0.05) : 0.001),
+                    alt: layerName === 'satellites' ? 0.015 : (item.alt_m ? Math.min(item.alt_m / 6371000, 0.01) : 0.001),
                     size,
                     color,
                     layerName,
@@ -114,7 +125,7 @@ export default function GlobeGL() {
         if (!containerRef.current || globeRef.current) return;
 
         const globe = Globe()
-            .globeImageUrl('//unpkg.com/three-globe/example/img/earth-dark.jpg')
+            .globeImageUrl('//unpkg.com/three-globe/example/img/earth-blue-marble.jpg')
             .bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png')
             .backgroundImageUrl('//unpkg.com/three-globe/example/img/night-sky.png')
             .showAtmosphere(true)
@@ -123,27 +134,37 @@ export default function GlobeGL() {
             .pointOfView({ lat: 20, lng: 0, altitude: 2.5 })
             .width(containerRef.current.clientWidth)
             .height(containerRef.current.clientHeight)
-            // Points layer config
-            .pointsData([])
-            .pointLat('lat')
-            .pointLng('lng')
-            .pointAltitude('alt')
-            .pointRadius('size')
-            .pointColor('color')
-            .pointsMerge(false)
-            .pointResolution(4)
-            // Click handler
-            .onPointClick((point) => {
+            // Objects layer config (Custom Three.js spheres instead of raw points)
+            .objectsData([])
+            .objectLat('lat')
+            .objectLng('lng')
+            .objectAltitude('alt')
+            .objectThreeObject((d) => {
+                const geometry = new THREE.SphereGeometry(d.size * 0.8, 8, 8);
+                const material = new THREE.MeshLambertMaterial({ color: d.color });
+                return new THREE.Mesh(geometry, material);
+            })
+            .onObjectClick((point) => {
                 if (!point) return;
+                const rawId = point._raw.id || `id-${Math.random()}`;
+
+                // Set inspector and tracked target
+                setTrackedTarget({ type: point.layerName, entityId: rawId, data: point._raw });
                 setInspector({
                     type: point.layerName,
                     name: point.name,
                     position: { lat: point.lat, lng: point.lng },
                     data: point._raw,
                 });
+
+                // Stop rotation and fly to point
+                useStore.getState().setAutoRotating(false);
+                if (globeRef.current) {
+                    globeRef.current.pointOfView({ lat: point.lat, lng: point.lng, altitude: 1.2 }, 1000);
+                }
             })
             // Hover
-            .onPointHover((point) => {
+            .onObjectHover((point) => {
                 if (point) {
                     setHoverInfo({
                         name: point.name,
@@ -161,27 +182,18 @@ export default function GlobeGL() {
         const scene = globe.scene();
         scene.background = new THREE.Color(0x000000);
 
-        // Custom green glow via directional light
-        const ambientLight = new THREE.AmbientLight(0x002200, 0.6);
-        scene.add(ambientLight);
+        // Custom green glow via directional + ambient light
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+        const dirLight = new THREE.DirectionalLight(0x00ff41, 0.6);
+        dirLight.position.set(1, 1, 1);
+        scene.add(ambientLight, dirLight);
 
         // Override renderer
         const renderer = globe.renderer();
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        renderer.toneMappingExposure = 0.8;
+        renderer.toneMappingExposure = 1.0;
 
-        // Globe material customization
-        const globeMesh = globe.scene().children.find(c => c.type === 'Group');
-        if (globeMesh) {
-            globeMesh.traverse((child) => {
-                if (child.isMesh && child.material) {
-                    child.material.emissive = new THREE.Color(0x001a00);
-                    child.material.emissiveIntensity = 0.15;
-                }
-            });
-        }
-
-        // Auto-rotation
+        // Auto-rotation & Controls
         const controls = globe.controls();
         controls.autoRotate = true;
         controls.autoRotateSpeed = 0.4;
@@ -189,6 +201,11 @@ export default function GlobeGL() {
         controls.dampingFactor = 0.1;
         controls.minDistance = 101;
         controls.maxDistance = 1200;
+
+        // Stop auto-rotation when user interacts
+        controls.addEventListener('start', () => {
+            useStore.getState().setAutoRotating(false);
+        });
 
         globeRef.current = globe;
 
@@ -210,10 +227,10 @@ export default function GlobeGL() {
         };
     }, []);
 
-    /* ── Update points data ──────────────────────────── */
+    /* ── Update objects data ──────────────────────────── */
     useEffect(() => {
         if (!globeRef.current) return;
-        globeRef.current.pointsData(pointsData);
+        globeRef.current.objectsData(pointsData);
     }, [pointsData]);
 
     /* ── Auto-rotation toggle ────────────────────────── */
