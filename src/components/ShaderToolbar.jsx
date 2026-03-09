@@ -7,63 +7,24 @@ export default function ShaderToolbar() {
     const setShader = useStore((s) => s.setShader);
     const enableAllLayers = useStore((s) => s.enableAllLayers);
     const enableSurveillanceLayers = useStore((s) => s.enableSurveillanceLayers);
-    const focusMode = useStore((s) => s.focusMode);
-    const toggleFocusMode = useStore((s) => s.toggleFocusMode);
-    const focusHideEntities = useStore((s) => s.focusHideEntities);
-    const setFocusHideEntities = useStore((s) => s.setFocusHideEntities);
 
-    const handleModeClick = (modeId) => {
-        setShader(modeId);
-        if (modeId === 'GOD') {
-            enableAllLayers();
-        } else if (modeId === 'SURVEILLANCE') {
-            enableSurveillanceLayers();
-        }
+    const handleClick = (mode) => {
+        setShader(mode.id);
+        if (mode.id === 'GOD') enableAllLayers();
+        else if (mode.id === 'SURVEILLANCE') enableSurveillanceLayers();
     };
 
     return (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 pointer-events-none z-10 animate-slide-up">
-            <div className="glass-panel px-6 py-3 flex flex-col items-center gap-3 pointer-events-auto rounded-full pb-4">
-
-                <div className="text-[10px] tracking-[0.3em] text-text-dim uppercase font-semibold">
-                    VISUAL_MODE_OVERRIDE
-                </div>
-
-                <div className="flex gap-2">
-                    {SHADER_MODES.map((mode) => (
-                        <button
-                            key={mode.id}
-                            onClick={() => handleModeClick(mode.id)}
-                            className={`mode-btn ${activeShader === mode.id ? 'active' : ''}`}
-                        >
-                            <span className="opacity-50 mr-2 text-[9px]">{mode.key}</span>
-                            {mode.label}
-                        </button>
-                    ))}
-                </div>
-
-                <div className="flex items-center gap-2 pt-1">
-                    <button
-                        onClick={toggleFocusMode}
-                        className={`mode-btn !px-3 !py-1.5 !text-[10px] ${
-                            focusMode ? 'active' : ''
-                        }`}
-                    >
-                        FOCUS MODE
-                    </button>
-                    {focusMode && (
-                        <button
-                            onClick={() => setFocusHideEntities(!focusHideEntities)}
-                            className={`mode-btn !px-3 !py-1.5 !text-[10px] ${
-                                focusHideEntities ? 'active' : ''
-                            }`}
-                        >
-                            {focusHideEntities ? 'SHOW ENTITIES' : 'HIDE ENTITIES'}
-                        </button>
-                    )}
-                </div>
-
-            </div>
+        <div className="shader-toolbar">
+            {SHADER_MODES.map((mode) => (
+                <button
+                    key={mode.id}
+                    className={`shader-btn ${activeShader === mode.id ? 'active' : ''}`}
+                    onClick={() => handleClick(mode)}
+                >
+                    +{mode.id}
+                </button>
+            ))}
         </div>
     );
 }

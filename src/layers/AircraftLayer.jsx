@@ -1,644 +1,179 @@
 import React, { useEffect, useRef, useCallback } from 'react';
-import * as Cesium from 'cesium';
 import useStore from '../store/useStore';
-import { API_URLS, POLL_INTERVALS } from '../constants/dataSources';
+import { POLL_INTERVALS } from '../constants/dataSources';
+
+const OPENSKY_URL = 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://opensky-network.org/api/states/all');
 
 const FEET_TO_METERS = 0.3048;
-const KNOTS_TO_MPS = 0.514444;
-const REQUEST_TIMEOUT_MS = 10000;
-const EARTH_RADIUS_M = 6371000;
-const ANIMATION_INTERVAL_MS = 350;
-const MAX_EXTRAPOLATION_SECONDS = 45;
-const ROTATING_REGION_BATCH_SIZE = 5;
+const REQUEST_TIMEOUT_MS = 8000;
 
 const MILITARY_CALLSIGN_PREFIXES = [
-    'RCH', 'CMB', 'KING', 'DUKE', 'NAVY', 'SPAR', 'NATO', 'QID', 'MMF', 'BAF', 'CNV',
+    'RCH', 'DUKE', 'FORGE', 'DARK', 'COHO', 'SLAM', 'HAVOC', 'FURY', 'TEAL', 'BISON',
+    'TOPCAT', 'REACH', 'EVAC', 'SPAR', 'ALIKE', 'NATO',
 ];
-const CARGO_CALLSIGN_PREFIXES = [
-    'FDX', 'UPS', 'DHL', 'CKS', 'GTI', 'ABX', 'CLX', 'BOX', 'NCR', 'BCS', 'FX',
-];
-const MILITARY_TYPE_PREFIXES = [
-    'C17', 'C130', 'KC', 'E3', 'P8', 'A400', 'C5', 'F15', 'F16', 'F18', 'B52', 'B1',
-];
+const MILITARY_TYPE_PREFIXES = ['C17', 'C130', 'KC', 'E3', 'P8', 'A400', 'C5', 'F15', 'F16', 'F18', 'B52', 'B1'];
 const CARGO_TYPE_HINTS = ['744F', '748F', '77F', '76F', '73F', 'A332F', 'A30F'];
 
-function toRadians(value) {
-    return value * Math.PI / 180;
-}
-
-function toDegrees(value) {
-    return value * 180 / Math.PI;
-}
-
-function normalizeLongitude(lon) {
-    let value = lon;
-    while (value > 180) value -= 360;
-    while (value < -180) value += 360;
-    return value;
-}
-
 function normalizeCallsign(raw) {
-    return String(raw || '')
-        .trim()
-        .toUpperCase()
-        .replace(/\s+/g, '');
+    if (!raw || typeof raw !== 'string') return '';
+    return raw.replace(/[\s_]+/g, '').toUpperCase();
 }
 
-function classifyFlight({ callsign, operator, aircraftType, categoryCode }) {
-    const normalizedCallsign = normalizeCallsign(callsign);
-    const operatorText = String(operator || '').toUpperCase();
-    const typeText = String(aircraftType || '').toUpperCase();
-
-    const isMilitary =
-        MILITARY_CALLSIGN_PREFIXES.some((prefix) => normalizedCallsign.startsWith(prefix)) ||
-        MILITARY_TYPE_PREFIXES.some((prefix) => typeText.startsWith(prefix)) ||
-        /(AIR FORCE|AIRFORCE|MILITARY|NAVY|ARMY|MARINES|DEFENCE|DEFENSE|USAF|RAF)/.test(operatorText);
-
-    if (isMilitary) return 'military';
-
-    const isCargo =
-        CARGO_CALLSIGN_PREFIXES.some((prefix) => normalizedCallsign.startsWith(prefix)) ||
-        CARGO_TYPE_HINTS.some((hint) => typeText.includes(hint)) ||
-        /(CARGO|FREIGHT|EXPRESS|LOGISTICS|PARCEL)/.test(operatorText);
-
-    if (isCargo) return 'cargo';
-
-    const looksPassenger = /^[A-Z]{2,3}\d/.test(normalizedCallsign) ||
-        /(AIRLINES|AIRWAYS|JET|AIR\s)/.test(operatorText);
-
-    if (looksPassenger) return 'passenger';
-
-    if (categoryCode === 'A1' || categoryCode === 'A2') return 'private';
-
-    if (!normalizedCallsign && !operatorText) return 'unknown';
-
-    return 'private';
-}
-
-function projectFlightPosition(longitude, latitude, headingDeg, speedMps, dtSeconds) {
-    if (
-        !Number.isFinite(longitude) ||
-        !Number.isFinite(latitude) ||
-        !Number.isFinite(headingDeg) ||
-        !Number.isFinite(speedMps) ||
-        speedMps <= 0
-    ) {
-        return { longitude, latitude };
-    }
-
-    const angularDistance = (speedMps * dtSeconds) / EARTH_RADIUS_M;
-    const heading = toRadians(headingDeg);
-    const lat1 = toRadians(latitude);
-    const lon1 = toRadians(longitude);
-
-    const sinLat1 = Math.sin(lat1);
-    const cosLat1 = Math.cos(lat1);
-    const sinAngular = Math.sin(angularDistance);
-    const cosAngular = Math.cos(angularDistance);
-
-    const lat2 = Math.asin(
-        sinLat1 * cosAngular + cosLat1 * sinAngular * Math.cos(heading)
-    );
-
-    const lon2 = lon1 + Math.atan2(
-        Math.sin(heading) * sinAngular * cosLat1,
-        cosAngular - sinLat1 * Math.sin(lat2)
-    );
-
-    return {
-        longitude: normalizeLongitude(toDegrees(lon2)),
-        latitude: Math.max(-89.9, Math.min(89.9, toDegrees(lat2))),
-    };
+function classifyFlight({ callsign, operator, aircraftType }) {
+    const cs = normalizeCallsign(callsign);
+    const type = (aircraftType || '').toUpperCase();
+    const op = (operator || '').toUpperCase();
+    if (MILITARY_CALLSIGN_PREFIXES.some((p) => cs.startsWith(p))) return 'military';
+    if (MILITARY_TYPE_PREFIXES.some((p) => type.startsWith(p))) return 'military';
+    if (['AIRFORCE', 'NAVY', 'ARMY', 'MARINE', 'RAF', 'IAF'].some((m) => op.includes(m))) return 'military';
+    if (CARGO_TYPE_HINTS.some((h) => type.includes(h))) return 'cargo';
+    if (/^[A-Z]{2,3}\d/.test(cs)) return 'passenger';
+    if (/^N\d/.test(cs) || /^G-/.test(cs) || /^VT-/.test(cs)) return 'private';
+    return 'unknown';
 }
 
 function parseOpenSkyPayload(payload) {
-    try {
-        let parsed = payload;
-        if (typeof parsed === 'string') parsed = JSON.parse(parsed);
-        if (parsed && typeof parsed.contents === 'string') parsed = JSON.parse(parsed.contents);
-        if (!parsed || !Array.isArray(parsed.states)) return [];
-
-        return parsed.states
-            .map((state) => {
-                const [
-                    icao24, callsign, origin_country, , ,
-                    longitude, latitude, baro_altitude,
-                    on_ground, velocity, true_track,
-                ] = state;
-
-                if (!Number.isFinite(longitude) || !Number.isFinite(latitude) || on_ground === true) return null;
-
-                const normalizedCallsign = callsign ? String(callsign).trim() : String(icao24 || 'UNKNOWN').toUpperCase();
-                const operator = origin_country || 'Unknown';
-
-                return {
-                    id: String(icao24 || `${longitude}:${latitude}`).toLowerCase(),
-                    callsign: normalizedCallsign,
-                    operator,
-                    origin: operator,
-                    registration: 'N/A',
-                    aircraftType: 'N/A',
-                    categoryCode: 'N/A',
-                    provider: 'OpenSky',
-                    longitude,
-                    latitude,
-                    altitudeM: Number.isFinite(baro_altitude) ? baro_altitude : 10000,
-                    velocityMps: Number.isFinite(velocity) ? velocity : 0,
-                    headingDeg: Number.isFinite(true_track) ? true_track : 0,
-                };
-            })
-            .filter(Boolean)
-            .map((flight) => ({
-                ...flight,
-                flightClass: classifyFlight(flight),
-            }));
-    } catch (err) {
-        return [];
-    }
+    if (!payload?.states?.length) return [];
+    return payload.states.map((s) => {
+        const callsign = normalizeCallsign(s[1]);
+        return {
+            id: `aircraft-${s[0] || callsign}`,
+            icao24: s[0],
+            callsign,
+            lat: s[6],
+            lng: s[5],
+            alt_m: s[7] || (s[13] ? s[13] * FEET_TO_METERS : 0),
+            heading: s[10] || 0,
+            velocity_mps: s[9] || 0,
+            on_ground: s[8],
+            flightClass: classifyFlight({ callsign, operator: '', aircraftType: '' }),
+            origin_country: s[2] || '',
+        };
+    }).filter((f) => f.lat != null && f.lng != null && !f.on_ground);
 }
 
-function parseAdsbPayload(payload, provider) {
-    if (!payload || !Array.isArray(payload.ac)) return [];
-
-    return payload.ac
-        .map((ac) => {
-            const longitude = typeof ac.lon === 'number' ? ac.lon : Number(ac.lon);
-            const latitude = typeof ac.lat === 'number' ? ac.lat : Number(ac.lat);
-            if (!Number.isFinite(longitude) || !Number.isFinite(latitude)) return null;
-
-            const baroFeet = typeof ac.alt_baro === 'number' ? ac.alt_baro : null;
-            const geomFeet = typeof ac.alt_geom === 'number' ? ac.alt_geom : null;
-            const altitudeM = Number.isFinite(baroFeet)
-                ? baroFeet * FEET_TO_METERS
-                : Number.isFinite(geomFeet)
-                    ? geomFeet * FEET_TO_METERS
-                    : 10000;
-
-            const onGround = ac.alt_baro === 'ground' || (Number.isFinite(geomFeet) && geomFeet < 120);
-            if (onGround) return null;
-
-            const speedKnots = typeof ac.gs === 'number' ? ac.gs : Number(ac.gs);
-            const headingDeg = typeof ac.track === 'number' ? ac.track : Number(ac.track);
-            const callsign = String(ac.flight || ac.hex || 'UNKNOWN').trim();
-            const operator = ac.ownOp || ac.desc || 'Unknown';
-
-            const parsedFlight = {
-                id: String(ac.hex || `${longitude}:${latitude}`).toLowerCase(),
-                callsign,
-                operator,
-                origin: operator,
-                registration: ac.r || 'N/A',
-                aircraftType: ac.t || ac.desc || 'N/A',
-                categoryCode: ac.category || 'N/A',
-                provider,
-                longitude,
-                latitude,
-                altitudeM,
-                velocityMps: Number.isFinite(speedKnots) ? speedKnots * KNOTS_TO_MPS : 0,
-                headingDeg: Number.isFinite(headingDeg) ? headingDeg : 0,
-            };
-
-            return {
-                ...parsedFlight,
-                flightClass: classifyFlight(parsedFlight),
-            };
-        })
-        .filter(Boolean);
-}
-
-async function fetchJsonWithTimeout(url, timeoutMs) {
+async function fetchJsonWithTimeout(url, timeoutMs = REQUEST_TIMEOUT_MS) {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
     try {
-        const response = await fetch(url, {
-            signal: controller.signal,
-            cache: 'no-store',
-        });
+        const response = await fetch(url, { signal: controller.signal });
+        clearTimeout(timer);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        return await response.json();
-    } finally {
-        clearTimeout(timeoutId);
+        return response.json();
+    } catch (err) {
+        clearTimeout(timer);
+        throw err;
     }
 }
 
-function createPlaneIconDataUri() {
-    const canvas = document.createElement('canvas');
-    canvas.width = 28;
-    canvas.height = 28;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return null;
-
-    ctx.translate(14, 14);
-    ctx.fillStyle = '#00b4ff';
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
-    ctx.lineWidth = 1.2;
-
-    ctx.beginPath();
-    ctx.moveTo(0, -10);
-    ctx.lineTo(2.6, 2.4);
-    ctx.lineTo(8.2, 6.5);
-    ctx.lineTo(7.2, 8.1);
-    ctx.lineTo(1.3, 5.6);
-    ctx.lineTo(1.3, 10.5);
-    ctx.lineTo(-1.3, 10.5);
-    ctx.lineTo(-1.3, 5.6);
-    ctx.lineTo(-7.2, 8.1);
-    ctx.lineTo(-8.2, 6.5);
-    ctx.lineTo(-2.6, 2.4);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-
-    return canvas.toDataURL('image/png');
-}
-
-const BASE_AIRCRAFT_SOURCES = [
-    { url: API_URLS.ADSB_ONE_GLOBAL, parser: (payload) => parseAdsbPayload(payload, 'ADSB.one') },
-    { url: API_URLS.AIRPLANES_GLOBAL, parser: (payload) => parseAdsbPayload(payload, 'Airplanes.live') },
-];
-
-const CORE_REGIONAL_AIR_ZONES = [
+const CORE_ZONES = [
     { id: 'INDIA_NORTH', lat: 28.6, lon: 77.2, radiusNm: 900 },
     { id: 'INDIA_SOUTH', lat: 13.0, lon: 80.2, radiusNm: 900 },
     { id: 'EUROPE_CORE', lat: 50.0, lon: 10.0, radiusNm: 1200 },
-    { id: 'N_AMERICA', lat: 39.0, lon: -97.0, radiusNm: 1700 },
-    { id: 'S_AMERICA', lat: -15.0, lon: -60.0, radiusNm: 1400 },
-    { id: 'EAST_ASIA', lat: 35.7, lon: 116.8, radiusNm: 1400 },
-    { id: 'SE_ASIA', lat: 6.8, lon: 103.5, radiusNm: 1200 },
-    { id: 'AFRICA', lat: 2.0, lon: 20.0, radiusNm: 1700 },
-    { id: 'OCEANIA', lat: -24.0, lon: 134.0, radiusNm: 1500 },
-];
-
-const ROTATING_REGIONAL_AIR_ZONES = [
-    { id: 'INDIA', lat: 22.6, lon: 79.0, radiusNm: 1700 },
-    { id: 'MIDDLE_EAST', lat: 25.2, lon: 46.8, radiusNm: 1700 },
-    { id: 'EAST_ASIA', lat: 35.7, lon: 116.8, radiusNm: 2000 },
-    { id: 'SE_ASIA', lat: 6.8, lon: 103.5, radiusNm: 1700 },
-    { id: 'AFRICA_NORTH', lat: 25.3, lon: 15.0, radiusNm: 1900 },
-    { id: 'AFRICA_SOUTH', lat: -18.0, lon: 24.0, radiusNm: 1900 },
+    { id: 'SE_ASIA', lat: 10.0, lon: 105.0, radiusNm: 1200 },
+    { id: 'E_ASIA', lat: 35.0, lon: 120.0, radiusNm: 1200 },
+    { id: 'MID_EAST', lat: 25.0, lon: 50.0, radiusNm: 900 },
+    { id: 'AFRICA_W', lat: 6.0, lon: 3.0, radiusNm: 1800 },
     { id: 'S_AMERICA', lat: -15.0, lon: -60.0, radiusNm: 2300 },
     { id: 'OCEANIA', lat: -24.0, lon: 134.0, radiusNm: 2200 },
-    { id: 'NORTH_ATLANTIC', lat: 45.0, lon: -30.0, radiusNm: 1700 },
+    { id: 'N_AMERICA', lat: 40.0, lon: -100.0, radiusNm: 2200 },
 ];
 
-function buildRegionalPointSources(zones) {
-    return zones.flatMap((zone) => {
-        const suffix = `${zone.lat}/${zone.lon}/${zone.radiusNm}`;
-        return [
-            {
-                url: `https://api.adsb.one/v2/point/${suffix}`,
-                parser: (payload) => parseAdsbPayload(payload, `ADSB.one ${zone.id}`),
-            },
-            {
-                url: `https://api.airplanes.live/v2/point/${suffix}`,
-                parser: (payload) => parseAdsbPayload(payload, `Airplanes.live ${zone.id}`),
-            },
-        ];
-    });
-}
-
-function getRotatingZones(cycleIndex) {
-    if (!ROTATING_REGIONAL_AIR_ZONES.length) return [];
-    const zones = [];
-    const start = (cycleIndex * ROTATING_REGION_BATCH_SIZE) % ROTATING_REGIONAL_AIR_ZONES.length;
-    for (let i = 0; i < ROTATING_REGION_BATCH_SIZE; i += 1) {
-        const idx = (start + i) % ROTATING_REGIONAL_AIR_ZONES.length;
-        zones.push(ROTATING_REGIONAL_AIR_ZONES[idx]);
-    }
-    return zones;
-}
-
-export default function AircraftLayer({ viewer }) {
+export default function AircraftLayer() {
     const aircraftEnabled = useStore((s) => s.layers.aircraft.enabled);
-    const militaryActivityEnabled = useStore((s) => s.layers.militaryActivity.enabled);
     const flightFilters = useStore((s) => s.flightFilters);
-    const trackedTarget = useStore((s) => s.trackedTarget);
     const updateData = useStore((s) => s.updateLayerData);
     const setStatus = useStore((s) => s.setLayerStatus);
     const setAircraftFeedData = useStore((s) => s.setAircraftFeedData);
 
-    const entitiesRef = useRef(new Map());
-    const flightStateRef = useRef(new Map());
     const rawFlightsRef = useRef([]);
     const pollTimerRef = useRef(null);
-    const animationTimerRef = useRef(null);
     const mountedRef = useRef(true);
-    const planeIconRef = useRef(null);
     const sourceCycleRef = useRef(0);
-    const shouldIngest = aircraftEnabled || militaryActivityEnabled;
 
-    const clearEntities = useCallback(() => {
-        entitiesRef.current.forEach((entity) => viewer.entities.remove(entity));
-        entitiesRef.current.clear();
-        flightStateRef.current.clear();
-    }, [viewer]);
+    const fetchFlights = useCallback(async () => {
+        if (!mountedRef.current) return;
+        setStatus('aircraft', 'loading');
 
-    const applyTrackedVisibility = useCallback((trackedEntityId) => {
-        const hasTrackedAircraft = Boolean(
-            trackedEntityId &&
-            typeof trackedEntityId === 'string' &&
-            trackedEntityId.startsWith('aircraft-')
-        );
+        try {
+            // Base OpenSky fetch
+            const payload = await fetchJsonWithTimeout(OPENSKY_URL);
+            const flights = parseOpenSkyPayload(payload);
 
-        for (const [, entity] of entitiesRef.current.entries()) {
-            entity.show = hasTrackedAircraft ? entity.id === trackedEntityId : true;
-        }
+            // Regional zone fetches (rotate through zones)
+            const cycle = sourceCycleRef.current % CORE_ZONES.length;
+            const zone = CORE_ZONES[cycle];
+            sourceCycleRef.current++;
 
-        if (viewer && !viewer.isDestroyed()) {
-            viewer.scene.requestRender();
-        }
-    }, [viewer]);
+            try {
+                const d = 10; // ~10 degree box approximation
+                const directUrl = `https://opensky-network.org/api/states/all?lamin=${zone.lat - d}&lamax=${zone.lat + d}&lomin=${zone.lon - d}&lomax=${zone.lon + d}`;
+                const zoneUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(directUrl);
+                const zonePayload = await fetchJsonWithTimeout(zoneUrl);
+                const zoneFlights = parseOpenSkyPayload(zonePayload);
+                // Merge, dedupe by id
+                const existingIds = new Set(flights.map((f) => f.id));
+                for (const zf of zoneFlights) {
+                    if (!existingIds.has(zf.id)) flights.push(zf);
+                }
+            } catch (_) {
+                // Zone fetch failed, continue with base data
+            }
 
-    const animateFlights = useCallback(() => {
-        if (!viewer || viewer.isDestroyed()) return;
+            if (!mountedRef.current) return;
 
-        const nowMs = Date.now();
-        for (const [id, flight] of flightStateRef.current.entries()) {
-            const entity = entitiesRef.current.get(id);
-            if (!entity) continue;
+            rawFlightsRef.current = flights;
+            setAircraftFeedData(flights);
 
-            const elapsedSeconds = Math.min(
-                Math.max((nowMs - flight.updatedAtMs) / 1000, 0),
-                MAX_EXTRAPOLATION_SECONDS
-            );
-
-            const projected = projectFlightPosition(
-                flight.longitude,
-                flight.latitude,
-                flight.headingDeg,
-                flight.velocityMps,
-                elapsedSeconds
-            );
-
-            entity.position = Cesium.Cartesian3.fromDegrees(
-                projected.longitude,
-                projected.latitude,
-                flight.altitudeM
-            );
-        }
-
-        viewer.scene.requestRender();
-    }, [viewer]);
-
-    const handleData = useCallback((flights) => {
-        if (!Array.isArray(flights) || !flights.length) {
-            clearEntities();
-            updateData('aircraft', []);
-            setStatus('aircraft', 'error');
-            return;
-        }
-
-        const activeFilters = useStore.getState().flightFilters;
-        const activeTrackedTarget = useStore.getState().trackedTarget;
-        const trackedEntityId = (
-            activeTrackedTarget?.type === 'aircraft' &&
-            typeof activeTrackedTarget.entityId === 'string' &&
-            activeTrackedTarget.entityId.startsWith('aircraft-')
-        )
-            ? activeTrackedTarget.entityId
-            : null;
-        const airlineQuery = String(activeFilters.airlineQuery || '').trim().toUpperCase();
-        const visibleFlights = flights.filter((flight) => {
-            if (!activeFilters[flight.flightClass]) return false;
-            if (!airlineQuery) return true;
-            return (
-                String(flight.callsign || '').toUpperCase().includes(airlineQuery) ||
-                String(flight.operator || '').toUpperCase().includes(airlineQuery) ||
-                String(flight.registration || '').toUpperCase().includes(airlineQuery)
-            );
-        });
-
-        setStatus('aircraft', 'active');
-        updateData('aircraft', visibleFlights);
-
-        const currentIds = new Set();
-        const nowMs = Date.now();
-
-        visibleFlights.forEach((flight) => {
-            const id = flight.id;
-            currentIds.add(id);
-
-            flightStateRef.current.set(id, {
-                ...flight,
-                updatedAtMs: nowMs,
+            // Apply filters
+            const filters = useStore.getState().flightFilters;
+            const airlineQuery = String(filters.airlineQuery || '').trim().toUpperCase();
+            const visible = flights.filter((f) => {
+                if (!filters[f.flightClass]) return false;
+                if (!airlineQuery) return true;
+                return String(f.callsign).includes(airlineQuery);
             });
 
-            const speedKmh = flight.velocityMps ? Math.round(flight.velocityMps * 3.6) : null;
-            const heading = Number.isFinite(flight.headingDeg) ? Math.round(flight.headingDeg) : null;
-            const rotation = Cesium.Math.toRadians(heading || 0);
-
-            if (entitiesRef.current.has(id)) {
-                const entity = entitiesRef.current.get(id);
-                entity.position = Cesium.Cartesian3.fromDegrees(flight.longitude, flight.latitude, flight.altitudeM);
-                entity.billboard.rotation = rotation;
-                entity.show = trackedEntityId ? entity.id === trackedEntityId : true;
-                entity.properties.callsign = flight.callsign;
-                entity.properties.operator = flight.operator;
-                entity.properties.provider = flight.provider;
-                entity.properties.class = flight.flightClass.toUpperCase();
-                entity.properties.aircraftType = flight.aircraftType;
-                entity.properties.registration = flight.registration;
-                entity.properties.latitude = flight.latitude.toFixed(4);
-                entity.properties.longitude = flight.longitude.toFixed(4);
-                entity.properties.altitude = `${Math.round(flight.altitudeM)} m`;
-                entity.properties.velocity = speedKmh !== null ? `${speedKmh} km/h` : 'N/A';
-                entity.properties.heading = heading !== null ? `${heading}°` : 'N/A';
-                entity.properties._headingDeg = heading !== null ? heading : 0;
-            } else {
-                const entity = viewer.entities.add({
-                    id: `aircraft-${id}`,
-                    position: Cesium.Cartesian3.fromDegrees(flight.longitude, flight.latitude, flight.altitudeM),
-                    show: trackedEntityId ? `aircraft-${id}` === trackedEntityId : true,
-                    name: flight.callsign,
-                    billboard: {
-                        image: planeIconRef.current,
-                        scale: 0.48,
-                        alignedAxis: Cesium.Cartesian3.UNIT_Z,
-                        rotation,
-                        disableDepthTestDistance: 9000000,
-                    },
-                    properties: {
-                        _layerType: 'aircraft',
-                        callsign: flight.callsign,
-                        operator: flight.operator,
-                        provider: flight.provider,
-                        class: flight.flightClass.toUpperCase(),
-                        icao24: id,
-                        registration: flight.registration,
-                        aircraftType: flight.aircraftType,
-                        altitude: `${Math.round(flight.altitudeM)} m`,
-                        velocity: speedKmh !== null ? `${speedKmh} km/h` : 'N/A',
-                        heading: heading !== null ? `${heading}°` : 'N/A',
-                        _headingDeg: heading !== null ? heading : 0,
-                        latitude: flight.latitude.toFixed(4),
-                        longitude: flight.longitude.toFixed(4),
-                        status: 'AIRBORNE',
-                    },
-                });
-                entitiesRef.current.set(id, entity);
-            }
-        });
-
-        for (const [id, entity] of entitiesRef.current.entries()) {
-            if (!currentIds.has(id)) {
-                viewer.entities.remove(entity);
-                entitiesRef.current.delete(id);
-                flightStateRef.current.delete(id);
-            }
-        }
-    }, [clearEntities, setStatus, updateData, viewer]);
-
-    const pollAircraft = useCallback(async () => {
-        if (!shouldIngest || !mountedRef.current) return;
-
-        const zones = getRotatingZones(sourceCycleRef.current);
-        sourceCycleRef.current += 1;
-        const coreRegionalSources = buildRegionalPointSources(CORE_REGIONAL_AIR_ZONES);
-        const rotatingRegionalSources = buildRegionalPointSources(zones);
-        const aircraftSources = [
-            ...BASE_AIRCRAFT_SOURCES,
-            ...coreRegionalSources,
-            ...rotatingRegionalSources,
-        ];
-
-        const results = await Promise.allSettled(
-            aircraftSources.map(async (source) => {
-                const payload = await fetchJsonWithTimeout(source.url, REQUEST_TIMEOUT_MS);
-                return source.parser(payload);
-            })
-        );
-
-        const merged = new Map();
-        for (const result of results) {
-            if (result.status !== 'fulfilled') continue;
-            for (const flight of result.value) {
-                if (!flight || !flight.id) continue;
-                const existing = merged.get(flight.id);
-                if (!existing) {
-                    merged.set(flight.id, flight);
-                    continue;
-                }
-
-                // Prefer records with richer metadata.
-                const existingScore =
-                    (existing.operator && existing.operator !== 'Unknown' ? 1 : 0) +
-                    (existing.registration && existing.registration !== 'N/A' ? 1 : 0) +
-                    (existing.aircraftType && existing.aircraftType !== 'N/A' ? 1 : 0);
-                const newScore =
-                    (flight.operator && flight.operator !== 'Unknown' ? 1 : 0) +
-                    (flight.registration && flight.registration !== 'N/A' ? 1 : 0) +
-                    (flight.aircraftType && flight.aircraftType !== 'N/A' ? 1 : 0);
-
-                if (newScore >= existingScore) {
-                    merged.set(flight.id, flight);
-                }
-            }
-        }
-
-        const flights = Array.from(merged.values());
-        rawFlightsRef.current = flights;
-        setAircraftFeedData(flights);
-
-        if (!flights.length) {
-            clearEntities();
-            if (aircraftEnabled) {
-                updateData('aircraft', []);
+            updateData('aircraft', visible);
+            setStatus('aircraft', 'active');
+        } catch (err) {
+            if (mountedRef.current) {
                 setStatus('aircraft', 'error');
-            } else {
-                updateData('aircraft', []);
-                setStatus('aircraft', 'idle');
             }
-            return;
         }
-
-        if (aircraftEnabled) {
-            handleData(flights);
-        } else {
-            // Keep ingesting raw feed for military layer while aircraft visuals stay hidden.
-            clearEntities();
-            updateData('aircraft', []);
-            setStatus('aircraft', 'idle');
-        }
-    }, [
-        aircraftEnabled,
-        clearEntities,
-        handleData,
-        setAircraftFeedData,
-        setStatus,
-        shouldIngest,
-        updateData,
-    ]);
-
-    useEffect(() => {
-        if (!planeIconRef.current) {
-            planeIconRef.current = createPlaneIconDataUri();
-        }
-    }, []);
-
-    useEffect(() => {
-        if (!aircraftEnabled) return;
-        if (!rawFlightsRef.current.length) return;
-        handleData(rawFlightsRef.current);
-    }, [flightFilters, handleData, aircraftEnabled]);
-
-    useEffect(() => {
-        if (!aircraftEnabled) return;
-        const trackedEntityId = (
-            trackedTarget?.type === 'aircraft' &&
-            typeof trackedTarget.entityId === 'string' &&
-            trackedTarget.entityId.startsWith('aircraft-')
-        )
-            ? trackedTarget.entityId
-            : null;
-        applyTrackedVisibility(trackedEntityId);
-    }, [trackedTarget, applyTrackedVisibility, aircraftEnabled]);
+    }, [setStatus, updateData, setAircraftFeedData]);
 
     useEffect(() => {
         mountedRef.current = true;
-
-        if (!shouldIngest) {
+        if (!aircraftEnabled) {
             clearInterval(pollTimerRef.current);
-            clearInterval(animationTimerRef.current);
-            sourceCycleRef.current = 0;
-            clearEntities();
             updateData('aircraft', []);
             setStatus('aircraft', 'idle');
             setAircraftFeedData([]);
+            rawFlightsRef.current = [];
             return;
         }
 
-        if (aircraftEnabled) {
-            setStatus('aircraft', 'loading');
-        } else {
-            setStatus('aircraft', 'idle');
-            clearEntities();
-            updateData('aircraft', []);
-        }
-        pollAircraft();
-        pollTimerRef.current = setInterval(pollAircraft, POLL_INTERVALS.AIRCRAFT);
-        if (aircraftEnabled) {
-            animationTimerRef.current = setInterval(animateFlights, ANIMATION_INTERVAL_MS);
-        }
+        fetchFlights();
+        pollTimerRef.current = setInterval(fetchFlights, POLL_INTERVALS.AIRCRAFT);
 
         return () => {
             mountedRef.current = false;
             clearInterval(pollTimerRef.current);
-            clearInterval(animationTimerRef.current);
-            if (viewer && !viewer.isDestroyed()) {
-                clearEntities();
-            }
         };
-    }, [
-        aircraftEnabled,
-        animateFlights,
-        clearEntities,
-        pollAircraft,
-        setAircraftFeedData,
-        setStatus,
-        shouldIngest,
-        updateData,
-        viewer,
-    ]);
+    }, [aircraftEnabled, fetchFlights, updateData, setStatus, setAircraftFeedData]);
+
+    // Re-filter when filters change
+    useEffect(() => {
+        if (!aircraftEnabled || !rawFlightsRef.current.length) return;
+        const airlineQuery = String(flightFilters.airlineQuery || '').trim().toUpperCase();
+        const visible = rawFlightsRef.current.filter((f) => {
+            if (!flightFilters[f.flightClass]) return false;
+            if (!airlineQuery) return true;
+            return String(f.callsign).includes(airlineQuery);
+        });
+        updateData('aircraft', visible);
+    }, [flightFilters, aircraftEnabled, updateData]);
 
     return null;
 }

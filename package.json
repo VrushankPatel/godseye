@@ -1,7 +1,7 @@
 {
   "name": "godseye",
   "private": true,
-  "version": "1.0.0",
+  "version": "2.0.0-globegl",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -15,11 +15,12 @@
   },
   "dependencies": {
     "@vitejs/plugin-react": "^5.1.4",
-    "cesium": "^1.139.1",
+    "globe.gl": "^2.35.3",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
     "hls.js": "^1.6.15",
-    "resium": "^1.19.4",
     "satellite.js": "^6.0.2",
-    "vite-plugin-cesium": "^1.2.23",
+    "three": "^0.175.0",
     "zustand": "^5.0.11"
   }
 }

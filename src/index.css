@@ -1,92 +1,52 @@
-@import "tailwindcss";
+/* ═══════════════════════════════════════════════════════
+   GODSEYE — Green Monochrome Military Design System
+   Globe.GL Branch (feature/globejs-test)
+   ═══════════════════════════════════════════════════════ */
 
-@theme {
-  --color-bg-primary: #0a0a0f;
-  --color-bg-panel: rgba(10, 10, 15, 0.85);
-  --color-neon-green: #00ff41;
-  --color-neon-amber: #ffaa00;
-  --color-electric-blue: #00b4ff;
-  --color-neon-red: #ff3333;
-  --color-neon-cyan: #00ffff;
-  --color-text-primary: #e0e0e0;
-  --color-text-dim: #666680;
-  --color-border-panel: rgba(0, 180, 255, 0.15);
-  --font-mono: 'JetBrains Mono', 'Share Tech Mono', monospace;
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+@import 'tailwindcss';
+
+/* ── CSS Variables ─────────────────────────────────── */
+:root {
+  --primary: #00ff41;
+  --primary-dim: #00cc33;
+  --primary-dark: #009922;
+  --primary-glow: rgba(0, 255, 65, 0.25);
+  --bg: #000000;
+  --panel-bg: rgba(0, 12, 0, 0.88);
+  --panel-border: rgba(0, 255, 65, 0.2);
+  --panel-border-bright: rgba(0, 255, 65, 0.5);
+  --text-dim: rgba(0, 255, 65, 0.5);
+  --text-muted: rgba(0, 255, 65, 0.3);
+  --danger: #ff2222;
+  --warning: #ffaa00;
+  --font-mono: 'Share Tech Mono', 'Courier New', monospace;
 }
 
-/* ── Base ─────────────────────────────────────────── */
-* {
+/* ── Reset & Global ────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
 }
 
 body {
-  background: var(--color-bg-primary);
-  color: var(--color-text-primary);
   font-family: var(--font-mono);
+  background: var(--bg);
+  color: var(--primary);
   overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  cursor: crosshair;
 }
 
-/* ── Cesium Overrides ─────────────────────────────── */
-.cesium-viewer,
-.cesium-viewer-cesiumWidgetContainer,
-.cesium-widget,
-.cesium-widget canvas {
-  width: 100% !important;
-  height: 100% !important;
+::selection {
+  background: var(--primary);
+  color: var(--bg);
 }
 
-.cesium-viewer .cesium-widget-credits,
-.cesium-viewer .cesium-viewer-toolbar,
-.cesium-viewer .cesium-viewer-animationContainer,
-.cesium-viewer .cesium-viewer-timelineContainer,
-.cesium-viewer .cesium-viewer-fullscreenContainer,
-.cesium-viewer .cesium-viewer-infoBoxContainer,
-.cesium-viewer .cesium-viewer-selectionIndicatorContainer,
-.cesium-viewer .cesium-viewer-geocoderContainer,
-.cesium-viewer .cesium-viewer-navigationHelpButtonContainer,
-.cesium-viewer .cesium-viewer-homeButtonContainer,
-.cesium-viewer .cesium-viewer-sceneModePicker,
-.cesium-viewer .cesium-viewer-projectionPicker,
-.cesium-viewer .cesium-viewer-baseLayerPickerContainer,
-.cesium-viewer-bottom {
-  display: none !important;
-}
-
-/* ── Glassmorphism Panel ──────────────────────────── */
-.glass-panel {
-  background: var(--color-bg-panel);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--color-border-panel);
-  border-radius: 4px;
-  position: relative;
-  overflow: hidden;
-}
-
-.glass-panel::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: repeating-linear-gradient(0deg,
-      transparent,
-      transparent 2px,
-      rgba(0, 180, 255, 0.02) 2px,
-      rgba(0, 180, 255, 0.02) 4px);
-  pointer-events: none;
-  z-index: 0;
-}
-
-.glass-panel>* {
-  position: relative;
-  z-index: 1;
-}
-
-/* ── Scrollbar ────────────────────────────────────── */
+/* Scrollbar */
 ::-webkit-scrollbar {
   width: 4px;
 }
@@ -96,607 +56,612 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 180, 255, 0.3);
+  background: var(--primary-dark);
   border-radius: 2px;
 }
 
-/* ── Toggle Switch ────────────────────────────────── */
-.toggle-switch {
-  width: 36px;
-  height: 18px;
-  border-radius: 9px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  position: relative;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  flex-shrink: 0;
-}
-
-.toggle-switch.active {
-  background: rgba(0, 255, 65, 0.15);
-  border-color: var(--color-neon-green);
-  box-shadow: 0 0 8px rgba(0, 255, 65, 0.3);
-}
-
-.toggle-switch::after {
-  content: '';
-  position: absolute;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: #555;
-  top: 2px;
-  left: 2px;
-  transition: all 0.3s ease;
-}
-
-.toggle-switch.active::after {
-  left: 20px;
-  background: var(--color-neon-green);
-  box-shadow: 0 0 6px var(--color-neon-green);
-}
-
-/* ── Mode Button ──────────────────────────────────── */
-.mode-btn {
-  padding: 6px 14px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.03);
-  color: var(--color-text-dim);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  border-radius: 2px;
-  white-space: nowrap;
-}
-
-.mode-btn:hover {
-  border-color: var(--color-electric-blue);
-  color: var(--color-text-primary);
-  background: rgba(0, 180, 255, 0.05);
-}
-
-.mode-btn.active {
-  border-color: var(--color-electric-blue);
-  color: var(--color-electric-blue);
-  background: rgba(0, 180, 255, 0.1);
-  box-shadow: 0 0 12px rgba(0, 180, 255, 0.2), inset 0 0 12px rgba(0, 180, 255, 0.05);
-  text-shadow: 0 0 8px rgba(0, 180, 255, 0.5);
-}
-
-/* ── Shader Overlays ──────────────────────────────── */
-.shader-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  pointer-events: none;
-  z-index: 5;
-  transition: opacity 0.5s ease;
-}
-
-/* NVG - Night Vision */
-.shader-nvg {
-  background: radial-gradient(ellipse at center, transparent 40%, rgba(0, 20, 0, 0.6) 100%);
-  mix-blend-mode: multiply;
-}
-
-.shader-nvg::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: repeating-linear-gradient(0deg,
-      transparent,
-      transparent 1px,
-      rgba(0, 255, 65, 0.03) 1px,
-      rgba(0, 255, 65, 0.03) 2px);
-  animation: nvg-scan 0.1s linear infinite;
-}
-
-.shader-nvg::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.9' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E");
-  opacity: 0.4;
-}
-
-/* FLIR - Thermal */
-.shader-flir {
-  background: radial-gradient(ellipse at center, transparent 40%, rgba(20, 0, 0, 0.5) 100%);
-}
-
-.shader-flir::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: repeating-linear-gradient(0deg,
-      transparent,
-      transparent 3px,
-      rgba(255, 100, 0, 0.015) 3px,
-      rgba(255, 100, 0, 0.015) 4px);
-}
-
-/* CRT */
-.shader-crt {
-  background: radial-gradient(ellipse at center, transparent 50%, rgba(0, 0, 0, 0.5) 100%);
-}
-
-.shader-crt::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: repeating-linear-gradient(0deg,
-      transparent,
-      transparent 1px,
-      rgba(0, 0, 0, 0.15) 1px,
-      rgba(0, 0, 0, 0.15) 3px);
-  animation: crt-flicker 0.05s linear infinite;
-}
-
-.shader-crt::after {
-  content: '';
+/* ── Globe Container ───────────────────────────────── */
+.globe-container {
   position: absolute;
   inset: 0;
-  background:
-    radial-gradient(ellipse at center, transparent 38%, rgba(0, 0, 0, 0.46) 72%, rgba(0, 0, 0, 0.9) 100%),
-    linear-gradient(0deg, rgba(0, 0, 0, 0.24), rgba(0, 0, 0, 0.08));
-}
-
-/* Anime */
-.shader-anime::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, rgba(255, 100, 200, 0.03) 0%, transparent 50%, rgba(100, 200, 255, 0.03) 100%);
-}
-
-@keyframes nvg-scan {
-  0% {
-    transform: translateY(0);
-  }
-
-  100% {
-    transform: translateY(2px);
-  }
-}
-
-@keyframes crt-flicker {
-  0% {
-    opacity: 0.95;
-  }
-
-  50% {
-    opacity: 1;
-  }
-
-  100% {
-    opacity: 0.95;
-  }
-}
-
-/* ── CSS Filters for Globe Container ──────────────── */
-.globe-container {
-  width: 100%;
-  height: 100%;
-  position: relative;
-  touch-action: none;
-  overscroll-behavior: none;
+  z-index: 0;
 }
 
 .globe-container canvas {
-  touch-action: none;
+  display: block;
 }
 
-.globe-container.mode-nvg {
-  filter: saturate(0) brightness(1.4) sepia(1) hue-rotate(70deg) contrast(1.3);
+/* ── Top Bar ───────────────────────────────────────── */
+.top-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 16px;
+  background: linear-gradient(180deg, rgba(0, 12, 0, 0.9) 0%, transparent 100%);
+  border-bottom: 1px solid var(--panel-border);
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
 }
 
-.globe-container.mode-flir {
-  filter: saturate(0) contrast(1.8) brightness(1.1) sepia(0.3) hue-rotate(-10deg);
-}
-
-.globe-container.mode-crt {
-  filter: saturate(0.6) contrast(1.2) brightness(0.9) sepia(0.4) hue-rotate(15deg);
-}
-
-.globe-container.mode-anime {
-  filter: saturate(1.8) contrast(1.5) brightness(1.1);
-}
-
-/* ── Animations ───────────────────────────────────── */
-@keyframes pulse-glow {
-
-  0%,
-  100% {
-    opacity: 0.6;
-    transform: scale(1);
-  }
-
-  50% {
-    opacity: 1;
-    transform: scale(1.5);
-  }
-}
-
-@keyframes slide-in-left {
-  from {
-    transform: translateX(-100%);
-    opacity: 0;
-  }
-
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-@keyframes slide-in-right {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-@keyframes slide-in-up {
-  from {
-    transform: translateY(100%);
-    opacity: 0;
-  }
-
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-@keyframes fade-in {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes count-tick {
-  0% {
-    transform: translateY(-100%);
-    opacity: 0;
-  }
-
-  100% {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-.animate-slide-left {
-  animation: slide-in-left 0.5s ease-out forwards;
-}
-
-.animate-slide-right {
-  animation: slide-in-right 0.5s ease-out forwards;
-}
-
-.animate-slide-up {
-  animation: slide-in-up 0.4s ease-out forwards;
-}
-
-.animate-fade-in {
-  animation: fade-in 0.6s ease-out forwards;
-}
-
-/* ── Pulsating Entity ─────────────────────────────── */
-@keyframes entity-pulse {
-
-  0%,
-  100% {
-    box-shadow: 0 0 4px currentColor;
-  }
-
-  50% {
-    box-shadow: 0 0 16px currentColor, 0 0 32px currentColor;
-  }
-}
-
-/* ── Inspector Feed ───────────────────────────────── */
-.feed-image {
-  width: 100%;
-  aspect-ratio: 16/9;
-  object-fit: cover;
-  border: 1px solid var(--color-border-panel);
-  border-radius: 2px;
-  background: #111;
-}
-
-.no-signal {
-  width: 100%;
-  aspect-ratio: 16/9;
-  background: repeating-linear-gradient(0deg,
-      #111 0px,
-      #111 2px,
-      #1a1a1a 2px,
-      #1a1a1a 4px);
+.top-bar-left {
   display: flex;
   align-items: center;
-  justify-content: center;
-  color: var(--color-neon-red);
-  font-size: 12px;
-  letter-spacing: 2px;
-  border: 1px solid rgba(255, 51, 51, 0.3);
-  border-radius: 2px;
-  animation: static-noise 0.3s steps(5) infinite;
+  gap: 16px;
 }
 
-@keyframes static-noise {
-  0% {
-    background-position: 0 0;
-  }
-
-  25% {
-    background-position: 1px 1px;
-  }
-
-  50% {
-    background-position: -1px 0;
-  }
-
-  75% {
-    background-position: 0 -1px;
-  }
-
-  100% {
-    background-position: 1px -1px;
-  }
+.top-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
-/* ── Mission HUD ─────────────────────────────────── */
-.mission-hud-left {
-  position: absolute;
-  top: 92px;
-  left: max(18px, env(safe-area-inset-left));
-  transition: left 0.2s ease;
-  max-width: 260px;
-  padding: 12px 14px;
-  border: 1px solid rgba(255, 170, 0, 0.18);
-  /* background removed because we are using glass-panel in the component now */
-  font-size: 10px;
-  letter-spacing: 0.16em;
-  color: #b4b7c9;
-}
-
-.mission-hud-left--offset {
-  left: calc(max(16px, env(safe-area-inset-left)) + 19.5rem + 14px);
-}
-
-.mission-label {
-  color: #ffaa00;
-  margin-bottom: 10px;
-}
-
-.mission-title {
-  color: #f8f8f8;
+.top-bar-brand {
   font-size: 13px;
-  letter-spacing: 0.24em;
-  font-weight: 700;
+  font-weight: bold;
+  color: var(--primary);
+  text-shadow: 0 0 10px var(--primary-glow);
+}
+
+.classification-banner {
+  background: var(--danger);
+  color: #000;
+  padding: 2px 12px;
+  font-size: 9px;
+  font-weight: bold;
+  letter-spacing: 3px;
+  text-align: center;
+}
+
+.top-bar-stat {
+  color: var(--text-dim);
+  font-size: 10px;
+}
+
+.top-bar-stat span {
+  color: var(--primary);
+}
+
+/* ── Data Layers Panel (Left Side) ─────────────────── */
+.layer-panel {
+  position: fixed;
+  top: 40px;
+  left: 0;
+  z-index: 90;
+  width: 220px;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+  background: var(--panel-bg);
+  border-right: 1px solid var(--panel-border);
+  border-bottom: 1px solid var(--panel-border);
+  padding: 12px 0;
+}
+
+.layer-panel-header {
+  padding: 4px 16px 10px;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--panel-border);
   margin-bottom: 6px;
 }
 
-.mission-sub {
-  color: #8890b2;
-  letter-spacing: 0.14em;
-}
-
-.mission-hud-right {
-  position: absolute;
-  top: 98px;
-  right: max(18px, env(safe-area-inset-right));
-  transition: right 0.2s ease;
-  width: 220px;
-  max-height: 240px;
-  overflow-y: auto;
-  overflow-x: hidden;
+.layer-item {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 12px;
-  border: 1px solid rgba(0, 180, 255, 0.2);
-  background: linear-gradient(180deg, rgba(8, 10, 16, 0.74), rgba(8, 10, 16, 0.52));
-  backdrop-filter: blur(8px);
-}
-
-.mission-hud-right::-webkit-scrollbar {
-  width: 2px;
-}
-
-.mission-hud-right--offset {
-  right: calc(22.5rem + max(18px, env(safe-area-inset-right)) + 18px);
-}
-
-@media (max-width: 1220px) {
-  .mission-hud-right--offset {
-    right: 18px;
-    top: 16px;
-  }
-}
-
-.mission-metric {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.mission-metric-top {
-  display: flex;
+  align-items: center;
   justify-content: space-between;
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  color: #aeb4ca;
+  padding: 6px 16px;
+  cursor: pointer;
+  transition: background 0.15s;
+  font-size: 11px;
+  letter-spacing: 1px;
   text-transform: uppercase;
 }
 
-.mission-bar {
-  width: 100%;
-  height: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  background: rgba(255, 255, 255, 0.06);
+.layer-item:hover {
+  background: rgba(0, 255, 65, 0.05);
 }
 
-.mission-bar-fill {
-  height: 100%;
-  transition: width 0.35s ease;
-}
-
-.mission-cities {
-  position: absolute;
-  bottom: 115px;
-  left: 50%;
-  transform: translateX(-50%);
+.layer-item-left {
   display: flex;
-  gap: 8px;
-  padding: 8px 10px;
-  border: 1px solid rgba(0, 180, 255, 0.22);
-  background: rgba(10, 10, 15, 0.6);
-  backdrop-filter: blur(8px);
-  border-radius: 999px;
+  align-items: center;
+  gap: 10px;
 }
 
-.city-chip {
+.layer-icon {
+  font-size: 14px;
+  width: 18px;
+  text-align: center;
+}
+
+.layer-name {
+  color: var(--primary-dim);
+  font-size: 11px;
+}
+
+.layer-item.active .layer-name {
+  color: var(--primary);
+  text-shadow: 0 0 6px var(--primary-glow);
+}
+
+/* Toggle pill */
+.layer-toggle {
+  width: 32px;
+  height: 14px;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--panel-border);
+  position: relative;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.layer-toggle::after {
+  content: '';
+  position: absolute;
+  top: 1px;
+  left: 2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  transition: all 0.2s;
+}
+
+.layer-toggle.on {
+  background: rgba(0, 255, 65, 0.15);
+  border-color: var(--primary-dark);
+}
+
+.layer-toggle.on::after {
+  left: 18px;
+  background: var(--primary);
+  box-shadow: 0 0 6px var(--primary-glow);
+}
+
+/* Status dot */
+.layer-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-left: 6px;
+}
+
+.layer-status-dot.active {
+  background: var(--primary);
+  box-shadow: 0 0 4px var(--primary);
+}
+
+.layer-status-dot.loading {
+  background: var(--warning);
+  animation: pulse 1s infinite;
+}
+
+.layer-status-dot.error {
+  background: var(--danger);
+}
+
+.layer-status-dot.idle {
+  background: var(--text-muted);
+}
+
+/* Panoptic Override Button */
+.panoptic-btn {
+  display: block;
+  width: calc(100% - 32px);
+  margin: 12px 16px 4px;
+  padding: 8px 0;
+  background: transparent;
+  border: 2px solid var(--primary);
+  color: var(--primary);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.panoptic-btn:hover {
+  background: var(--primary);
+  color: var(--bg);
+  box-shadow: 0 0 20px var(--primary-glow), inset 0 0 20px rgba(0, 0, 0, 0.3);
+}
+
+/* ── Bottom Toolbar Area ───────────────────────────── */
+.bottom-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 16px 10px;
+  background: linear-gradient(0deg, rgba(0, 12, 0, 0.9) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+.bottom-bar>* {
+  pointer-events: auto;
+}
+
+/* City Presets */
+.city-presets {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.city-preset-btn {
+  padding: 4px 14px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  color: var(--text-dim);
   font-family: var(--font-mono);
   font-size: 10px;
-  letter-spacing: 0.12em;
+  letter-spacing: 1.5px;
   text-transform: uppercase;
-  color: #c8d0ef;
-  background: rgba(0, 0, 0, 0.32);
-  border: 1px solid rgba(0, 180, 255, 0.26);
-  border-radius: 999px;
-  padding: 5px 11px;
-  transition: all 0.2s ease;
+  cursor: pointer;
+  transition: all 0.15s;
 }
 
-.city-chip:hover {
-  color: #00b4ff;
-  border-color: rgba(0, 180, 255, 0.7);
-  box-shadow: 0 0 12px rgba(0, 180, 255, 0.25);
+.city-preset-btn:hover {
+  color: var(--primary);
+  border-color: var(--primary-dark);
+  background: rgba(0, 255, 65, 0.08);
 }
 
-/* ── Flight Filters ─────────────────────────────── */
-.flight-filter-panel {
-  position: absolute;
-  top: 360px;
-  right: max(18px, env(safe-area-inset-right));
-  width: 220px;
-  padding: 12px;
-  border: 1px solid rgba(0, 180, 255, 0.22);
-  background: linear-gradient(180deg, rgba(8, 10, 16, 0.76), rgba(8, 10, 16, 0.56));
-  backdrop-filter: blur(8px);
-  transition: right 0.2s ease;
-}
-
-.flight-filter-panel--offset {
-  right: calc(22.5rem + max(18px, env(safe-area-inset-right)) + 18px);
-}
-
-.flight-filter-header {
+/* Shader Tabs */
+.shader-toolbar {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
+  gap: 2px;
+  margin-bottom: 6px;
+}
+
+.shader-btn {
+  padding: 4px 12px;
+  background: transparent;
+  border: 1px solid var(--panel-border);
+  color: var(--text-dim);
+  font-family: var(--font-mono);
   font-size: 10px;
-  letter-spacing: 0.16em;
-  color: #c8d0ef;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-transform: uppercase;
 }
 
-.flight-filter-header button {
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: rgba(255, 255, 255, 0.04);
-  color: #9aa1c4;
-  padding: 2px 6px;
-  font-size: 9px;
-  letter-spacing: 0.08em;
+.shader-btn:hover {
+  color: var(--primary);
 }
 
-.flight-filter-search {
-  margin-bottom: 8px;
+.shader-btn.active {
+  background: var(--primary);
+  color: var(--bg);
+  border-color: var(--primary);
+  font-weight: bold;
 }
 
-.flight-filter-search input {
-  width: 100%;
-  border: 1px solid rgba(0, 180, 255, 0.28);
-  background: rgba(0, 0, 0, 0.35);
-  color: #e6ebff;
-  padding: 6px 8px;
-  font-size: 11px;
-  letter-spacing: 0.06em;
-  outline: none;
-}
-
-.flight-filter-search input::placeholder {
-  color: #7c84a8;
-}
-
-.flight-filter-list {
+/* Focus & Hide Buttons */
+.bottom-actions {
   display: flex;
-  flex-direction: column;
   gap: 6px;
 }
 
-.flight-filter-chip {
+.action-btn {
+  padding: 6px 20px;
+  background: transparent;
+  border: 1px solid var(--panel-border);
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.action-btn:hover {
+  border-color: var(--primary-dark);
+  color: var(--primary);
+}
+
+.action-btn.active {
+  background: rgba(0, 255, 65, 0.15);
+  border-color: var(--primary);
+  color: var(--primary);
+  text-shadow: 0 0 8px var(--primary-glow);
+}
+
+.action-btn.focus-mode {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.action-btn.focus-mode.active {
+  background: rgba(255, 0, 0, 0.1);
+  border-color: var(--danger);
+  color: var(--danger);
+  text-shadow: 0 0 8px rgba(255, 0, 0, 0.4);
+}
+
+/* ── SysLog Terminal ───────────────────────────────── */
+.sys-log {
+  position: fixed;
+  bottom: 70px;
+  left: 12px;
+  z-index: 90;
+  width: 360px;
+  max-height: 120px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+}
+
+.sys-log-header {
+  padding: 3px 10px;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.sys-log-body {
+  padding: 6px 10px;
+  max-height: 90px;
+  overflow-y: auto;
+  font-size: 9px;
+  line-height: 1.6;
+  color: var(--primary-dim);
+}
+
+.sys-log-line {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sys-log-cursor {
+  animation: blink 1s step-end infinite;
+  color: var(--primary);
+  font-size: 10px;
+}
+
+/* ── Inspector Panel ───────────────────────────────── */
+.inspector-panel {
+  position: fixed;
+  top: 40px;
+  right: 0;
+  z-index: 90;
+  width: 340px;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+  background: var(--panel-bg);
+  border-left: 1px solid var(--panel-border);
+  border-bottom: 1px solid var(--panel-border);
+  padding: 12px 16px;
+}
+
+.inspector-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  background: rgba(255, 255, 255, 0.03);
-  color: #b0b8d6;
-  padding: 5px 7px;
-  font-size: 10px;
-  letter-spacing: 0.12em;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--panel-border);
+  margin-bottom: 10px;
+}
+
+.inspector-title {
+  font-size: 12px;
+  letter-spacing: 2px;
   text-transform: uppercase;
+  color: var(--primary);
+  text-shadow: 0 0 6px var(--primary-glow);
 }
 
-.flight-filter-chip.is-active {
-  box-shadow: 0 0 10px rgba(0, 180, 255, 0.14);
+.inspector-close {
+  background: none;
+  border: 1px solid var(--panel-border);
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 2px 8px;
+  transition: all 0.15s;
 }
 
-@media (max-width: 1220px) {
-  .mission-hud-left--offset {
-    left: 18px;
-    top: 16px;
+.inspector-close:hover {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+.inspector-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 3px 0;
+  font-size: 10px;
+  border-bottom: 1px solid rgba(0, 255, 65, 0.05);
+}
+
+.inspector-label {
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.inspector-value {
+  color: var(--primary);
+  text-align: right;
+  max-width: 60%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Inspector video embed */
+.inspector-video {
+  width: 100%;
+  aspect-ratio: 16/9;
+  border: 1px solid var(--panel-border);
+  margin-top: 10px;
+  background: #000;
+}
+
+/* ── Mission HUD (Right Side) ──────────────────────── */
+.mission-hud-right {
+  position: fixed;
+  top: 40px;
+  right: 0;
+  z-index: 80;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 10px;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  text-align: right;
+}
+
+.hud-metric {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.hud-metric-value {
+  color: var(--primary);
+  min-width: 50px;
+}
+
+/* ── Hover Tooltip ─────────────────────────────────── */
+.hover-tooltip {
+  position: fixed;
+  z-index: 200;
+  padding: 4px 10px;
+  background: var(--panel-bg);
+  border: 1px solid var(--primary-dark);
+  color: var(--primary);
+  font-size: 10px;
+  letter-spacing: 1px;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* ── Reticle ───────────────────────────────────────── */
+.reticle {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 50;
+  pointer-events: none;
+}
+
+.reticle-ring {
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--text-muted);
+  border-radius: 50%;
+  position: relative;
+}
+
+.reticle-ring::before,
+.reticle-ring::after {
+  content: '';
+  position: absolute;
+  background: var(--text-muted);
+}
+
+.reticle-ring::before {
+  width: 1px;
+  height: 8px;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.reticle-ring::after {
+  width: 8px;
+  height: 1px;
+  right: -10px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* ── Focus Mask ────────────────────────────────────── */
+.focus-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+  border: 3px solid var(--danger);
+  box-shadow: inset 0 0 60px rgba(255, 0, 0, 0.1);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.focus-mask.active {
+  opacity: 1;
+}
+
+/* ── Shader Overlays ───────────────────────────────── */
+.mode-nvg {
+  filter: sepia(0.4) hue-rotate(80deg) saturate(2) brightness(0.8);
+}
+
+.mode-flir {
+  filter: grayscale(1) brightness(0.7) contrast(2);
+}
+
+.mode-crt::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 255, 65, 0.03) 2px,
+      rgba(0, 255, 65, 0.03) 4px);
+  pointer-events: none;
+  z-index: 1000;
+}
+
+/* ── Animations ────────────────────────────────────── */
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 1;
   }
 
-  .flight-filter-panel {
-    top: 98px;
-    right: 18px;
+  50% {
+    opacity: 0.3;
+  }
+}
+
+@keyframes blink {
+
+  0%,
+  100% {
+    opacity: 1;
   }
 
-  .flight-filter-panel--offset {
-    right: 18px;
-    top: 450px;
+  50% {
+    opacity: 0;
   }
+}
+
+/* ── Glass panel (legacy compat) ───────────────────── */
+.glass-panel {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
 }
