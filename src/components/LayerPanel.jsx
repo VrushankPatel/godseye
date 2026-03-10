@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import useStore from '../store/useStore';
 import { LAYER_DEFS, SURVEILLANCE_PRIMARY_LAYERS } from '../constants/dataSources';
-import SysTerminal from './SysTerminal';
 
 export default function LayerPanel() {
     const {
@@ -98,24 +97,15 @@ export default function LayerPanel() {
 
     if (!layerPanelOpen) {
         return (
-            <div
-                className="absolute top-24 bottom-4 flex flex-col gap-2 pointer-events-none z-10"
-                style={{ left: 'max(10px, env(safe-area-inset-left))', width: '19.5rem' }}
+            <button
+                onClick={toggleLayerPanel}
+                className="absolute top-1/2 -translate-y-1/2 glass-panel p-2.5 rounded-r-lg rounded-l-none text-text-dim hover:text-white pointer-events-auto z-10 border-l-0"
+                style={{ left: 'max(10px, env(safe-area-inset-left))' }}
             >
-                {/* Reopen chevron */}
-                <button
-                    onClick={toggleLayerPanel}
-                    className="glass-panel p-2.5 rounded-r-lg rounded-l-none text-text-dim hover:text-white pointer-events-auto border-l-0 self-start"
-                >
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-5 h-5">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                </button>
-                {/* Terminal stays visible */}
-                <div className="mt-auto">
-                    <SysTerminal />
-                </div>
-            </div>
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-5 h-5">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+            </button>
         );
     }
 
@@ -178,9 +168,6 @@ export default function LayerPanel() {
                 </div>
 
             </div>
-
-            {/* SysOps Terminal — stacked below the layer panel */}
-            <SysTerminal />
         </div>
     );
 }
