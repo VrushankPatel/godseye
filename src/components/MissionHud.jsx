@@ -384,7 +384,6 @@ export default function MissionHud() {
     const isTracked = isTrackable && trackedTarget?.entityId === inspector._entityId;
     const trackViews = inspector?.type === 'satellites' ? SATELLITE_VIEWS : AIRCRAFT_VIEWS;
     const hasMedia = inspector && (inspector.type === 'cctv' || inspector.type === 'traffic');
-    const showFlightFilters = inspector?.type === 'aircraft';
 
     const handleTrackToggle = useCallback(() => {
         if (!inspector || !isTrackable) return;
@@ -394,6 +393,7 @@ export default function MissionHud() {
     }, [inspector, isTrackable, isTracked, setTrackingView, toggleTrackedTarget]);
 
     // Flight filter store reads
+    const aircraftEnabled = useStore((s) => s.layers.aircraft.enabled);
     const flights = useStore((s) => s.layers.aircraft.data);
     const flightFilters = useStore((s) => s.flightFilters);
     const setFlightFilter = useStore((s) => s.setFlightFilter);
@@ -413,6 +413,8 @@ export default function MissionHud() {
         acc[cls] = (acc[cls] || 0) + 1;
         return acc;
     }, {});
+    const showFlightFilters = aircraftEnabled;
+    const showNavShortcuts = !inspector || inspector.type !== 'aircraft';
 
     const [visibleCities, setVisibleCities] = useState(ALL_CITIES.slice(0, 6));
     const [panelMediaSrc, setPanelMediaSrc] = useState('');
@@ -666,7 +668,7 @@ export default function MissionHud() {
                     )}
 
                     {/* NAV Shortcuts — for non-aircraft targets */}
-                    {!showFlightFilters && (
+                    {showNavShortcuts && (
                         <div className="rcp-section">
                             <div className="rcp-header">
                                 <span>NAV SHORTCUTS</span>
