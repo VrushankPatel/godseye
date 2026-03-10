@@ -498,11 +498,7 @@ export default function MissionHud() {
         };
     }, [effectiveVideoUrl, panelMediaKind, inspector?.id]);
 
-    const orderedLayerKeys = [
-        ...SURVEILLANCE_PRIMARY_LAYERS,
-        ...Object.keys(layers).filter((key) => !SURVEILLANCE_PRIMARY_LAYERS.includes(key)),
-    ];
-    const snapshotRows = orderedLayerKeys
+    const snapshotRows = SURVEILLANCE_PRIMARY_LAYERS
         .map((key) => {
             const layer = layers[key];
             const def = LAYER_DEFS[key];
