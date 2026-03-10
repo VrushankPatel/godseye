@@ -344,12 +344,21 @@ export default function AircraftLayer({ viewer }) {
             entity.show = hasTrackedAircraft ? entity.id === trackedEntityId : true;
         }
 
-        // When tracking stops, reset all flight timestamps so
-        // position extrapolation doesn't shoot flights off
+        // When tracking stops, reset timestamps AND snap all entities
+        // back to their actual positions from flightStateRef
         if (!hasTrackedAircraft) {
             const nowMs = Date.now();
-            for (const [, flight] of flightStateRef.current.entries()) {
+            for (const [id, flight] of flightStateRef.current.entries()) {
                 flight.updatedAtMs = nowMs;
+                // Snap entity back to its real lat/lon (zero extrapolation)
+                const entity = entitiesRef.current.get(id);
+                if (entity) {
+                    entity.position = Cesium.Cartesian3.fromDegrees(
+                        flight.longitude,
+                        flight.latitude,
+                        flight.altitudeM
+                    );
+                }
             }
         }
 
