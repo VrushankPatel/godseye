@@ -28,6 +28,7 @@ export default function SysTerminal() {
     const layers = useStore((s) => s.layers);
     const sysTerminalVisible = useStore((s) => s.sysTerminalVisible);
     const toggleSysTerminal = useStore((s) => s.toggleSysTerminal);
+    const layerPanelOpen = useStore((s) => s.layerPanelOpen);
     const [lines, setLines] = useState([]);
     const scrollRef = useRef(null);
     const seenRef = useRef(new Set());
@@ -74,12 +75,16 @@ export default function SysTerminal() {
         }
     }, [lines]);
 
-    // When hidden, show a small reopen button (as inline element in the flex column)
+    // Left position: shift right when LayerPanel is open
+    const leftPos = layerPanelOpen ? '340px' : '24px';
+
+    // When hidden, show a small reopen button pinned to bottom-left
     if (!sysTerminalVisible) {
         return (
             <button
                 onClick={toggleSysTerminal}
                 className="pointer-events-auto sys-terminal-toggle"
+                style={{ position: 'absolute', bottom: '24px', left: leftPos }}
                 title="Show terminal"
             >
                 ▸ SYS
@@ -88,7 +93,10 @@ export default function SysTerminal() {
     }
 
     return (
-        <div className="sys-terminal pointer-events-auto">
+        <div
+            className="sys-terminal pointer-events-auto"
+            style={{ position: 'absolute', bottom: '24px', left: leftPos }}
+        >
             <div className="sys-terminal-header">
                 <span className="sys-terminal-dot"></span>
                 <span style={{ flex: 1 }}>SYS://OPS_TERMINAL</span>

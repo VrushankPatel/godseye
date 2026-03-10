@@ -706,9 +706,8 @@ body {
 
 /* ── SysOps Terminal ─────────────────────────────── */
 .sys-terminal {
-  width: 100%;
+  width: 320px;
   max-height: 180px;
-  flex-shrink: 0;
   background: rgba(2, 8, 20, 0.45);
   border: 1px solid rgba(14, 165, 233, 0.15);
   border-radius: 4px;
@@ -716,6 +715,7 @@ body {
   z-index: 9;
   backdrop-filter: blur(6px);
   box-shadow: 0 0 15px rgba(14, 165, 233, 0.04);
+  transition: left 0.3s ease;
 }
 
 .sys-terminal-toggle {
@@ -730,8 +730,8 @@ body {
   font-family: var(--font-mono);
   text-transform: uppercase;
   backdrop-filter: blur(4px);
-  flex-shrink: 0;
-  align-self: flex-start;
+  z-index: 9;
+  transition: left 0.3s ease;
 }
 
 .sys-terminal-header {
