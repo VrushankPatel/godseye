@@ -371,6 +371,8 @@ export default function MissionHud() {
     const toggleMissionHud = useStore((s) => s.toggleMissionHud);
     const citiesVisible = useStore((s) => s.citiesVisible);
     const toggleCities = useStore((s) => s.toggleCities);
+    const setAutoRotating = useStore((s) => s.setAutoRotating);
+    const setFocusMode = useStore((s) => s.setFocusMode);
 
     const TRACKABLE_TYPES = new Set(['aircraft', 'satellites', 'militaryActivity']);
     const AIRCRAFT_VIEWS = [{ id: 'CHASE', label: 'Chase' }, { id: 'COCKPIT', label: 'Cockpit' }, { id: 'TOP', label: 'Top' }, { id: 'SIDE', label: 'Side' }];
@@ -515,12 +517,14 @@ export default function MissionHud() {
 
     const focusCity = useCallback((city) => {
         if (!viewerRef || viewerRef.isDestroyed()) return;
+        setAutoRotating(false);
+        setFocusMode(true);
         viewerRef.camera.flyTo({
             destination: Cesium.Cartesian3.fromDegrees(city.longitude, city.latitude, city.height),
             orientation: { heading: Cesium.Math.toRadians(0), pitch: Cesium.Math.toRadians(city.pitch ?? -65), roll: 0 },
             duration: 1.8,
         });
-    }, [viewerRef]);
+    }, [viewerRef, setAutoRotating, setFocusMode]);
 
     const toggleBtnStyle = {
         padding: '4px 10px', fontSize: '9px', letterSpacing: '1.5px',
