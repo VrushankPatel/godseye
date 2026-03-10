@@ -75,8 +75,8 @@ export default function SysTerminal() {
         }
     }, [lines]);
 
-    // Left position: shift right when LayerPanel is open
-    const leftPos = layerPanelOpen ? '340px' : '24px';
+    // Position directly below the LayerPanel — same left, same width
+    const leftPos = 'max(16px, env(safe-area-inset-left))';
 
     // When hidden, show a small reopen button pinned to bottom-left
     if (!sysTerminalVisible) {
@@ -95,7 +95,7 @@ export default function SysTerminal() {
     return (
         <div
             className="sys-terminal pointer-events-auto"
-            style={{ position: 'absolute', bottom: '24px', left: leftPos }}
+            style={{ position: 'absolute', bottom: '24px', left: leftPos, width: '19.5rem' }}
         >
             <div className="sys-terminal-header">
                 <span className="sys-terminal-dot"></span>
