@@ -519,25 +519,17 @@ export default function AircraftLayer({ viewer }) {
             ...rotatingRegionalSources,
         ];
 
-        const results = await Promise.allSettled(
-            aircraftSources.map(async (source) => {
-                const payload = await fetchJsonWithTimeout(source.url, REQUEST_TIMEOUT_MS);
-                return source.parser(payload);
-            })
-        );
-
+        // ── Progressive loading: render after each source resolves ──
         const merged = new Map();
-        for (const result of results) {
-            if (result.status !== 'fulfilled') continue;
-            for (const flight of result.value) {
+
+        const mergeFlights = (flights) => {
+            for (const flight of flights) {
                 if (!flight || !flight.id) continue;
                 const existing = merged.get(flight.id);
                 if (!existing) {
                     merged.set(flight.id, flight);
                     continue;
                 }
-
-                // Prefer records with richer metadata.
                 const existingScore =
                     (existing.operator && existing.operator !== 'Unknown' ? 1 : 0) +
                     (existing.registration && existing.registration !== 'N/A' ? 1 : 0) +
@@ -546,13 +538,39 @@ export default function AircraftLayer({ viewer }) {
                     (flight.operator && flight.operator !== 'Unknown' ? 1 : 0) +
                     (flight.registration && flight.registration !== 'N/A' ? 1 : 0) +
                     (flight.aircraftType && flight.aircraftType !== 'N/A' ? 1 : 0);
-
                 if (newScore >= existingScore) {
                     merged.set(flight.id, flight);
                 }
             }
-        }
+        };
 
+        let sourcesResolved = 0;
+        const totalSources = aircraftSources.length;
+
+        // Fire all sources in parallel, but render as each one completes
+        const sourcePromises = aircraftSources.map(async (source) => {
+            try {
+                const payload = await fetchJsonWithTimeout(source.url, REQUEST_TIMEOUT_MS);
+                const flights = source.parser(payload);
+                mergeFlights(flights);
+
+                // Render current merged state immediately
+                const snapshot = Array.from(merged.values());
+                rawFlightsRef.current = snapshot;
+                setAircraftFeedData(snapshot);
+                if (aircraftEnabled && snapshot.length > 0) {
+                    handleData(snapshot);
+                }
+            } catch {
+                // Individual source failure — silently continue
+            } finally {
+                sourcesResolved += 1;
+            }
+        });
+
+        await Promise.allSettled(sourcePromises);
+
+        // Final pass with complete merged data
         const flights = Array.from(merged.values());
         rawFlightsRef.current = flights;
         setAircraftFeedData(flights);
@@ -572,7 +590,6 @@ export default function AircraftLayer({ viewer }) {
         if (aircraftEnabled) {
             handleData(flights);
         } else {
-            // Keep ingesting raw feed for military layer while aircraft visuals stay hidden.
             clearEntities();
             updateData('aircraft', []);
             setStatus('aircraft', 'idle');

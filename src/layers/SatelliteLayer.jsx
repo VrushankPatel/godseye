@@ -225,6 +225,11 @@ export default function SatelliteLayer({ viewer }) {
         aggregate.push(...parseTleApiMember(firstPage.member));
         updateData('satellites', aggregate);
 
+        // Render immediately after first page
+        satRecordsRef.current = [...aggregate];
+        setStatus('satellites', 'active');
+        startPropagation();
+
         const totalPages = getTotalPages(firstPage.view) || 1;
         const pagesToFetch = Math.min(MAX_FETCH_PAGES, totalPages);
 
@@ -244,11 +249,14 @@ export default function SatelliteLayer({ viewer }) {
             }
 
             if (signal.aborted || !isEnabled) return [];
+
+            // Progressive update — propagation timer will render new ones
+            satRecordsRef.current = [...aggregate];
             updateData('satellites', aggregate);
         }
 
         return aggregate;
-    }, [isEnabled, updateData]);
+    }, [isEnabled, updateData, setStatus, startPropagation]);
 
     const loadSatellites = useCallback(async () => {
         setStatus('satellites', 'loading');
@@ -264,6 +272,9 @@ export default function SatelliteLayer({ viewer }) {
             satRecordsRef.current = records;
             updateData('satellites', records);
             setStatus('satellites', 'active');
+
+            // startPropagation is called progressively inside loadFromPaginatedApi now
+            // but ensure final state is propagating
             startPropagation();
         } catch (err) {
             if (controller.signal.aborted) return;
