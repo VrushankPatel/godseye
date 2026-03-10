@@ -675,6 +675,30 @@ body {
   color: #7dd3fc;
 }
 
+.rcp-media-frame {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 1px solid rgba(14, 165, 233, 0.22);
+  background: rgba(0, 0, 0, 0.5);
+  object-fit: cover;
+  border-radius: 2px;
+}
+
+.rcp-media-fallback {
+  width: 100%;
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(251, 191, 36, 0.35);
+  color: rgba(251, 191, 36, 0.95);
+  background: rgba(120, 53, 15, 0.15);
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  border-radius: 2px;
+}
+
 /* ── Unified Right Column Panel ──────────────────── */
 .right-column-panel {
   position: absolute;
@@ -811,6 +835,38 @@ body {
   grid-template-columns: repeat(2, 1fr);
   gap: 3px;
   padding: 6px;
+}
+
+.rcp-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2px;
+  padding: 6px 10px 8px;
+}
+
+.rcp-stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+}
+
+.rcp-stat-label {
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: rgba(200, 208, 239, 0.55);
+}
+
+.rcp-stat-value {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: rgba(154, 161, 196, 0.92);
+}
+
+.rcp-stat-value.is-active {
+  color: #00b4ff;
 }
 
 .city-chip {

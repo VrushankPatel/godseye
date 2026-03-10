@@ -303,6 +303,58 @@ function getVisibleCities(viewer, maxCities = 6) {
     return scored.slice(0, maxCities).map((s) => s.city);
 }
 
+function appendCacheBuster(url) {
+    if (!url) return '';
+    try {
+        const parsed = new URL(url);
+        parsed.searchParams.set('_ts', String(Date.now()));
+        return parsed.toString();
+    } catch (err) {
+        return `${url}${url.includes('?') ? '&' : '?'}_ts=${Date.now()}`;
+    }
+}
+
+function unwrapWorldcamsPlayer(url) {
+    if (!url) return '';
+    try {
+        const parsed = new URL(url);
+        if (!(parsed.hostname.includes('worldcams.tv') && parsed.pathname.includes('/player'))) {
+            return '';
+        }
+        return parsed.searchParams.get('url') || '';
+    } catch (err) {
+        return '';
+    }
+}
+
+function isHlsUrl(url) {
+    return /\.m3u8(\?|$)/i.test(String(url || ''));
+}
+
+function resolvePanelMediaKind(inspector, effectiveVideoUrl) {
+    if (!inspector) return 'none';
+    if (!effectiveVideoUrl && (inspector.url || inspector.fallbackUrl)) return 'image';
+    if (!effectiveVideoUrl) return 'none';
+
+    const lower = String(effectiveVideoUrl).toLowerCase();
+    if (
+        lower.includes('youtube.com/embed') ||
+        lower.includes('/player?url=') ||
+        lower.endsWith('.htm') ||
+        lower.endsWith('.html')
+    ) {
+        return 'embed';
+    }
+    if (
+        lower.includes('.m3u8') ||
+        lower.includes('.mp4') ||
+        lower.includes('.webm')
+    ) {
+        return 'video';
+    }
+    return 'embed';
+}
+
 export default function MissionHud() {
     const layers = useStore((s) => s.layers);
     const viewerRef = useStore((s) => s.viewerRef);
@@ -332,6 +384,7 @@ export default function MissionHud() {
     const isTracked = isTrackable && trackedTarget?.entityId === inspector._entityId;
     const trackViews = inspector?.type === 'satellites' ? SATELLITE_VIEWS : AIRCRAFT_VIEWS;
     const hasMedia = inspector && (inspector.type === 'cctv' || inspector.type === 'traffic');
+    const showFlightFilters = inspector?.type === 'aircraft';
 
     const handleTrackToggle = useCallback(() => {
         if (!inspector || !isTrackable) return;
@@ -341,7 +394,6 @@ export default function MissionHud() {
     }, [inspector, isTrackable, isTracked, setTrackingView, toggleTrackedTarget]);
 
     // Flight filter store reads
-    const aircraftEnabled = useStore((s) => s.layers.aircraft.enabled);
     const flights = useStore((s) => s.layers.aircraft.data);
     const flightFilters = useStore((s) => s.flightFilters);
     const setFlightFilter = useStore((s) => s.setFlightFilter);
@@ -363,7 +415,17 @@ export default function MissionHud() {
     }, {});
 
     const [visibleCities, setVisibleCities] = useState(ALL_CITIES.slice(0, 6));
+    const [panelMediaSrc, setPanelMediaSrc] = useState('');
+    const [panelMediaFailed, setPanelMediaFailed] = useState(false);
+    const mediaVideoRef = useRef(null);
     const rafRef = useRef(null);
+
+    const effectiveVideoUrl = (() => {
+        if (!inspector?.videoUrl) return '';
+        const nested = unwrapWorldcamsPlayer(inspector.videoUrl);
+        return nested || inspector.videoUrl;
+    })();
+    const panelMediaKind = resolvePanelMediaKind(inspector, effectiveVideoUrl);
 
     const LAYER_SCALE = {
         aircraft: 10000, satellites: 12000, seismic: 600, airports: 10000,
@@ -383,6 +445,62 @@ export default function MissionHud() {
         return () => { removeListener(); if (rafRef.current) cancelAnimationFrame(rafRef.current); };
     }, [viewerRef]);
 
+    useEffect(() => {
+        setPanelMediaFailed(false);
+        setPanelMediaSrc(appendCacheBuster(inspector?.url || inspector?.fallbackUrl || ''));
+    }, [inspector]);
+
+    useEffect(() => {
+        if (!hasMedia || panelMediaKind !== 'image' || !inspector?.url) return undefined;
+        const refreshSeconds = Math.max(3, Number(inspector.refreshSeconds) || 6);
+        const timer = setInterval(() => {
+            setPanelMediaSrc(appendCacheBuster(inspector.url));
+            setPanelMediaFailed(false);
+        }, refreshSeconds * 1000);
+        return () => clearInterval(timer);
+    }, [hasMedia, inspector, panelMediaKind]);
+
+    useEffect(() => {
+        const videoEl = mediaVideoRef.current;
+        if (!videoEl || panelMediaKind !== 'video' || !effectiveVideoUrl || !isHlsUrl(effectiveVideoUrl)) {
+            return undefined;
+        }
+
+        let cancelled = false;
+        let hlsInstance = null;
+
+        const setup = async () => {
+            if (videoEl.canPlayType('application/vnd.apple.mpegurl')) {
+                videoEl.src = effectiveVideoUrl;
+                return;
+            }
+            try {
+                const module = await import('hls.js');
+                if (cancelled) return;
+                const Hls = module.default;
+                if (Hls?.isSupported?.()) {
+                    hlsInstance = new Hls({ enableWorker: true, lowLatencyMode: true });
+                    hlsInstance.loadSource(effectiveVideoUrl);
+                    hlsInstance.attachMedia(videoEl);
+                    hlsInstance.on(Hls.Events.ERROR, (_, data) => {
+                        if (data?.fatal) setPanelMediaFailed(true);
+                    });
+                } else {
+                    videoEl.src = effectiveVideoUrl;
+                }
+            } catch (err) {
+                if (!cancelled) setPanelMediaFailed(true);
+            }
+        };
+
+        setup();
+
+        return () => {
+            cancelled = true;
+            if (hlsInstance) hlsInstance.destroy();
+        };
+    }, [effectiveVideoUrl, panelMediaKind, inspector?.id]);
+
     const metrics = SURVEILLANCE_PRIMARY_LAYERS
         .map((key) => {
             const layer = layers[key]; const def = LAYER_DEFS[key];
@@ -392,6 +510,17 @@ export default function MissionHud() {
             return { key, label: def.label, value: layer.count, pct, color: def.color || '#00b4ff' };
         })
         .filter(Boolean);
+
+    const sideTelemetry = [
+        { key: 'seismicStations', label: 'SEIS STATIONS' },
+        { key: 'maritime', label: 'MARITIME' },
+        { key: 'powerGrid', label: 'POWER GRID' },
+        { key: 'traffic', label: 'TRAFFIC' },
+    ].map((entry) => ({
+        ...entry,
+        count: layers[entry.key]?.count || 0,
+        active: layers[entry.key]?.enabled && layers[entry.key]?.status === 'active',
+    }));
 
     const focusCity = useCallback((city) => {
         if (!viewerRef || viewerRef.isDestroyed()) return;
@@ -409,10 +538,8 @@ export default function MissionHud() {
         fontFamily: 'var(--font-mono)', textTransform: 'uppercase',
     };
 
-    // Right panel stays at same position — entity info is embedded inside
-    const rightPanelRight = hasMedia && inspector
-        ? 'calc(22.5rem + max(18px, env(safe-area-inset-right)) + 18px)'
-        : 'max(18px, env(safe-area-inset-right))';
+    // Right panel stays fixed; all entity types render in this same column.
+    const rightPanelRight = 'max(18px, env(safe-area-inset-right))';
 
     return (
         <>
@@ -442,7 +569,7 @@ export default function MissionHud() {
 
             {/* Metrics bar — top right */}
             {metrics.length > 0 && (
-                <div className={`mission-hud-right pointer-events-auto z-10 ${inspector ? 'mission-hud-right--offset' : ''}`}>
+                <div className="mission-hud-right pointer-events-auto z-10">
                     {metrics.map((m) => (
                         <div key={m.key} className="mission-metric">
                             <div className="mission-metric-top"><span>{m.label}</span><span>{m.value.toLocaleString()}</span></div>
@@ -457,13 +584,46 @@ export default function MissionHud() {
             {/* ── Unified right column ── */}
             {citiesVisible ? (
                 <div className="right-column-panel pointer-events-auto z-10" style={{ right: rightPanelRight }}>
-                    {/* Entity Info — when inspector is set and NOT cctv/traffic */}
-                    {inspector && !hasMedia && (
+                    {/* Entity Info — unified for all clicked entities including CCTV/Traffic */}
+                    {inspector && (
                         <div className="rcp-section rcp-entity">
                             <div className="rcp-header" style={{ borderBottomColor: `${inspectorDef.color}22` }}>
                                 <span style={{ color: inspectorDef.color }}>{inspectorDef.icon} {inspectorDef.label}</span>
                                 <button onClick={clearInspector} className="rcp-action">✕</button>
                             </div>
+                            {hasMedia && (
+                                <div style={{ padding: '8px 10px 6px' }}>
+                                    {panelMediaKind === 'embed' && effectiveVideoUrl ? (
+                                        <iframe
+                                            src={effectiveVideoUrl}
+                                            title="Live Feed"
+                                            className="rcp-media-frame"
+                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                            allowFullScreen
+                                        />
+                                    ) : panelMediaKind === 'video' && effectiveVideoUrl && !panelMediaFailed ? (
+                                        <video
+                                            ref={isHlsUrl(effectiveVideoUrl) ? mediaVideoRef : null}
+                                            src={isHlsUrl(effectiveVideoUrl) ? undefined : effectiveVideoUrl}
+                                            className="rcp-media-frame"
+                                            autoPlay
+                                            muted
+                                            controls
+                                            playsInline
+                                            onError={() => setPanelMediaFailed(true)}
+                                        />
+                                    ) : panelMediaSrc && !panelMediaFailed ? (
+                                        <img
+                                            src={panelMediaSrc}
+                                            alt={inspector.name || 'Camera Feed'}
+                                            className="rcp-media-frame"
+                                            onError={() => setPanelMediaFailed(true)}
+                                        />
+                                    ) : (
+                                        <div className="rcp-media-fallback">FEED METADATA ONLY</div>
+                                    )}
+                                </div>
+                            )}
                             <div className="rcp-entity-name" style={{ textShadow: `0 0 8px ${inspectorDef.color}30` }}>
                                 {inspector.name || inspector.callsign || inspector.id || 'UNIDENTIFIED'}
                             </div>
@@ -500,8 +660,8 @@ export default function MissionHud() {
                             )}
                         </div>
                     )}
-                    {/* Flight Filters — only when aircraft enabled */}
-                    {aircraftEnabled && (
+                    {/* Flight Filters — only when an aircraft is selected */}
+                    {showFlightFilters && (
                         <div className="rcp-section">
                             <div className="rcp-header">
                                 <span>FLIGHT FILTERS</span>
@@ -530,20 +690,39 @@ export default function MissionHud() {
                         </div>
                     )}
 
-                    {/* NAV Shortcuts */}
+                    {/* NAV Shortcuts — for non-aircraft targets */}
+                    {!showFlightFilters && (
+                        <div className="rcp-section">
+                            <div className="rcp-header">
+                                <span>NAV SHORTCUTS</span>
+                                <button onClick={toggleCities} className="rcp-action" title="Hide panel">✕</button>
+                            </div>
+                            <div className="rcp-city-grid">
+                                <button className="city-chip" onClick={() => focusCity({ longitude: 10, latitude: 20, height: 9000000, pitch: -90 })}>
+                                    ◎ GLOBAL
+                                </button>
+                                {visibleCities.map((city) => (
+                                    <button key={city.name} className="city-chip" onClick={() => focusCity(city)}>
+                                        {city.name}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Compact surveillance snapshot inside same right column */}
                     <div className="rcp-section">
                         <div className="rcp-header">
-                            <span>NAV SHORTCUTS</span>
-                            <button onClick={toggleCities} className="rcp-action" title="Hide panel">✕</button>
+                            <span>SURV SNAPSHOT</span>
                         </div>
-                        <div className="rcp-city-grid">
-                            <button className="city-chip" onClick={() => focusCity({ longitude: 10, latitude: 20, height: 9000000, pitch: -90 })}>
-                                ◎ GLOBAL
-                            </button>
-                            {visibleCities.map((city) => (
-                                <button key={city.name} className="city-chip" onClick={() => focusCity(city)}>
-                                    {city.name}
-                                </button>
+                        <div className="rcp-stats-grid">
+                            {sideTelemetry.map((item) => (
+                                <div key={item.key} className="rcp-stat-row">
+                                    <span className="rcp-stat-label">{item.label}</span>
+                                    <span className={`rcp-stat-value ${item.active ? 'is-active' : ''}`}>
+                                        {item.count.toLocaleString()}
+                                    </span>
+                                </div>
                             ))}
                         </div>
                     </div>
