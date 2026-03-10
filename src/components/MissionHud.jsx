@@ -501,26 +501,28 @@ export default function MissionHud() {
         };
     }, [effectiveVideoUrl, panelMediaKind, inspector?.id]);
 
-    const metrics = SURVEILLANCE_PRIMARY_LAYERS
+    const orderedLayerKeys = [
+        ...SURVEILLANCE_PRIMARY_LAYERS,
+        ...Object.keys(layers).filter((key) => !SURVEILLANCE_PRIMARY_LAYERS.includes(key)),
+    ];
+    const snapshotRows = orderedLayerKeys
         .map((key) => {
-            const layer = layers[key]; const def = LAYER_DEFS[key];
-            if (!layer || !def || !layer.enabled || layer.status !== 'active') return null;
-            const scale = LAYER_SCALE[key] || 1000;
-            const pct = Math.max(8, Math.min(100, Math.round((layer.count / scale) * 100)));
-            return { key, label: def.label, value: layer.count, pct, color: def.color || '#00b4ff' };
+            const layer = layers[key];
+            const def = LAYER_DEFS[key];
+            if (!layer || !def || !layer.enabled) return null;
+            const scale = LAYER_SCALE[key] || Math.max(1, layer.count || 1);
+            const pct = layer.count > 0
+                ? Math.max(8, Math.min(100, Math.round((layer.count / scale) * 100)))
+                : 0;
+            return {
+                key,
+                label: def.label,
+                count: layer.count || 0,
+                pct,
+                color: def.color || '#00b4ff',
+            };
         })
         .filter(Boolean);
-
-    const sideTelemetry = [
-        { key: 'seismicStations', label: 'SEIS STATIONS' },
-        { key: 'maritime', label: 'MARITIME' },
-        { key: 'powerGrid', label: 'POWER GRID' },
-        { key: 'traffic', label: 'TRAFFIC' },
-    ].map((entry) => ({
-        ...entry,
-        count: layers[entry.key]?.count || 0,
-        active: layers[entry.key]?.enabled && layers[entry.key]?.status === 'active',
-    }));
 
     const focusCity = useCallback((city) => {
         if (!viewerRef || viewerRef.isDestroyed()) return;
@@ -565,20 +567,6 @@ export default function MissionHud() {
                 <button onClick={toggleLayerPanel} className="pointer-events-auto z-10"
                     style={{ ...toggleBtnStyle, position: 'absolute', left: '16px', top: missionHudVisible ? '200px' : '118px' }}
                     title="Show data layers">◎ LAYERS</button>
-            )}
-
-            {/* Metrics bar — top right */}
-            {metrics.length > 0 && (
-                <div className="mission-hud-right pointer-events-auto z-10">
-                    {metrics.map((m) => (
-                        <div key={m.key} className="mission-metric">
-                            <div className="mission-metric-top"><span>{m.label}</span><span>{m.value.toLocaleString()}</span></div>
-                            <div className="mission-bar">
-                                <div className="mission-bar-fill" style={{ width: `${m.pct}%`, background: m.color, boxShadow: `0 0 10px ${m.color}66` }} />
-                            </div>
-                        </div>
-                    ))}
-                </div>
             )}
 
             {/* ── Unified right column ── */}
@@ -715,16 +703,30 @@ export default function MissionHud() {
                         <div className="rcp-header">
                             <span>SURV SNAPSHOT</span>
                         </div>
-                        <div className="rcp-stats-grid">
-                            {sideTelemetry.map((item) => (
-                                <div key={item.key} className="rcp-stat-row">
-                                    <span className="rcp-stat-label">{item.label}</span>
-                                    <span className={`rcp-stat-value ${item.active ? 'is-active' : ''}`}>
-                                        {item.count.toLocaleString()}
-                                    </span>
-                                </div>
-                            ))}
-                        </div>
+                        {snapshotRows.length > 0 ? (
+                            <div className="rcp-snapshot-list">
+                                {snapshotRows.map((item) => (
+                                    <div key={item.key} className="rcp-snapshot-item">
+                                        <div className="rcp-snapshot-top">
+                                            <span>{item.label}</span>
+                                            <span>{item.count.toLocaleString()}</span>
+                                        </div>
+                                        <div className="rcp-snapshot-bar">
+                                            <div
+                                                className="rcp-snapshot-fill"
+                                                style={{
+                                                    width: `${item.pct}%`,
+                                                    background: item.color,
+                                                    boxShadow: `0 0 10px ${item.color}66`,
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="rcp-snapshot-empty">NO ENABLED LAYERS</div>
+                        )}
                     </div>
                 </div>
             ) : (

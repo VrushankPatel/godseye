@@ -869,6 +869,49 @@ body {
   color: #00b4ff;
 }
 
+.rcp-snapshot-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px 10px;
+}
+
+.rcp-snapshot-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rcp-snapshot-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  color: rgba(200, 208, 239, 0.9);
+  text-transform: uppercase;
+}
+
+.rcp-snapshot-bar {
+  width: 100%;
+  height: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.rcp-snapshot-fill {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.rcp-snapshot-empty {
+  padding: 10px;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  color: rgba(200, 208, 239, 0.5);
+  text-transform: uppercase;
+}
+
 .city-chip {
   font-family: var(--font-mono);
   font-size: 9px;
