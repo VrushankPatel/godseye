@@ -474,7 +474,10 @@ export default function MissionHud() {
 
             {/* City shortcuts — bottom-right column */}
             {citiesVisible ? (
-                <div className="mission-cities-panel pointer-events-auto z-10">
+                <div
+                    className="mission-cities-panel pointer-events-auto z-10"
+                    style={inspector ? { right: 'calc(22.5rem + max(18px, env(safe-area-inset-right)) + 18px)' } : undefined}
+                >
                     <div className="mission-cities-header">
                         <span>NAV SHORTCUTS</span>
                         <button
@@ -498,7 +501,10 @@ export default function MissionHud() {
                 <button
                     onClick={toggleCities}
                     className="pointer-events-auto z-10 sys-terminal-toggle"
-                    style={{ position: 'absolute', bottom: '24px', right: 'max(18px, env(safe-area-inset-right))' }}
+                    style={{
+                        position: 'absolute', bottom: '24px',
+                        right: inspector ? 'calc(22.5rem + max(18px, env(safe-area-inset-right)) + 18px)' : 'max(18px, env(safe-area-inset-right))',
+                    }}
                     title="Show nav shortcuts"
                 >
                     ▸ NAV
