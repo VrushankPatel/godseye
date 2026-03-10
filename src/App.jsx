@@ -10,7 +10,6 @@ import ShaderOverlay from './components/ShaderOverlay';
 import MissionHud from './components/MissionHud';
 import FlightFilterPanel from './components/FlightFilterPanel';
 import FocusMask from './components/FocusMask';
-import SysTerminal from './components/SysTerminal';
 import useStore from './store/useStore';
 import { SHADER_MODES } from './constants/dataSources';
 
@@ -85,7 +84,6 @@ export default function App() {
             <HoverTooltip />
             <MissionHud />
             <FlightFilterPanel />
-            <SysTerminal />
         </div>
     );
 }

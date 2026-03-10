@@ -578,7 +578,7 @@ body {
 
 .mission-cities {
   position: absolute;
-  bottom: 115px;
+  bottom: 180px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -706,19 +706,32 @@ body {
 
 /* ── SysOps Terminal ─────────────────────────────── */
 .sys-terminal {
-  position: absolute;
-  bottom: 100px;
-  width: 320px;
+  width: 100%;
   max-height: 180px;
+  flex-shrink: 0;
   background: rgba(2, 8, 20, 0.45);
   border: 1px solid rgba(14, 165, 233, 0.15);
   border-radius: 4px;
   font-family: var(--font-mono);
   z-index: 9;
-  pointer-events: auto;
   backdrop-filter: blur(6px);
   box-shadow: 0 0 15px rgba(14, 165, 233, 0.04);
-  transition: left 0.3s ease;
+}
+
+.sys-terminal-toggle {
+  padding: 4px 10px;
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  color: rgba(56, 189, 248, 0.5);
+  cursor: pointer;
+  border: 1px solid rgba(14, 165, 233, 0.15);
+  background: rgba(2, 8, 20, 0.5);
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  backdrop-filter: blur(4px);
+  flex-shrink: 0;
+  align-self: flex-start;
 }
 
 .sys-terminal-header {

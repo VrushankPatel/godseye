@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import useStore from '../store/useStore';
 import { LAYER_DEFS, SURVEILLANCE_PRIMARY_LAYERS } from '../constants/dataSources';
+import SysTerminal from './SysTerminal';
 
 export default function LayerPanel() {
     const {
@@ -97,24 +98,34 @@ export default function LayerPanel() {
 
     if (!layerPanelOpen) {
         return (
-            <button
-                onClick={toggleLayerPanel}
-                className="absolute top-1/2 -translate-y-1/2 glass-panel p-2.5 rounded-r-lg rounded-l-none text-text-dim hover:text-white pointer-events-auto z-10 border-l-0"
-                style={{ left: 'max(10px, env(safe-area-inset-left))' }}
+            <div
+                className="absolute top-24 bottom-4 flex flex-col gap-2 pointer-events-none z-10"
+                style={{ left: 'max(10px, env(safe-area-inset-left))', width: '19.5rem' }}
             >
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-5 h-5">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-            </button>
+                {/* Reopen chevron */}
+                <button
+                    onClick={toggleLayerPanel}
+                    className="glass-panel p-2.5 rounded-r-lg rounded-l-none text-text-dim hover:text-white pointer-events-auto border-l-0 self-start"
+                >
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-5 h-5">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                </button>
+                {/* Terminal stays visible */}
+                <div className="mt-auto">
+                    <SysTerminal />
+                </div>
+            </div>
         );
     }
 
     return (
         <div
-            className="absolute top-24 bottom-24 w-[19.5rem] flex flex-col pointer-events-none z-10 animate-slide-left"
+            className="absolute top-24 bottom-4 w-[19.5rem] flex flex-col gap-2 pointer-events-none z-10 animate-slide-left"
             style={{ left: 'max(16px, env(safe-area-inset-left))' }}
         >
-            <div className="glass-panel w-full h-full flex flex-col pointer-events-auto">
+            {/* Data Layers Panel */}
+            <div className="glass-panel w-full flex-1 min-h-0 flex flex-col pointer-events-auto">
 
                 <div className="px-5 py-4 border-b border-border-panel flex justify-between items-center bg-black/20">
                     <h2 className="text-[13px] tracking-[0.18em] leading-tight text-white/90">Data Layers</h2>
@@ -167,6 +178,9 @@ export default function LayerPanel() {
                 </div>
 
             </div>
+
+            {/* SysOps Terminal — stacked below the layer panel */}
+            <SysTerminal />
         </div>
     );
 }

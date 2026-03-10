@@ -28,7 +28,6 @@ export default function SysTerminal() {
     const layers = useStore((s) => s.layers);
     const sysTerminalVisible = useStore((s) => s.sysTerminalVisible);
     const toggleSysTerminal = useStore((s) => s.toggleSysTerminal);
-    const layerPanelOpen = useStore((s) => s.layerPanelOpen);
     const [lines, setLines] = useState([]);
     const scrollRef = useRef(null);
     const seenRef = useRef(new Set());
@@ -75,30 +74,12 @@ export default function SysTerminal() {
         }
     }, [lines]);
 
-    // When hidden, show a small reopen button
+    // When hidden, show a small reopen button (as inline element in the flex column)
     if (!sysTerminalVisible) {
         return (
             <button
                 onClick={toggleSysTerminal}
-                className="pointer-events-auto"
-                style={{
-                    position: 'absolute',
-                    bottom: '100px',
-                    left: layerPanelOpen ? '340px' : '24px',
-                    padding: '4px 10px',
-                    fontSize: '9px',
-                    letterSpacing: '1.5px',
-                    color: 'rgba(56, 189, 248, 0.5)',
-                    cursor: 'pointer',
-                    border: '1px solid rgba(14, 165, 233, 0.15)',
-                    background: 'rgba(2, 8, 20, 0.5)',
-                    borderRadius: '4px',
-                    fontFamily: 'var(--font-mono)',
-                    textTransform: 'uppercase',
-                    transition: 'all 0.3s',
-                    zIndex: 9,
-                    backdropFilter: 'blur(4px)',
-                }}
+                className="pointer-events-auto sys-terminal-toggle"
                 title="Show terminal"
             >
                 ▸ SYS
@@ -107,10 +88,7 @@ export default function SysTerminal() {
     }
 
     return (
-        <div
-            className="sys-terminal"
-            style={{ left: layerPanelOpen ? '340px' : '24px' }}
-        >
+        <div className="sys-terminal pointer-events-auto">
             <div className="sys-terminal-header">
                 <span className="sys-terminal-dot"></span>
                 <span style={{ flex: 1 }}>SYS://OPS_TERMINAL</span>
