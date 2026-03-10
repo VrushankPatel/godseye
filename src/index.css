@@ -612,7 +612,7 @@ body {
 /* ── Flight Filters ─────────────────────────────── */
 .flight-filter-panel {
   position: absolute;
-  top: 360px;
+  bottom: 180px;
   right: max(18px, env(safe-area-inset-right));
   width: 220px;
   padding: 12px;

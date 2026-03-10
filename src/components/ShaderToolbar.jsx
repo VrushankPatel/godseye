@@ -27,14 +27,14 @@ export default function ShaderToolbar() {
 
     return (
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 pointer-events-none z-10 animate-slide-up">
-            <div className="glass-panel px-6 py-3 flex flex-col items-center gap-3 pointer-events-auto rounded-full pb-4">
+            <div className="glass-panel px-8 py-5 flex flex-col items-center gap-4 pointer-events-auto rounded-full pb-5">
 
                 <div className="text-[10px] tracking-[0.3em] text-text-dim uppercase font-semibold">
                     VISUAL_MODE_OVERRIDE
                 </div>
 
                 {/* Row 1: First 4 shader modes */}
-                <div className="flex gap-2">
+                <div className="flex gap-3">
                     {row1.map((mode) => (
                         <button
                             key={mode.id}
@@ -48,7 +48,7 @@ export default function ShaderToolbar() {
                 </div>
 
                 {/* Row 2: Remaining modes + Focus + Hide Entities */}
-                <div className="flex gap-2">
+                <div className="flex gap-3">
                     {row2.map((mode) => (
                         <button
                             key={mode.id}
