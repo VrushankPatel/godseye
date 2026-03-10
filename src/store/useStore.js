@@ -182,6 +182,8 @@ const useStore = create((set, get) => ({
     toggleMissionHud: () => set((state) => ({ missionHudVisible: !state.missionHudVisible })),
     sysTerminalVisible: true,
     toggleSysTerminal: () => set((state) => ({ sysTerminalVisible: !state.sysTerminalVisible })),
+    citiesVisible: true,
+    toggleCities: () => set((state) => ({ citiesVisible: !state.citiesVisible })),
 
     // Get total active feed count
     getActiveFeedCount: () => {

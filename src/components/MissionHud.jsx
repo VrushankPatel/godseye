@@ -312,6 +312,8 @@ export default function MissionHud() {
     const toggleLayerPanel = useStore((s) => s.toggleLayerPanel);
     const missionHudVisible = useStore((s) => s.missionHudVisible);
     const toggleMissionHud = useStore((s) => s.toggleMissionHud);
+    const citiesVisible = useStore((s) => s.citiesVisible);
+    const toggleCities = useStore((s) => s.toggleCities);
 
     const [visibleCities, setVisibleCities] = useState(ALL_CITIES.slice(0, 6));
     const rafRef = useRef(null);
@@ -470,16 +472,38 @@ export default function MissionHud() {
                 </div>
             )}
 
-            <div className="mission-cities pointer-events-auto z-10">
-                <button className="city-chip" onClick={() => focusCity({ longitude: 10, latitude: 20, height: 9000000, pitch: -90 })}>
-                    Global
+            {/* City shortcuts — bottom-right column */}
+            {citiesVisible ? (
+                <div className="mission-cities-panel pointer-events-auto z-10">
+                    <div className="mission-cities-header">
+                        <span>NAV SHORTCUTS</span>
+                        <button
+                            onClick={toggleCities}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(56, 189, 248, 0.4)', fontSize: '10px', lineHeight: 1, padding: '0 2px' }}
+                            title="Hide nav shortcuts"
+                        >✕</button>
+                    </div>
+                    <div className="mission-cities-list">
+                        <button className="city-chip" onClick={() => focusCity({ longitude: 10, latitude: 20, height: 9000000, pitch: -90 })}>
+                            ◎ Global
+                        </button>
+                        {visibleCities.map((city) => (
+                            <button key={city.name} className="city-chip" onClick={() => focusCity(city)}>
+                                {city.name}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            ) : (
+                <button
+                    onClick={toggleCities}
+                    className="pointer-events-auto z-10 sys-terminal-toggle"
+                    style={{ position: 'absolute', bottom: '24px', right: 'max(18px, env(safe-area-inset-right))' }}
+                    title="Show nav shortcuts"
+                >
+                    ▸ NAV
                 </button>
-                {visibleCities.map((city) => (
-                    <button key={city.name} className="city-chip" onClick={() => focusCity(city)}>
-                        {city.name}
-                    </button>
-                ))}
-            </div>
+            )}
         </>
     );
 }
