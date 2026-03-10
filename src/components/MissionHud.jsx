@@ -427,13 +427,6 @@ export default function MissionHud() {
     })();
     const panelMediaKind = resolvePanelMediaKind(inspector, effectiveVideoUrl);
 
-    const LAYER_SCALE = {
-        aircraft: 10000, satellites: 12000, seismic: 600, airports: 10000,
-        seismicStations: 5000, maritime: 8000, powerGrid: 7000, cctv: 8000,
-        traffic: 1200, conflicts: 1200, militaryActivity: 1000,
-        militaryBases: 3000, forbiddenZones: 1500, airspace: 1500,
-    };
-
     useEffect(() => {
         if (!viewerRef || viewerRef.isDestroyed()) return;
         const updateCities = () => setVisibleCities(getVisibleCities(viewerRef, 6));
@@ -510,16 +503,10 @@ export default function MissionHud() {
             const layer = layers[key];
             const def = LAYER_DEFS[key];
             if (!layer || !def || !layer.enabled) return null;
-            const scale = LAYER_SCALE[key] || Math.max(1, layer.count || 1);
-            const pct = layer.count > 0
-                ? Math.max(8, Math.min(100, Math.round((layer.count / scale) * 100)))
-                : 0;
             return {
                 key,
                 label: def.label,
                 count: layer.count || 0,
-                pct,
-                color: def.color || '#00b4ff',
             };
         })
         .filter(Boolean);
@@ -710,16 +697,6 @@ export default function MissionHud() {
                                         <div className="rcp-snapshot-top">
                                             <span>{item.label}</span>
                                             <span>{item.count.toLocaleString()}</span>
-                                        </div>
-                                        <div className="rcp-snapshot-bar">
-                                            <div
-                                                className="rcp-snapshot-fill"
-                                                style={{
-                                                    width: `${item.pct}%`,
-                                                    background: item.color,
-                                                    boxShadow: `0 0 10px ${item.color}66`,
-                                                }}
-                                            />
                                         </div>
                                     </div>
                                 ))}
