@@ -153,9 +153,8 @@ export const SHADER_MODES = [
     { id: 'NVG', label: 'NVG', key: '2', color: '#00ff41' },
     { id: 'FLIR', label: 'FLIR', key: '3', color: '#ff6600' },
     { id: 'CRT', label: 'CRT', key: '4', color: '#ffaa00' },
-    { id: 'ANIME', label: 'Anime', key: '5', color: '#ff69b4' },
-    { id: 'GOD', label: 'God', key: '6', color: '#00ffff' },
-    { id: 'SURVEILLANCE', label: 'Surv', key: '7', color: '#7dd3fc' },
+    { id: 'GOD', label: 'God', key: '5', color: '#00ffff' },
+    { id: 'SURVEILLANCE', label: 'Surv', key: '6', color: '#7dd3fc' },
 ];
 
 // ── Layer Definitions ─────────────────────────────────

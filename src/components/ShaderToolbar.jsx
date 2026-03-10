@@ -21,6 +21,10 @@ export default function ShaderToolbar() {
         }
     };
 
+    // Split into two rows of up to 4
+    const row1 = SHADER_MODES.slice(0, 4);
+    const row2 = SHADER_MODES.slice(4);
+
     return (
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 pointer-events-none z-10 animate-slide-up">
             <div className="glass-panel px-6 py-3 flex flex-col items-center gap-3 pointer-events-auto rounded-full pb-4">
@@ -29,36 +33,46 @@ export default function ShaderToolbar() {
                     VISUAL_MODE_OVERRIDE
                 </div>
 
+                {/* Row 1: First 4 shader modes */}
                 <div className="flex gap-2">
-                    {SHADER_MODES.map((mode) => (
+                    {row1.map((mode) => (
                         <button
                             key={mode.id}
                             onClick={() => handleModeClick(mode.id)}
                             className={`mode-btn ${activeShader === mode.id ? 'active' : ''}`}
                         >
-                            <span className="opacity-50 mr-2 text-[9px]">{mode.key}</span>
+                            <span className="opacity-50 text-[9px]">{mode.key}</span>
                             {mode.label}
                         </button>
                     ))}
                 </div>
 
-                <div className="flex items-center gap-2 pt-1">
+                {/* Row 2: Remaining modes + Focus + Hide Entities */}
+                <div className="flex gap-2">
+                    {row2.map((mode) => (
+                        <button
+                            key={mode.id}
+                            onClick={() => handleModeClick(mode.id)}
+                            className={`mode-btn ${activeShader === mode.id ? 'active' : ''}`}
+                        >
+                            <span className="opacity-50 text-[9px]">{mode.key}</span>
+                            {mode.label}
+                        </button>
+                    ))}
                     <button
                         onClick={toggleFocusMode}
-                        className={`mode-btn !px-3 !py-1.5 !text-[10px] ${
-                            focusMode ? 'active' : ''
-                        }`}
+                        className={`mode-btn ${focusMode ? 'active' : ''}`}
                     >
-                        FOCUS MODE
+                        <span className="opacity-50 text-[9px]">7</span>
+                        Focus
                     </button>
                     {focusMode && (
                         <button
                             onClick={() => setFocusHideEntities(!focusHideEntities)}
-                            className={`mode-btn !px-3 !py-1.5 !text-[10px] ${
-                                focusHideEntities ? 'active' : ''
-                            }`}
+                            className={`mode-btn ${focusHideEntities ? 'active' : ''}`}
                         >
-                            {focusHideEntities ? 'SHOW ENTITIES' : 'HIDE ENTITIES'}
+                            <span className="opacity-50 text-[9px]">8</span>
+                            {focusHideEntities ? 'Show' : 'Hide'}
                         </button>
                     )}
                 </div>

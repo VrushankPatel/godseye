@@ -9,7 +9,6 @@ export default function Reticle() {
             case 'NVG': return 'rgba(0, 255, 65, 0.4)';  // Neon Green
             case 'FLIR': return 'rgba(255, 100, 0, 0.4)'; // Orange/Amber
             case 'CRT': return 'rgba(255, 170, 0, 0.4)';  // CRT Amber
-            case 'ANIME': return 'rgba(0, 180, 255, 0.4)'; // Blue
             case 'SURVEILLANCE': return 'rgba(0, 212, 255, 0.45)';
             default: return 'rgba(255, 255, 255, 0.2)'; // White
         }

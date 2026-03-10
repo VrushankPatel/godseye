@@ -139,6 +139,9 @@ body {
 
 /* ── Mode Button ──────────────────────────────────── */
 .mode-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   padding: 6px 14px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.03);
@@ -698,5 +701,86 @@ body {
   .flight-filter-panel--offset {
     right: 18px;
     top: 450px;
+  }
+}
+
+/* ── SysOps Terminal ─────────────────────────────── */
+.sys-terminal {
+  position: absolute;
+  bottom: 100px;
+  left: 24px;
+  width: 340px;
+  max-height: 200px;
+  background: rgba(0, 0, 0, 0.85);
+  border: 1px solid rgba(0, 255, 65, 0.2);
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  z-index: 10;
+  pointer-events: none;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 0 20px rgba(0, 255, 65, 0.05), inset 0 0 30px rgba(0, 0, 0, 0.5);
+}
+
+.sys-terminal-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: rgba(0, 255, 65, 0.5);
+  border-bottom: 1px solid rgba(0, 255, 65, 0.1);
+  text-transform: uppercase;
+}
+
+.sys-terminal-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #00ff41;
+  box-shadow: 0 0 6px #00ff41;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.sys-terminal-body {
+  padding: 8px 10px;
+  max-height: 160px;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.sys-terminal-body::-webkit-scrollbar {
+  display: none;
+}
+
+.sys-terminal-line {
+  font-size: 10px;
+  line-height: 1.6;
+  color: rgba(0, 255, 65, 0.45);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sys-terminal-line--latest {
+  color: rgba(0, 255, 65, 0.9);
+  text-shadow: 0 0 8px rgba(0, 255, 65, 0.3);
+}
+
+.sys-terminal-cursor {
+  font-size: 10px;
+  color: #00ff41;
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0;
   }
 }

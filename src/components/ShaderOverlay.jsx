@@ -13,7 +13,6 @@ export default function ShaderOverlay() {
             case 'NVG': return 'shader-nvg';
             case 'FLIR': return 'shader-flir';
             case 'CRT': return 'shader-crt';
-            case 'ANIME': return 'shader-anime';
             default: return '';
         }
     };

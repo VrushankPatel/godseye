@@ -10,6 +10,7 @@ import ShaderOverlay from './components/ShaderOverlay';
 import MissionHud from './components/MissionHud';
 import FlightFilterPanel from './components/FlightFilterPanel';
 import FocusMask from './components/FocusMask';
+import SysTerminal from './components/SysTerminal';
 import useStore from './store/useStore';
 import { SHADER_MODES } from './constants/dataSources';
 
@@ -19,40 +20,41 @@ export default function App() {
     const enableAllLayers = useStore((s) => s.enableAllLayers);
     const enableSurveillanceLayers = useStore((s) => s.enableSurveillanceLayers);
     const clearInspector = useStore((s) => s.clearInspector);
+    const toggleFocusMode = useStore((s) => s.toggleFocusMode);
+    const focusHideEntities = useStore((s) => s.focusHideEntities);
+    const setFocusHideEntities = useStore((s) => s.setFocusHideEntities);
 
-    // Keyboard shortcuts: 1-7 for shader modes, Escape to close inspector
+    // Keyboard shortcuts: 1-6 shader modes, 7 Focus, 8 Hide Entities, Escape close
     useEffect(() => {
         const handleKeyDown = (e) => {
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
             const keyNum = parseInt(e.key);
-            if (keyNum >= 1 && keyNum <= 7) {
+            if (keyNum >= 1 && keyNum <= SHADER_MODES.length) {
                 const mode = SHADER_MODES[keyNum - 1];
                 if (mode) {
                     setShader(mode.id);
-                    if (mode.id === 'GOD') {
-                        enableAllLayers();
-                    } else if (mode.id === 'SURVEILLANCE') {
-                        enableSurveillanceLayers();
-                    }
+                    if (mode.id === 'GOD') enableAllLayers();
+                    else if (mode.id === 'SURVEILLANCE') enableSurveillanceLayers();
                 }
+            } else if (e.key === '7') {
+                toggleFocusMode();
+            } else if (e.key === '8') {
+                setFocusHideEntities(!focusHideEntities);
             }
 
-            if (e.key === 'Escape') {
-                clearInspector();
-            }
+            if (e.key === 'Escape') clearInspector();
         };
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [setShader, enableAllLayers, enableSurveillanceLayers, clearInspector]);
+    }, [setShader, enableAllLayers, enableSurveillanceLayers, clearInspector, toggleFocusMode, focusHideEntities, setFocusHideEntities]);
 
     const getGlobeModeClass = () => {
         switch (activeShader) {
             case 'NVG': return 'mode-nvg';
             case 'FLIR': return 'mode-flir';
             case 'CRT': return 'mode-crt';
-            case 'ANIME': return 'mode-anime';
             default: return '';
         }
     };
@@ -79,6 +81,7 @@ export default function App() {
             <HoverTooltip />
             <MissionHud />
             <FlightFilterPanel />
+            <SysTerminal />
         </div>
     );
 }

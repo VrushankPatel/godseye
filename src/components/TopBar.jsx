@@ -80,7 +80,7 @@ export default function TopBar() {
 
             {/* Top Center: Classification Banner */}
             <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-neon-red/10 border border-neon-red/30 px-8 py-1 rounded text-[10px] tracking-[0.2em] text-neon-red font-bold uppercase backdrop-blur-md hidden md:block mt-safe">
-                TOP SECRET // SI-TK // NOFORN
+                CLASSIFIED // EYES ONLY // GODSEYE
             </div>
 
             {/* Right: Time & Telemetry */}
