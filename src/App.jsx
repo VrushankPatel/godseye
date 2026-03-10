@@ -20,6 +20,7 @@ export default function App() {
     const enableAllLayers = useStore((s) => s.enableAllLayers);
     const enableSurveillanceLayers = useStore((s) => s.enableSurveillanceLayers);
     const clearInspector = useStore((s) => s.clearInspector);
+    const clearTrackedTarget = useStore((s) => s.clearTrackedTarget);
     const toggleFocusMode = useStore((s) => s.toggleFocusMode);
     const focusHideEntities = useStore((s) => s.focusHideEntities);
     const setFocusHideEntities = useStore((s) => s.setFocusHideEntities);
@@ -43,12 +44,15 @@ export default function App() {
                 setFocusHideEntities(!focusHideEntities);
             }
 
-            if (e.key === 'Escape') clearInspector();
+            if (e.key === 'Escape') {
+                clearInspector();
+                clearTrackedTarget();
+            }
         };
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [setShader, enableAllLayers, enableSurveillanceLayers, clearInspector, toggleFocusMode, focusHideEntities, setFocusHideEntities]);
+    }, [setShader, enableAllLayers, enableSurveillanceLayers, clearInspector, clearTrackedTarget, toggleFocusMode, focusHideEntities, setFocusHideEntities]);
 
     const getGlobeModeClass = () => {
         switch (activeShader) {

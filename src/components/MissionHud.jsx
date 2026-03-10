@@ -309,6 +309,8 @@ export default function MissionHud() {
     const activeShader = useStore((s) => s.activeShader);
     const inspector = useStore((s) => s.inspector);
     const layerPanelOpen = useStore((s) => s.layerPanelOpen);
+    const missionHudVisible = useStore((s) => s.missionHudVisible);
+    const toggleMissionHud = useStore((s) => s.toggleMissionHud);
 
     const [visibleCities, setVisibleCities] = useState(ALL_CITIES.slice(0, 6));
     const rafRef = useRef(null);
@@ -388,14 +390,39 @@ export default function MissionHud() {
 
     return (
         <>
-            <div
-                className={`mission-hud-left glass-panel pointer-events-none z-10 ${layerPanelOpen ? 'mission-hud-left--offset' : ''
-                    }`}
-            >
-                <div className="mission-label">CLASSIFIED // EYES ONLY // GODSEYE</div>
-                <div className="mission-title">{activeShader} MODE</div>
-                <div className="mission-sub">SURVEILLANCE NODE ACTIVE</div>
-            </div>
+            {/* Mode wizard chip — hideable */}
+            {missionHudVisible ? (
+                <div
+                    className={`mission-hud-left glass-panel pointer-events-auto z-10 ${layerPanelOpen ? 'mission-hud-left--offset' : ''}`}
+                >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <div className="mission-label">CLASSIFIED // EYES ONLY // GODSEYE</div>
+                        <button
+                            onClick={toggleMissionHud}
+                            className="text-text-dim hover:text-white transition-colors"
+                            style={{ fontSize: '10px', background: 'none', border: 'none', cursor: 'pointer', padding: '0 0 0 8px', lineHeight: 1 }}
+                            title="Hide mode wizard"
+                        >✕</button>
+                    </div>
+                    <div className="mission-title">{activeShader} MODE</div>
+                    <div className="mission-sub">SURVEILLANCE NODE ACTIVE</div>
+                </div>
+            ) : (
+                <button
+                    onClick={toggleMissionHud}
+                    className={`glass-panel pointer-events-auto z-10 ${layerPanelOpen ? 'mission-hud-left--offset' : ''}`}
+                    style={{
+                        position: 'absolute', left: layerPanelOpen ? '340px' : '24px', top: '120px',
+                        padding: '4px 10px', fontSize: '9px', letterSpacing: '1.5px',
+                        color: 'var(--color-text-dim)', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.1)',
+                        background: 'rgba(255,255,255,0.03)', transition: 'all 0.3s',
+                        fontFamily: 'var(--font-mono)', textTransform: 'uppercase',
+                    }}
+                    title="Show mode wizard"
+                >
+                    ◎ MODE
+                </button>
+            )}
 
             {metrics.length > 0 && (
                 <div

@@ -26,6 +26,9 @@ const LAYER_MESSAGES = {
 
 export default function SysTerminal() {
     const layers = useStore((s) => s.layers);
+    const sysTerminalVisible = useStore((s) => s.sysTerminalVisible);
+    const toggleSysTerminal = useStore((s) => s.toggleSysTerminal);
+    const layerPanelOpen = useStore((s) => s.layerPanelOpen);
     const [lines, setLines] = useState([]);
     const scrollRef = useRef(null);
     const seenRef = useRef(new Set());
@@ -55,7 +58,6 @@ export default function SysTerminal() {
 
             if (layer.status === 'active' && layer.count > 0 && !seenRef.current.has(activeKey)) {
                 seenRef.current.add(activeKey);
-                // Clear old active message for this key
                 seenRef.current.forEach((k) => {
                     if (k.startsWith(`${key}:active:`) && k !== activeKey) {
                         seenRef.current.delete(k);
@@ -73,11 +75,55 @@ export default function SysTerminal() {
         }
     }, [lines]);
 
+    // When hidden, show a small reopen button
+    if (!sysTerminalVisible) {
+        return (
+            <button
+                onClick={toggleSysTerminal}
+                className="pointer-events-auto"
+                style={{
+                    position: 'absolute',
+                    bottom: '100px',
+                    left: layerPanelOpen ? '340px' : '24px',
+                    padding: '4px 10px',
+                    fontSize: '9px',
+                    letterSpacing: '1.5px',
+                    color: 'rgba(56, 189, 248, 0.5)',
+                    cursor: 'pointer',
+                    border: '1px solid rgba(14, 165, 233, 0.15)',
+                    background: 'rgba(2, 8, 20, 0.5)',
+                    borderRadius: '4px',
+                    fontFamily: 'var(--font-mono)',
+                    textTransform: 'uppercase',
+                    transition: 'all 0.3s',
+                    zIndex: 9,
+                    backdropFilter: 'blur(4px)',
+                }}
+                title="Show terminal"
+            >
+                ▸ SYS
+            </button>
+        );
+    }
+
     return (
-        <div className="sys-terminal">
+        <div
+            className="sys-terminal"
+            style={{ left: layerPanelOpen ? '340px' : '24px' }}
+        >
             <div className="sys-terminal-header">
                 <span className="sys-terminal-dot"></span>
-                SYS://OPS_TERMINAL
+                <span style={{ flex: 1 }}>SYS://OPS_TERMINAL</span>
+                <button
+                    onClick={toggleSysTerminal}
+                    className="pointer-events-auto"
+                    style={{
+                        background: 'none', border: 'none', cursor: 'pointer',
+                        color: 'rgba(56, 189, 248, 0.4)', fontSize: '10px', lineHeight: 1,
+                        padding: '0 2px',
+                    }}
+                    title="Hide terminal"
+                >✕</button>
             </div>
             <div className="sys-terminal-body" ref={scrollRef}>
                 {lines.map((line, i) => (

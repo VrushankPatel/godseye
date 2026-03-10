@@ -177,6 +177,12 @@ const useStore = create((set, get) => ({
     layerPanelOpen: true,
     toggleLayerPanel: () => set((state) => ({ layerPanelOpen: !state.layerPanelOpen })),
 
+    // Panel visibility toggles
+    missionHudVisible: true,
+    toggleMissionHud: () => set((state) => ({ missionHudVisible: !state.missionHudVisible })),
+    sysTerminalVisible: true,
+    toggleSysTerminal: () => set((state) => ({ sysTerminalVisible: !state.sysTerminalVisible })),
+
     // Get total active feed count
     getActiveFeedCount: () => {
         const { layers } = get();

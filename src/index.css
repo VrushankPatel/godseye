@@ -708,17 +708,17 @@ body {
 .sys-terminal {
   position: absolute;
   bottom: 100px;
-  left: 24px;
   width: 320px;
   max-height: 180px;
-  background: rgba(2, 8, 20, 0.88);
-  border: 1px solid rgba(14, 165, 233, 0.18);
+  background: rgba(2, 8, 20, 0.45);
+  border: 1px solid rgba(14, 165, 233, 0.15);
   border-radius: 4px;
   font-family: var(--font-mono);
   z-index: 9;
-  pointer-events: none;
-  backdrop-filter: blur(8px);
-  box-shadow: 0 0 20px rgba(14, 165, 233, 0.05), inset 0 0 30px rgba(0, 0, 0, 0.5);
+  pointer-events: auto;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 0 15px rgba(14, 165, 233, 0.04);
+  transition: left 0.3s ease;
 }
 
 .sys-terminal-header {
