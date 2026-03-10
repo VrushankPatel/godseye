@@ -308,12 +308,37 @@ export default function MissionHud() {
     const viewerRef = useStore((s) => s.viewerRef);
     const activeShader = useStore((s) => s.activeShader);
     const inspector = useStore((s) => s.inspector);
+    const clearInspector = useStore((s) => s.clearInspector);
+    const trackedTarget = useStore((s) => s.trackedTarget);
+    const toggleTrackedTarget = useStore((s) => s.toggleTrackedTarget);
+    const trackingView = useStore((s) => s.trackingView);
+    const setTrackingView = useStore((s) => s.setTrackingView);
     const layerPanelOpen = useStore((s) => s.layerPanelOpen);
     const toggleLayerPanel = useStore((s) => s.toggleLayerPanel);
     const missionHudVisible = useStore((s) => s.missionHudVisible);
     const toggleMissionHud = useStore((s) => s.toggleMissionHud);
     const citiesVisible = useStore((s) => s.citiesVisible);
     const toggleCities = useStore((s) => s.toggleCities);
+
+    const TRACKABLE_TYPES = new Set(['aircraft', 'satellites', 'militaryActivity']);
+    const AIRCRAFT_VIEWS = [{ id: 'CHASE', label: 'Chase' }, { id: 'COCKPIT', label: 'Cockpit' }, { id: 'TOP', label: 'Top' }, { id: 'SIDE', label: 'Side' }];
+    const SATELLITE_VIEWS = [{ id: 'ORBIT', label: 'Orbit' }, { id: 'NADIR', label: 'Nadir' }, { id: 'WIDE', label: 'Wide' }];
+
+    const SKIP_KEYS = new Set(['type', 'name', 'callsign', 'id', 'url', 'fallbackUrl', 'videoUrl', 'mediaType', 'refreshSeconds', 'detailsUrl']);
+
+    // Entity info helpers
+    const inspectorDef = inspector ? (LAYER_DEFS[inspector.type] || { color: '#fff', icon: '❓', label: 'UNKNOWN' }) : null;
+    const isTrackable = inspector && TRACKABLE_TYPES.has(inspector.type) && Boolean(inspector._entityId);
+    const isTracked = isTrackable && trackedTarget?.entityId === inspector._entityId;
+    const trackViews = inspector?.type === 'satellites' ? SATELLITE_VIEWS : AIRCRAFT_VIEWS;
+    const hasMedia = inspector && (inspector.type === 'cctv' || inspector.type === 'traffic');
+
+    const handleTrackToggle = useCallback(() => {
+        if (!inspector || !isTrackable) return;
+        const normalizedType = inspector.type === 'militaryActivity' ? 'aircraft' : inspector.type;
+        if (!isTracked) setTrackingView(normalizedType === 'satellites' ? 'ORBIT' : 'CHASE');
+        toggleTrackedTarget({ entityId: inspector._entityId, type: normalizedType, label: inspector.name || inspector.callsign || inspector.id || 'TARGET' });
+    }, [inspector, isTrackable, isTracked, setTrackingView, toggleTrackedTarget]);
 
     // Flight filter store reads
     const aircraftEnabled = useStore((s) => s.layers.aircraft.enabled);
@@ -384,7 +409,8 @@ export default function MissionHud() {
         fontFamily: 'var(--font-mono)', textTransform: 'uppercase',
     };
 
-    const rightPanelRight = inspector
+    // Right panel stays at same position — entity info is embedded inside
+    const rightPanelRight = hasMedia && inspector
         ? 'calc(22.5rem + max(18px, env(safe-area-inset-right)) + 18px)'
         : 'max(18px, env(safe-area-inset-right))';
 
@@ -431,6 +457,49 @@ export default function MissionHud() {
             {/* ── Unified right column ── */}
             {citiesVisible ? (
                 <div className="right-column-panel pointer-events-auto z-10" style={{ right: rightPanelRight }}>
+                    {/* Entity Info — when inspector is set and NOT cctv/traffic */}
+                    {inspector && !hasMedia && (
+                        <div className="rcp-section rcp-entity">
+                            <div className="rcp-header" style={{ borderBottomColor: `${inspectorDef.color}22` }}>
+                                <span style={{ color: inspectorDef.color }}>{inspectorDef.icon} {inspectorDef.label}</span>
+                                <button onClick={clearInspector} className="rcp-action">✕</button>
+                            </div>
+                            <div className="rcp-entity-name" style={{ textShadow: `0 0 8px ${inspectorDef.color}30` }}>
+                                {inspector.name || inspector.callsign || inspector.id || 'UNIDENTIFIED'}
+                            </div>
+                            <div className="rcp-entity-grid">
+                                {Object.entries(inspector).map(([key, value]) => {
+                                    if (SKIP_KEYS.has(key) || key.startsWith('_') || typeof value === 'object') return null;
+                                    return (
+                                        <div key={key} className="rcp-entity-field">
+                                            <span className="rcp-entity-key">{key}</span>
+                                            <span className="rcp-entity-val">{value !== null && value !== undefined ? String(value) : 'N/A'}</span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                            {isTrackable && (
+                                <div style={{ padding: '0 8px 8px' }}>
+                                    <button className={`rcp-track-btn ${isTracked ? 'is-tracked' : ''}`} onClick={handleTrackToggle}>
+                                        {isTracked ? '■ STOP TRACK' : '▶ TRACK TARGET'}
+                                    </button>
+                                </div>
+                            )}
+                            {isTracked && (
+                                <div style={{ padding: '0 8px 8px' }}>
+                                    <div className="rcp-entity-key" style={{ marginBottom: '4px' }}>TRACK VIEW</div>
+                                    <div className="rcp-view-grid">
+                                        {trackViews.map((v) => (
+                                            <button key={v.id} onClick={() => setTrackingView(v.id)}
+                                                className={`rcp-view-btn ${trackingView === v.id ? 'is-active' : ''}`}>
+                                                {v.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
                     {/* Flight Filters — only when aircraft enabled */}
                     {aircraftEnabled && (
                         <div className="rcp-section">

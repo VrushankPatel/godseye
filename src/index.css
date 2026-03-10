@@ -576,6 +576,105 @@ body {
   transition: width 0.35s ease;
 }
 
+/* ── Entity Info (within right column) ───────────── */
+.rcp-entity-name {
+  padding: 6px 10px 4px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #ffffff;
+  word-break: break-word;
+  line-height: 1.2;
+}
+
+.rcp-entity-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2px 8px;
+  padding: 4px 10px 6px;
+}
+
+.rcp-entity-field {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 2px 0;
+  min-width: 0;
+}
+
+.rcp-entity-key {
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  color: rgba(200, 208, 239, 0.45);
+  text-transform: uppercase;
+}
+
+.rcp-entity-val {
+  font-size: 11px;
+  color: #c8d0ef;
+  word-break: break-word;
+  line-height: 1.2;
+}
+
+.rcp-track-btn {
+  width: 100%;
+  padding: 5px 8px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  border: 1px solid rgba(0, 180, 255, 0.4);
+  background: rgba(0, 180, 255, 0.08);
+  color: #7dd3fc;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-radius: 2px;
+}
+
+.rcp-track-btn:hover {
+  background: rgba(0, 180, 255, 0.16);
+}
+
+.rcp-track-btn.is-tracked {
+  border-color: rgba(255, 80, 80, 0.5);
+  background: rgba(255, 80, 80, 0.1);
+  color: #fca5a5;
+}
+
+.rcp-track-btn.is-tracked:hover {
+  background: rgba(255, 80, 80, 0.2);
+}
+
+.rcp-view-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 3px;
+}
+
+.rcp-view-btn {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  padding: 3px 4px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: #9aa1c4;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-radius: 2px;
+}
+
+.rcp-view-btn:hover {
+  color: #fff;
+  border-color: rgba(0, 180, 255, 0.4);
+}
+
+.rcp-view-btn.is-active {
+  border-color: rgba(0, 180, 255, 0.6);
+  background: rgba(0, 180, 255, 0.15);
+  color: #7dd3fc;
+}
+
 /* ── Unified Right Column Panel ──────────────────── */
 .right-column-panel {
   position: absolute;
