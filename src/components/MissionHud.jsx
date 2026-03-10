@@ -515,11 +515,17 @@ export default function MissionHud() {
         if (!viewerRef || viewerRef.isDestroyed()) return;
         setAutoRotating(false);
         setFocusMode(true);
-        viewerRef.camera.flyTo({
-            destination: Cesium.Cartesian3.fromDegrees(city.longitude, city.latitude, city.height),
-            orientation: { heading: Cesium.Math.toRadians(0), pitch: Cesium.Math.toRadians(city.pitch ?? -65), roll: 0 },
-            duration: 1.8,
-        });
+        const target = Cesium.Cartesian3.fromDegrees(city.longitude, city.latitude, 0);
+        const range = Math.max(80000, Number(city.height) || 220000);
+        const heading = Cesium.Math.toRadians(Number(city.heading) || 0);
+        const pitch = Cesium.Math.toRadians(Number(city.pitch) || -65);
+        viewerRef.camera.flyToBoundingSphere(
+            new Cesium.BoundingSphere(target, 1),
+            {
+                duration: 1.8,
+                offset: new Cesium.HeadingPitchRange(heading, pitch, range),
+            }
+        );
     }, [viewerRef, setAutoRotating, setFocusMode]);
 
     const toggleBtnStyle = {
