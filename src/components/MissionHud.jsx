@@ -309,6 +309,7 @@ export default function MissionHud() {
     const activeShader = useStore((s) => s.activeShader);
     const inspector = useStore((s) => s.inspector);
     const layerPanelOpen = useStore((s) => s.layerPanelOpen);
+    const toggleLayerPanel = useStore((s) => s.toggleLayerPanel);
     const missionHudVisible = useStore((s) => s.missionHudVisible);
     const toggleMissionHud = useStore((s) => s.toggleMissionHud);
 
@@ -388,6 +389,14 @@ export default function MissionHud() {
         });
     }, [viewerRef]);
 
+    // Common toggle button style
+    const toggleBtnStyle = {
+        padding: '4px 10px', fontSize: '9px', letterSpacing: '1.5px',
+        color: 'var(--color-text-dim)', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.1)',
+        background: 'rgba(255,255,255,0.03)', transition: 'all 0.3s',
+        fontFamily: 'var(--font-mono)', textTransform: 'uppercase',
+    };
+
     return (
         <>
             {/* Mode wizard chip — hideable */}
@@ -410,17 +419,28 @@ export default function MissionHud() {
             ) : (
                 <button
                     onClick={toggleMissionHud}
-                    className={`glass-panel pointer-events-auto z-10 ${layerPanelOpen ? 'mission-hud-left--offset' : ''}`}
-                    style={{
-                        position: 'absolute', left: layerPanelOpen ? '340px' : '24px', top: '120px',
-                        padding: '4px 10px', fontSize: '9px', letterSpacing: '1.5px',
-                        color: 'var(--color-text-dim)', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.1)',
-                        background: 'rgba(255,255,255,0.03)', transition: 'all 0.3s',
-                        fontFamily: 'var(--font-mono)', textTransform: 'uppercase',
-                    }}
+                    className="pointer-events-auto z-10"
+                    style={{ ...toggleBtnStyle, position: 'absolute', left: '52px', top: '92px' }}
                     title="Show mode wizard"
                 >
                     ◎ MODE
+                </button>
+            )}
+
+            {/* Layers reopen button — shown when layer panel is hidden */}
+            {!layerPanelOpen && (
+                <button
+                    onClick={toggleLayerPanel}
+                    className="pointer-events-auto z-10"
+                    style={{
+                        ...toggleBtnStyle,
+                        position: 'absolute',
+                        left: '52px',
+                        top: missionHudVisible ? '185px' : '120px',
+                    }}
+                    title="Show data layers"
+                >
+                    ◎ LAYERS
                 </button>
             )}
 
