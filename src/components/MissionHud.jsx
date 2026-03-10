@@ -422,7 +422,7 @@ export default function MissionHud() {
                 <button
                     onClick={toggleMissionHud}
                     className="pointer-events-auto z-10"
-                    style={{ ...toggleBtnStyle, position: 'absolute', left: layerPanelOpen ? '340px' : '52px', top: '92px' }}
+                    style={{ ...toggleBtnStyle, position: 'absolute', left: layerPanelOpen ? '340px' : '16px', top: '92px' }}
                     title="Show mode wizard"
                 >
                     ◎ MODE
@@ -437,8 +437,8 @@ export default function MissionHud() {
                     style={{
                         ...toggleBtnStyle,
                         position: 'absolute',
-                        left: '52px',
-                        top: missionHudVisible ? '185px' : '120px',
+                        left: '16px',
+                        top: missionHudVisible ? '200px' : '118px',
                     }}
                     title="Show data layers"
                 >

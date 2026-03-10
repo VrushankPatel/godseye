@@ -483,7 +483,7 @@ body {
 .mission-hud-left {
   position: absolute;
   top: 92px;
-  left: 52px;
+  left: 16px;
   transition: left 0.2s ease;
   max-width: 260px;
   padding: 12px 14px;
