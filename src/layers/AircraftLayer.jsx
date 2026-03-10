@@ -344,6 +344,15 @@ export default function AircraftLayer({ viewer }) {
             entity.show = hasTrackedAircraft ? entity.id === trackedEntityId : true;
         }
 
+        // When tracking stops, reset all flight timestamps so
+        // position extrapolation doesn't shoot flights off
+        if (!hasTrackedAircraft) {
+            const nowMs = Date.now();
+            for (const [, flight] of flightStateRef.current.entries()) {
+                flight.updatedAtMs = nowMs;
+            }
+        }
+
         if (viewer && !viewer.isDestroyed()) {
             viewer.scene.requestRender();
         }
