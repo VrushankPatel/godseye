@@ -111,7 +111,7 @@ export default function LayerPanel() {
 
     return (
         <div
-            className="absolute top-24 bottom-4 w-[19.5rem] flex flex-col gap-2 pointer-events-none z-10 animate-slide-left"
+            className="absolute top-24 bottom-[220px] w-[19.5rem] flex flex-col gap-2 pointer-events-none z-10 animate-slide-left"
             style={{ left: 'max(16px, env(safe-area-inset-left))' }}
         >
             {/* Data Layers Panel */}
