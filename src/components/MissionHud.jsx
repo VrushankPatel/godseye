@@ -315,66 +315,56 @@ export default function MissionHud() {
     const citiesVisible = useStore((s) => s.citiesVisible);
     const toggleCities = useStore((s) => s.toggleCities);
 
+    // Flight filter store reads
+    const aircraftEnabled = useStore((s) => s.layers.aircraft.enabled);
+    const flights = useStore((s) => s.layers.aircraft.data);
+    const flightFilters = useStore((s) => s.flightFilters);
+    const setFlightFilter = useStore((s) => s.setFlightFilter);
+    const setFlightAirlineQuery = useStore((s) => s.setFlightAirlineQuery);
+    const resetFlightFilters = useStore((s) => s.resetFlightFilters);
+
+    const FILTER_CONFIG = [
+        { key: 'passenger', label: 'PAX', color: '#00b4ff' },
+        { key: 'cargo', label: 'CARGO', color: '#ffaa00' },
+        { key: 'military', label: 'MIL', color: '#ff5555' },
+        { key: 'private', label: 'PVT', color: '#a47bff' },
+        { key: 'unknown', label: 'UNK', color: '#9aa1c4' },
+    ];
+
+    const filterCounts = flights.reduce((acc, flight) => {
+        const cls = String(flight.flightClass || 'unknown').toLowerCase();
+        acc[cls] = (acc[cls] || 0) + 1;
+        return acc;
+    }, {});
+
     const [visibleCities, setVisibleCities] = useState(ALL_CITIES.slice(0, 6));
     const rafRef = useRef(null);
 
     const LAYER_SCALE = {
-        aircraft: 10000,
-        satellites: 12000,
-        seismic: 600,
-        airports: 10000,
-        seismicStations: 5000,
-        maritime: 8000,
-        powerGrid: 7000,
-        cctv: 8000,
-        traffic: 1200,
-        conflicts: 1200,
-        militaryActivity: 1000,
-        militaryBases: 3000,
-        forbiddenZones: 1500,
-        airspace: 1500,
+        aircraft: 10000, satellites: 12000, seismic: 600, airports: 10000,
+        seismicStations: 5000, maritime: 8000, powerGrid: 7000, cctv: 8000,
+        traffic: 1200, conflicts: 1200, militaryActivity: 1000,
+        militaryBases: 3000, forbiddenZones: 1500, airspace: 1500,
     };
 
-    // Dynamic city updates on camera movement
     useEffect(() => {
         if (!viewerRef || viewerRef.isDestroyed()) return;
-
-        const updateCities = () => {
-            const cities = getVisibleCities(viewerRef, 6);
-            setVisibleCities(cities);
-        };
-
-        // Initial
+        const updateCities = () => setVisibleCities(getVisibleCities(viewerRef, 6));
         updateCities();
-
-        // On camera move end
         const removeListener = viewerRef.camera.moveEnd.addEventListener(() => {
             if (rafRef.current) cancelAnimationFrame(rafRef.current);
             rafRef.current = requestAnimationFrame(updateCities);
         });
-
-        return () => {
-            removeListener();
-            if (rafRef.current) cancelAnimationFrame(rafRef.current);
-        };
+        return () => { removeListener(); if (rafRef.current) cancelAnimationFrame(rafRef.current); };
     }, [viewerRef]);
 
     const metrics = SURVEILLANCE_PRIMARY_LAYERS
         .map((key) => {
-            const layer = layers[key];
-            const def = LAYER_DEFS[key];
-            if (!layer || !def) return null;
-            if (!layer.enabled || layer.status !== 'active') return null;
-
+            const layer = layers[key]; const def = LAYER_DEFS[key];
+            if (!layer || !def || !layer.enabled || layer.status !== 'active') return null;
             const scale = LAYER_SCALE[key] || 1000;
             const pct = Math.max(8, Math.min(100, Math.round((layer.count / scale) * 100)));
-            return {
-                key,
-                label: def.label,
-                value: layer.count,
-                pct,
-                color: def.color || '#00b4ff',
-            };
+            return { key, label: def.label, value: layer.count, pct, color: def.color || '#00b4ff' };
         })
         .filter(Boolean);
 
@@ -382,16 +372,11 @@ export default function MissionHud() {
         if (!viewerRef || viewerRef.isDestroyed()) return;
         viewerRef.camera.flyTo({
             destination: Cesium.Cartesian3.fromDegrees(city.longitude, city.latitude, city.height),
-            orientation: {
-                heading: Cesium.Math.toRadians(0),
-                pitch: Cesium.Math.toRadians(city.pitch ?? -65),
-                roll: 0,
-            },
+            orientation: { heading: Cesium.Math.toRadians(0), pitch: Cesium.Math.toRadians(city.pitch ?? -65), roll: 0 },
             duration: 1.8,
         });
     }, [viewerRef]);
 
-    // Common toggle button style
     const toggleBtnStyle = {
         padding: '4px 10px', fontSize: '9px', letterSpacing: '1.5px',
         color: 'var(--color-text-dim)', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.1)',
@@ -399,116 +384,105 @@ export default function MissionHud() {
         fontFamily: 'var(--font-mono)', textTransform: 'uppercase',
     };
 
+    const rightPanelRight = inspector
+        ? 'calc(22.5rem + max(18px, env(safe-area-inset-right)) + 18px)'
+        : 'max(18px, env(safe-area-inset-right))';
+
     return (
         <>
-            {/* Mode wizard chip — hideable */}
+            {/* Mode wizard chip */}
             {missionHudVisible ? (
-                <div
-                    className={`mission-hud-left glass-panel pointer-events-auto z-10 ${layerPanelOpen ? 'mission-hud-left--offset' : ''}`}
-                >
+                <div className={`mission-hud-left glass-panel pointer-events-auto z-10 ${layerPanelOpen ? 'mission-hud-left--offset' : ''}`}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                         <div className="mission-label">CLASSIFIED // EYES ONLY // GODSEYE</div>
-                        <button
-                            onClick={toggleMissionHud}
-                            className="text-text-dim hover:text-white transition-colors"
+                        <button onClick={toggleMissionHud} className="text-text-dim hover:text-white transition-colors"
                             style={{ fontSize: '10px', background: 'none', border: 'none', cursor: 'pointer', padding: '0 0 0 8px', lineHeight: 1 }}
-                            title="Hide mode wizard"
-                        >✕</button>
+                            title="Hide mode wizard">✕</button>
                     </div>
                     <div className="mission-title">{activeShader} MODE</div>
                     <div className="mission-sub">SURVEILLANCE NODE ACTIVE</div>
                 </div>
             ) : (
-                <button
-                    onClick={toggleMissionHud}
-                    className="pointer-events-auto z-10"
+                <button onClick={toggleMissionHud} className="pointer-events-auto z-10"
                     style={{ ...toggleBtnStyle, position: 'absolute', left: layerPanelOpen ? '340px' : '16px', top: '92px' }}
-                    title="Show mode wizard"
-                >
-                    ◎ MODE
-                </button>
+                    title="Show mode wizard">◎ MODE</button>
             )}
 
-            {/* Layers reopen button — shown when layer panel is hidden */}
             {!layerPanelOpen && (
-                <button
-                    onClick={toggleLayerPanel}
-                    className="pointer-events-auto z-10"
-                    style={{
-                        ...toggleBtnStyle,
-                        position: 'absolute',
-                        left: '16px',
-                        top: missionHudVisible ? '200px' : '118px',
-                    }}
-                    title="Show data layers"
-                >
-                    ◎ LAYERS
-                </button>
+                <button onClick={toggleLayerPanel} className="pointer-events-auto z-10"
+                    style={{ ...toggleBtnStyle, position: 'absolute', left: '16px', top: missionHudVisible ? '200px' : '118px' }}
+                    title="Show data layers">◎ LAYERS</button>
             )}
 
+            {/* Metrics bar — top right */}
             {metrics.length > 0 && (
-                <div
-                    className={`mission-hud-right pointer-events-auto z-10 ${inspector ? 'mission-hud-right--offset' : ''
-                        }`}
-                >
-                    {metrics.map((metric) => (
-                        <div key={metric.key} className="mission-metric">
-                            <div className="mission-metric-top">
-                                <span>{metric.label}</span>
-                                <span>{metric.value.toLocaleString()}</span>
-                            </div>
+                <div className={`mission-hud-right pointer-events-auto z-10 ${inspector ? 'mission-hud-right--offset' : ''}`}>
+                    {metrics.map((m) => (
+                        <div key={m.key} className="mission-metric">
+                            <div className="mission-metric-top"><span>{m.label}</span><span>{m.value.toLocaleString()}</span></div>
                             <div className="mission-bar">
-                                <div
-                                    className="mission-bar-fill"
-                                    style={{
-                                        width: `${metric.pct}%`,
-                                        background: metric.color,
-                                        boxShadow: `0 0 10px ${metric.color}66`,
-                                    }}
-                                />
+                                <div className="mission-bar-fill" style={{ width: `${m.pct}%`, background: m.color, boxShadow: `0 0 10px ${m.color}66` }} />
                             </div>
                         </div>
                     ))}
                 </div>
             )}
 
-            {/* City shortcuts — bottom-right column */}
+            {/* ── Unified right column ── */}
             {citiesVisible ? (
-                <div
-                    className="mission-cities-panel pointer-events-auto z-10"
-                    style={inspector ? { right: 'calc(22.5rem + max(18px, env(safe-area-inset-right)) + 18px)' } : undefined}
-                >
-                    <div className="mission-cities-header">
-                        <span>NAV SHORTCUTS</span>
-                        <button
-                            onClick={toggleCities}
-                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(56, 189, 248, 0.4)', fontSize: '10px', lineHeight: 1, padding: '0 2px' }}
-                            title="Hide nav shortcuts"
-                        >✕</button>
-                    </div>
-                    <div className="mission-cities-list">
-                        <button className="city-chip" onClick={() => focusCity({ longitude: 10, latitude: 20, height: 9000000, pitch: -90 })}>
-                            ◎ Global
-                        </button>
-                        {visibleCities.map((city) => (
-                            <button key={city.name} className="city-chip" onClick={() => focusCity(city)}>
-                                {city.name}
+                <div className="right-column-panel pointer-events-auto z-10" style={{ right: rightPanelRight }}>
+                    {/* Flight Filters — only when aircraft enabled */}
+                    {aircraftEnabled && (
+                        <div className="rcp-section">
+                            <div className="rcp-header">
+                                <span>FLIGHT FILTERS</span>
+                                <button onClick={resetFlightFilters} className="rcp-action">RESET</button>
+                            </div>
+                            <div style={{ padding: '6px 8px 4px' }}>
+                                <input type="text" value={flightFilters.airlineQuery}
+                                    onChange={(e) => setFlightAirlineQuery(e.target.value)}
+                                    placeholder="Airline / Callsign" className="rcp-search" />
+                            </div>
+                            <div className="rcp-filter-grid">
+                                {FILTER_CONFIG.map((item) => {
+                                    const enabled = Boolean(flightFilters[item.key]);
+                                    const count = filterCounts[item.key] || 0;
+                                    return (
+                                        <button key={item.key}
+                                            className={`rcp-filter-chip ${enabled ? 'is-active' : ''}`}
+                                            onClick={() => setFlightFilter(item.key, !enabled)}
+                                            style={enabled ? { borderColor: `${item.color}88`, color: item.color } : undefined}>
+                                            <span className="rcp-chip-label">{item.label}</span>
+                                            <span className="rcp-chip-count">{count.toLocaleString()}</span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* NAV Shortcuts */}
+                    <div className="rcp-section">
+                        <div className="rcp-header">
+                            <span>NAV SHORTCUTS</span>
+                            <button onClick={toggleCities} className="rcp-action" title="Hide panel">✕</button>
+                        </div>
+                        <div className="rcp-city-grid">
+                            <button className="city-chip" onClick={() => focusCity({ longitude: 10, latitude: 20, height: 9000000, pitch: -90 })}>
+                                ◎ GLOBAL
                             </button>
-                        ))}
+                            {visibleCities.map((city) => (
+                                <button key={city.name} className="city-chip" onClick={() => focusCity(city)}>
+                                    {city.name}
+                                </button>
+                            ))}
+                        </div>
                     </div>
                 </div>
             ) : (
-                <button
-                    onClick={toggleCities}
-                    className="pointer-events-auto z-10 sys-terminal-toggle"
-                    style={{
-                        position: 'absolute', bottom: '24px',
-                        right: inspector ? 'calc(22.5rem + max(18px, env(safe-area-inset-right)) + 18px)' : 'max(18px, env(safe-area-inset-right))',
-                    }}
-                    title="Show nav shortcuts"
-                >
-                    ▸ NAV
-                </button>
+                <button onClick={toggleCities} className="pointer-events-auto z-10 sys-terminal-toggle"
+                    style={{ position: 'absolute', bottom: '24px', right: rightPanelRight }}
+                    title="Show right panel">▸ PANEL</button>
             )}
         </>
     );

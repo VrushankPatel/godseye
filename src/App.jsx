@@ -8,7 +8,6 @@ import HoverTooltip from './components/HoverTooltip';
 import Reticle from './components/Reticle';
 import ShaderOverlay from './components/ShaderOverlay';
 import MissionHud from './components/MissionHud';
-import FlightFilterPanel from './components/FlightFilterPanel';
 import FocusMask from './components/FocusMask';
 import SysTerminal from './components/SysTerminal';
 import useStore from './store/useStore';
@@ -84,7 +83,6 @@ export default function App() {
             <Inspector />
             <HoverTooltip />
             <MissionHud />
-            <FlightFilterPanel />
             <SysTerminal />
         </div>
     );

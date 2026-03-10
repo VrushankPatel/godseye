@@ -576,60 +576,160 @@ body {
   transition: width 0.35s ease;
 }
 
-/* ── City Nav Panel (bottom-right column) ───────── */
-.mission-cities-panel {
+/* ── Unified Right Column Panel ──────────────────── */
+.right-column-panel {
   position: absolute;
   bottom: 24px;
   right: max(18px, env(safe-area-inset-right));
-  width: 160px;
-  max-height: 220px;
-  background: rgba(2, 8, 20, 0.45);
-  border: 1px solid rgba(14, 165, 233, 0.15);
+  width: 260px;
+  background: rgba(2, 8, 20, 0.55);
+  border: 1px solid rgba(14, 165, 233, 0.18);
   border-radius: 4px;
   font-family: var(--font-mono);
   z-index: 9;
-  backdrop-filter: blur(6px);
-  box-shadow: 0 0 15px rgba(14, 165, 233, 0.04);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 0 20px rgba(14, 165, 233, 0.05);
   transition: right 0.2s ease;
+  max-height: calc(100vh - 140px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 
-.mission-cities-header {
+.right-column-panel::-webkit-scrollbar {
+  width: 2px;
+}
+
+.right-column-panel::-webkit-scrollbar-thumb {
+  background: rgba(0, 180, 255, 0.2);
+}
+
+/* Section within the panel */
+.rcp-section {
+  border-bottom: 1px solid rgba(14, 165, 233, 0.1);
+}
+
+.rcp-section:last-child {
+  border-bottom: none;
+}
+
+/* Section header */
+.rcp-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 6px 10px;
-  border-bottom: 1px solid rgba(14, 165, 233, 0.12);
+  padding: 7px 10px;
   font-size: 9px;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.18em;
   color: rgba(56, 189, 248, 0.5);
+  border-bottom: 1px solid rgba(14, 165, 233, 0.08);
 }
 
-.mission-cities-list {
+.rcp-action {
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(56, 189, 248, 0.4);
+  padding: 1px 6px;
+  font-size: 8px;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  transition: all 0.2s;
+}
+
+.rcp-action:hover {
+  color: #00b4ff;
+  border-color: rgba(0, 180, 255, 0.4);
+}
+
+/* Search input */
+.rcp-search {
+  width: 100%;
+  border: 1px solid rgba(0, 180, 255, 0.22);
+  background: rgba(0, 0, 0, 0.3);
+  color: #e6ebff;
+  padding: 5px 7px;
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  outline: none;
+  font-family: var(--font-mono);
+  border-radius: 2px;
+}
+
+.rcp-search::placeholder {
+  color: #7c84a8;
+}
+
+/* Filter chips — 3-column grid */
+.rcp-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  padding: 6px 8px 8px;
+}
+
+.rcp-filter-chip {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
   gap: 2px;
-  padding: 6px;
-  max-height: 240px;
-  overflow-y: auto;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.03);
+  color: #b0b8d6;
+  padding: 5px 4px;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  transition: all 0.2s;
+  border-radius: 2px;
 }
 
-.mission-cities-list::-webkit-scrollbar {
-  width: 2px;
+.rcp-filter-chip:hover {
+  border-color: rgba(0, 180, 255, 0.4);
+  background: rgba(0, 180, 255, 0.06);
+}
+
+.rcp-filter-chip.is-active {
+  box-shadow: 0 0 8px rgba(0, 180, 255, 0.12);
+  background: rgba(0, 180, 255, 0.06);
+}
+
+.rcp-chip-label {
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.rcp-chip-count {
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* City chips — 2-column grid */
+.rcp-city-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 3px;
+  padding: 6px;
 }
 
 .city-chip {
   font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.12em;
+  font-size: 9px;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  text-align: left;
+  text-align: center;
   color: #c8d0ef;
-  background: rgba(0, 0, 0, 0.25);
-  border: 1px solid rgba(14, 165, 233, 0.12);
-  border-radius: 3px;
-  padding: 5px 8px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(14, 165, 233, 0.1);
+  border-radius: 2px;
+  padding: 4px 4px;
   transition: all 0.2s ease;
-  width: 100%;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .city-chip:hover {
@@ -637,86 +737,6 @@ body {
   border-color: rgba(0, 180, 255, 0.5);
   background: rgba(0, 180, 255, 0.08);
   box-shadow: 0 0 8px rgba(0, 180, 255, 0.15);
-}
-
-/* ── Flight Filters ─────────────────────────────── */
-.flight-filter-panel {
-  position: absolute;
-  top: 350px;
-  right: max(18px, env(safe-area-inset-right));
-  width: 220px;
-  max-height: calc(100vh - 350px - 320px);
-  overflow-y: auto;
-  padding: 12px;
-  border: 1px solid rgba(0, 180, 255, 0.22);
-  background: linear-gradient(180deg, rgba(8, 10, 16, 0.76), rgba(8, 10, 16, 0.56));
-  backdrop-filter: blur(8px);
-  transition: right 0.2s ease;
-}
-
-.flight-filter-panel--offset {
-  right: calc(22.5rem + max(18px, env(safe-area-inset-right)) + 18px);
-}
-
-.flight-filter-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-  font-size: 10px;
-  letter-spacing: 0.16em;
-  color: #c8d0ef;
-}
-
-.flight-filter-header button {
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: rgba(255, 255, 255, 0.04);
-  color: #9aa1c4;
-  padding: 2px 6px;
-  font-size: 9px;
-  letter-spacing: 0.08em;
-}
-
-.flight-filter-search {
-  margin-bottom: 8px;
-}
-
-.flight-filter-search input {
-  width: 100%;
-  border: 1px solid rgba(0, 180, 255, 0.28);
-  background: rgba(0, 0, 0, 0.35);
-  color: #e6ebff;
-  padding: 6px 8px;
-  font-size: 11px;
-  letter-spacing: 0.06em;
-  outline: none;
-}
-
-.flight-filter-search input::placeholder {
-  color: #7c84a8;
-}
-
-.flight-filter-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.flight-filter-chip {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  background: rgba(255, 255, 255, 0.03);
-  color: #b0b8d6;
-  padding: 5px 7px;
-  font-size: 10px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.flight-filter-chip.is-active {
-  box-shadow: 0 0 10px rgba(0, 180, 255, 0.14);
 }
 
 @media (max-width: 1220px) {
