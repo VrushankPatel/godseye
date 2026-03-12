@@ -10,6 +10,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - run: npm ci && npm run build
+        env:
+          VITE_GOOGLE_MAPS_3D_KEY: '${{ secrets.VITE_GOOGLE_MAPS_3D_KEY }}'
+          VITE_GOOGLE_MAPS_API_KEY: '${{ secrets.VITE_GOOGLE_MAPS_3D_KEY }}'
+          VITE_MAPBOX_ACCESS_TOKEN: '${{ secrets.VITE_MAPBOX_ACCESS_TOKEN }}'
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
