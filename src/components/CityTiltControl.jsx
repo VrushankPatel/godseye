@@ -78,12 +78,15 @@ export default function CityTiltControl() {
             className="city-tilt-control city-tilt-control--docked glass-panel pointer-events-auto"
             style={{
                 width: '62px',
-                padding: '10px 6px',
+                padding: '8px 6px',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                gap: '6px',
-                alignSelf: 'stretch',
+                gap: '5px',
+                alignSelf: 'center',
+                height: '50%',
+                minHeight: '138px',
+                maxHeight: '182px',
             }}
         >
             <span className="text-[9px] tracking-[0.2em] text-cyan-200 uppercase">3D</span>
