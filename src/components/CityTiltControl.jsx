@@ -22,7 +22,6 @@ function sliderToPitchDeg(sliderValue) {
 export default function CityTiltControl() {
     const viewerRef = useStore((s) => s.viewerRef);
     const city3DActive = useStore((s) => s.city3DActive);
-    const citiesVisible = useStore((s) => s.citiesVisible);
     const setAutoRotating = useStore((s) => s.setAutoRotating);
 
     const [sliderValue, setSliderValue] = useState(0);
@@ -76,34 +75,32 @@ export default function CityTiltControl() {
 
     return (
         <div
-            className="city-tilt-control glass-panel pointer-events-auto"
+            className="city-tilt-control city-tilt-control--docked glass-panel pointer-events-auto"
             style={{
-                position: 'absolute',
-                top: '50%',
-                right: citiesVisible ? '420px' : '18px',
-                transform: 'translateY(-50%)',
-                zIndex: 30,
-                width: '58px',
-                padding: '8px 6px',
+                width: '62px',
+                padding: '10px 6px',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                gap: '8px',
+                gap: '6px',
+                alignSelf: 'stretch',
             }}
         >
             <span className="text-[9px] tracking-[0.2em] text-cyan-200 uppercase">3D</span>
-            <input
-                type="range"
-                min="0"
-                max="100"
-                step="1"
-                value={Math.round(sliderValue)}
-                onChange={handleSliderChange}
-                className="city-tilt-slider"
-                orient="vertical"
-                aria-label="3D camera angle"
-                title="Adjust 3D camera angle"
-            />
+            <div className="city-tilt-slider-wrap">
+                <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="1"
+                    value={Math.round(sliderValue)}
+                    onChange={handleSliderChange}
+                    className="city-tilt-slider city-tilt-slider--docked"
+                    orient="vertical"
+                    aria-label="3D camera angle"
+                    title="Adjust 3D camera angle"
+                />
+            </div>
             <span className="text-[9px] tracking-[0.18em] text-text-dim uppercase">{angleLabel}</span>
         </div>
     );

@@ -153,6 +153,24 @@ body {
   border-color: rgba(0, 180, 255, 0.28);
 }
 
+.city-tilt-control--docked {
+  border-radius: 22px;
+}
+
+.city-tilt-slider-wrap {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.city-tilt-slider--docked {
+  height: 100%;
+  min-height: 170px;
+}
+
 /* ── Mode Button ──────────────────────────────────── */
 .mode-btn {
   display: inline-flex;
