@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import * as Cesium from 'cesium';
 import useStore from '../store/useStore';
 import { LAYER_DEFS, SURVEILLANCE_PRIMARY_LAYERS } from '../constants/dataSources';
+import IntelWire from './IntelWire';
 
 // ── Massive city database (250+ cities, ranked by global significance) ──
 const ALL_CITIES = [
@@ -567,6 +568,10 @@ export default function MissionHud() {
             {/* ── Unified right column ── */}
             {citiesVisible ? (
                 <div className="right-column-panel pointer-events-auto z-10" style={{ right: rightPanelRight }}>
+                    {!inspector && (
+                        <IntelWire embedded />
+                    )}
+
                     {/* Entity Info — unified for all clicked entities including CCTV/Traffic */}
                     {inspector && (
                         <div className="rcp-section rcp-entity">

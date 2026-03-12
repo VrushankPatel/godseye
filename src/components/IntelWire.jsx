@@ -110,7 +110,7 @@ function relativeTime(timestampMs) {
     return `${Math.floor(diff / 86_400_000)}d ago`;
 }
 
-export default function IntelWire() {
+export default function IntelWire({ embedded = false, hidden = false }) {
     const [items, setItems] = useState([]);
     const [lastUpdatedAt, setLastUpdatedAt] = useState(0);
     const [isCollapsed, setIsCollapsed] = useState(false);
@@ -167,24 +167,29 @@ export default function IntelWire() {
         return relativeTime(lastUpdatedAt);
     }, [lastUpdatedAt]);
 
-    if (!hasItems) return null;
+    if (hidden || !hasItems) return null;
+
+    const containerClass = embedded ? 'rcp-section' : 'glass-panel pointer-events-auto';
+    const containerStyle = embedded
+        ? undefined
+        : {
+            position: 'absolute',
+            right: '16px',
+            top: '92px',
+            width: '360px',
+            zIndex: 35,
+            border: '1px solid rgba(0, 180, 255, 0.42)',
+            background: 'rgba(8, 12, 22, 0.75)',
+            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.45)',
+        };
 
     return (
         <div
-            className="glass-panel pointer-events-auto"
-            style={{
-                position: 'absolute',
-                right: '16px',
-                top: '92px',
-                width: '360px',
-                zIndex: 35,
-                border: '1px solid rgba(0, 180, 255, 0.42)',
-                background: 'rgba(8, 12, 22, 0.75)',
-                boxShadow: '0 10px 30px rgba(0, 0, 0, 0.45)',
-            }}
+            className={containerClass}
+            style={containerStyle}
         >
-            <div className="flex items-center justify-between px-3 py-2 border-b border-cyan-500/30">
-                <div className="text-cyan-200 tracking-[0.28em] text-[11px] uppercase flex items-center gap-2">
+            <div className={`flex items-center justify-between px-3 py-2 border-b border-cyan-500/30 ${embedded ? 'rcp-header' : ''}`}>
+                <div className="text-cyan-200 tracking-[0.22em] text-[11px] uppercase flex items-center gap-2">
                     <span className="inline-block h-2 w-2 rounded-full bg-red-500 animate-pulse" />
                     Live Intel Wire
                 </div>
@@ -192,7 +197,7 @@ export default function IntelWire() {
                     <span className="text-[10px] tracking-[0.18em] uppercase text-text-dim">{updatedLabel}</span>
                     <button
                         onClick={() => setIsCollapsed((prev) => !prev)}
-                        className="text-text-dim hover:text-white text-xs"
+                        className={embedded ? 'rcp-action' : 'text-text-dim hover:text-white text-xs'}
                         title={isCollapsed ? 'Expand intel wire' : 'Collapse intel wire'}
                     >
                         {isCollapsed ? '▾' : '▴'}
@@ -201,16 +206,16 @@ export default function IntelWire() {
             </div>
 
             {!isCollapsed && (
-                <div className="max-h-[300px] overflow-y-auto">
+                <div className={embedded ? 'max-h-[240px] overflow-y-auto' : 'max-h-[300px] overflow-y-auto'}>
                     {items.map((item) => (
                         <a
                             key={item.id}
                             href={item.link}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="block px-3 py-2 border-b border-cyan-500/10 hover:bg-cyan-500/10 transition-colors"
+                            className={`block px-3 py-2 border-b border-cyan-500/10 hover:bg-cyan-500/10 transition-colors ${embedded ? 'text-[11px]' : ''}`}
                         >
-                            <div className="text-[11px] tracking-[0.22em] uppercase text-cyan-300 mb-1">{item.source}</div>
+                            <div className="text-[10px] tracking-[0.22em] uppercase text-cyan-300 mb-1">{item.source}</div>
                             <div className="text-[12px] leading-snug text-slate-100">{item.title}</div>
                             <div className="text-[10px] tracking-[0.2em] uppercase text-text-dim mt-1">{relativeTime(item.publishedAt)}</div>
                         </a>
