@@ -33,7 +33,7 @@ const MAX_TRACK_POINTS = 220;
 const MIN_TRACK_POINT_DISTANCE_METERS = 250;
 const AIRCRAFT_MODEL_URI = '/models/Cesium_Air.glb';
 const TRACKED_AIRCRAFT_MODEL_HEADING_OFFSET_DEG = 0;
-const MIN_CAMERA_HEIGHT_M = 2500;
+const MIN_CAMERA_HEIGHT_M = 45;
 const MAX_CAMERA_HEIGHT_M = 120000000;
 const AUTO_RECENTER_HEIGHT_M = 6000000;
 const AUTO_RECENTER_MIN_INTERVAL_MS = 1500;
@@ -462,7 +462,7 @@ export default function Globe() {
             setAutoRotating(false);
 
             const height = viewer.camera.positionCartographic?.height || DEFAULT_CAMERA.height;
-            const step = Math.max(2500, Math.min(1800000, height * 0.12));
+            const step = Math.max(45, Math.min(900000, height * 0.08));
             if (event.deltaY > 0) {
                 viewer.camera.zoomOut(step);
             } else {
@@ -485,7 +485,7 @@ export default function Globe() {
             if (Math.abs(delta) < 0.005) return;
 
             const height = viewer.camera.positionCartographic?.height || DEFAULT_CAMERA.height;
-            const step = Math.max(2200, Math.min(1800000, height * 0.09));
+            const step = Math.max(40, Math.min(900000, height * 0.07));
             if (delta > 0) {
                 viewer.camera.zoomIn(step);
             } else {
