@@ -420,6 +420,7 @@ export default function MissionHud() {
     const showNavShortcuts = !inspector || inspector.type !== 'aircraft';
 
     const [visibleCities, setVisibleCities] = useState(ALL_CITIES.slice(0, 6));
+    const [intelWireVisible, setIntelWireVisible] = useState(true);
     const [panelMediaSrc, setPanelMediaSrc] = useState('');
     const [panelMediaFailed, setPanelMediaFailed] = useState(false);
     const mediaVideoRef = useRef(null);
@@ -568,8 +569,21 @@ export default function MissionHud() {
             {/* ── Unified right column ── */}
             {citiesVisible ? (
                 <div className="right-column-panel pointer-events-auto z-10" style={{ right: rightPanelRight }}>
-                    {!inspector && (
-                        <IntelWire embedded />
+                    <IntelWire
+                        embedded
+                        hidden={Boolean(inspector) || !intelWireVisible}
+                        onHide={() => setIntelWireVisible(false)}
+                    />
+
+                    {!inspector && !intelWireVisible && (
+                        <div className="rcp-section">
+                            <div className="rcp-header">
+                                <span>INTEL WIRE HIDDEN</span>
+                                <button onClick={() => setIntelWireVisible(true)} className="rcp-action" title="Show intel wire">
+                                    SHOW
+                                </button>
+                            </div>
+                        </div>
                     )}
 
                     {/* Entity Info — unified for all clicked entities including CCTV/Traffic */}

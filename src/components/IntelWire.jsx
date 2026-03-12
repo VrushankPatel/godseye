@@ -110,7 +110,7 @@ function relativeTime(timestampMs) {
     return `${Math.floor(diff / 86_400_000)}d ago`;
 }
 
-export default function IntelWire({ embedded = false, hidden = false }) {
+export default function IntelWire({ embedded = false, hidden = false, onHide = null }) {
     const [items, setItems] = useState([]);
     const [lastUpdatedAt, setLastUpdatedAt] = useState(0);
     const [isCollapsed, setIsCollapsed] = useState(false);
@@ -193,7 +193,7 @@ export default function IntelWire({ embedded = false, hidden = false }) {
                     <span className="inline-block h-2 w-2 rounded-full bg-red-500 animate-pulse" />
                     Live Intel Wire
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                     <span className="text-[10px] tracking-[0.18em] uppercase text-text-dim">{updatedLabel}</span>
                     <button
                         onClick={() => setIsCollapsed((prev) => !prev)}
@@ -202,6 +202,15 @@ export default function IntelWire({ embedded = false, hidden = false }) {
                     >
                         {isCollapsed ? '▾' : '▴'}
                     </button>
+                    {typeof onHide === 'function' && (
+                        <button
+                            onClick={onHide}
+                            className={embedded ? 'rcp-action' : 'text-text-dim hover:text-white text-xs'}
+                            title="Hide intel wire"
+                        >
+                            ✕
+                        </button>
+                    )}
                 </div>
             </div>
 
