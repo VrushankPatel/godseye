@@ -8,6 +8,7 @@ export default function ShaderToolbar() {
     const setShader = useStore((s) => s.setShader);
     const enableAllLayers = useStore((s) => s.enableAllLayers);
     const enableSurveillanceLayers = useStore((s) => s.enableSurveillanceLayers);
+    const city3DActive = useStore((s) => s.city3DActive);
     const focusMode = useStore((s) => s.focusMode);
     const toggleFocusMode = useStore((s) => s.toggleFocusMode);
     const focusHideEntities = useStore((s) => s.focusHideEntities);
@@ -25,6 +26,14 @@ export default function ShaderToolbar() {
     // Split into two rows of up to 4
     const row1 = SHADER_MODES.slice(0, 4);
     const row2 = SHADER_MODES.slice(4);
+    const gridCells = [
+        ...SHADER_MODES.map((mode) => ({ type: 'shader', mode })),
+        { type: 'focus' },
+        focusMode
+            ? { type: 'hide' }
+            : { type: 'placeholder', key: 'focus-hide-placeholder' },
+        { type: 'placeholder', key: 'grid-padding-cell' },
+    ];
 
     return (
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 pointer-events-none z-10 animate-slide-up">
@@ -35,49 +44,104 @@ export default function ShaderToolbar() {
                         VISUAL_MODE_OVERRIDE
                     </div>
 
-                    {/* Row 1: First 4 shader modes */}
-                    <div className="flex gap-3">
-                        {row1.map((mode) => (
-                            <button
-                                key={mode.id}
-                                onClick={() => handleModeClick(mode.id)}
-                                className={`mode-btn ${activeShader === mode.id ? 'active' : ''}`}
-                            >
-                                <span className="opacity-50 text-[9px]">{mode.key}</span>
-                                {mode.label}
-                            </button>
-                        ))}
-                    </div>
+                    {city3DActive ? (
+                        <div className="grid grid-cols-3 gap-3 w-[560px] max-w-[74vw]">
+                            {gridCells.map((cell) => {
+                                if (cell.type === 'placeholder') {
+                                    return (
+                                        <div
+                                            key={cell.key}
+                                            className="mode-btn mode-btn-grid mode-btn-placeholder"
+                                            aria-hidden="true"
+                                        />
+                                    );
+                                }
 
-                    {/* Row 2: Remaining modes + Focus + Hide Entities */}
-                    <div className="flex gap-3">
-                        {row2.map((mode) => (
-                            <button
-                                key={mode.id}
-                                onClick={() => handleModeClick(mode.id)}
-                                className={`mode-btn ${activeShader === mode.id ? 'active' : ''}`}
-                            >
-                                <span className="opacity-50 text-[9px]">{mode.key}</span>
-                                {mode.label}
-                            </button>
-                        ))}
-                        <button
-                            onClick={toggleFocusMode}
-                            className={`mode-btn ${focusMode ? 'active' : ''}`}
-                        >
-                            <span className="opacity-50 text-[9px]">7</span>
-                            Focus
-                        </button>
-                        {focusMode && (
-                            <button
-                                onClick={() => setFocusHideEntities(!focusHideEntities)}
-                                className={`mode-btn ${focusHideEntities ? 'active' : ''}`}
-                            >
-                                <span className="opacity-50 text-[9px]">8</span>
-                                {focusHideEntities ? 'Show' : 'Hide'}
-                            </button>
-                        )}
-                    </div>
+                                if (cell.type === 'focus') {
+                                    return (
+                                        <button
+                                            key="focus-mode-button"
+                                            onClick={toggleFocusMode}
+                                            className={`mode-btn mode-btn-grid ${focusMode ? 'active' : ''}`}
+                                        >
+                                            <span className="opacity-50 text-[9px]">7</span>
+                                            Focus
+                                        </button>
+                                    );
+                                }
+
+                                if (cell.type === 'hide') {
+                                    return (
+                                        <button
+                                            key="focus-hide-entities-button"
+                                            onClick={() => setFocusHideEntities(!focusHideEntities)}
+                                            className={`mode-btn mode-btn-grid ${focusHideEntities ? 'active' : ''}`}
+                                        >
+                                            <span className="opacity-50 text-[9px]">8</span>
+                                            {focusHideEntities ? 'Show' : 'Hide'}
+                                        </button>
+                                    );
+                                }
+
+                                return (
+                                    <button
+                                        key={cell.mode.id}
+                                        onClick={() => handleModeClick(cell.mode.id)}
+                                        className={`mode-btn mode-btn-grid ${activeShader === cell.mode.id ? 'active' : ''}`}
+                                    >
+                                        <span className="opacity-50 text-[9px]">{cell.mode.key}</span>
+                                        {cell.mode.label}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    ) : (
+                        <>
+                            {/* Row 1: First 4 shader modes */}
+                            <div className="flex gap-3">
+                                {row1.map((mode) => (
+                                    <button
+                                        key={mode.id}
+                                        onClick={() => handleModeClick(mode.id)}
+                                        className={`mode-btn ${activeShader === mode.id ? 'active' : ''}`}
+                                    >
+                                        <span className="opacity-50 text-[9px]">{mode.key}</span>
+                                        {mode.label}
+                                    </button>
+                                ))}
+                            </div>
+
+                            {/* Row 2: Remaining modes + Focus + Hide Entities */}
+                            <div className="flex gap-3">
+                                {row2.map((mode) => (
+                                    <button
+                                        key={mode.id}
+                                        onClick={() => handleModeClick(mode.id)}
+                                        className={`mode-btn ${activeShader === mode.id ? 'active' : ''}`}
+                                    >
+                                        <span className="opacity-50 text-[9px]">{mode.key}</span>
+                                        {mode.label}
+                                    </button>
+                                ))}
+                                <button
+                                    onClick={toggleFocusMode}
+                                    className={`mode-btn ${focusMode ? 'active' : ''}`}
+                                >
+                                    <span className="opacity-50 text-[9px]">7</span>
+                                    Focus
+                                </button>
+                                {focusMode && (
+                                    <button
+                                        onClick={() => setFocusHideEntities(!focusHideEntities)}
+                                        className={`mode-btn ${focusHideEntities ? 'active' : ''}`}
+                                    >
+                                        <span className="opacity-50 text-[9px]">8</span>
+                                        {focusHideEntities ? 'Show' : 'Hide'}
+                                    </button>
+                                )}
+                            </div>
+                        </>
+                    )}
                 </div>
                 <CityTiltControl />
             </div>
