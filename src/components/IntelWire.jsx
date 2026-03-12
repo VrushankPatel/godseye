@@ -1,8 +1,9 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 const INTEL_REFRESH_MS = 5 * 60 * 1000;
 const FETCH_TIMEOUT_MS = 12000;
 const MAX_ITEMS = 18;
+const INTEL_CACHE_KEY = 'godseye:intel-wire-cache:v1';
 const INTEL_KEYWORD_RE = /(military|defen[cs]e|army|navy|air\s*force|missile|drone|strike|conflict|war|border|security|intel|nato|ukraine|russia|china|taiwan|israel|iran|syria)/i;
 
 const INTEL_SOURCES = [
@@ -114,11 +115,37 @@ export default function IntelWire({ embedded = false, hidden = false, onHide = n
     const [items, setItems] = useState([]);
     const [lastUpdatedAt, setLastUpdatedAt] = useState(0);
     const [isCollapsed, setIsCollapsed] = useState(false);
+    const [status, setStatus] = useState('loading');
+    const [reloadTick, setReloadTick] = useState(0);
+    const itemsRef = useRef([]);
+
+    useEffect(() => {
+        itemsRef.current = Array.isArray(items) ? items : [];
+    }, [items]);
+
+    useEffect(() => {
+        try {
+            const raw = localStorage.getItem(INTEL_CACHE_KEY);
+            if (!raw) return;
+            const parsed = JSON.parse(raw);
+            if (!parsed || !Array.isArray(parsed.items) || !parsed.items.length) return;
+            setItems(parsed.items.slice(0, MAX_ITEMS));
+            if (Number.isFinite(parsed.lastUpdatedAt)) {
+                setLastUpdatedAt(parsed.lastUpdatedAt);
+            }
+            setStatus('stale');
+        } catch (err) {
+            // Ignore local cache issues.
+        }
+    }, []);
 
     useEffect(() => {
         let cancelled = false;
 
         const loadIntel = async () => {
+            if (!itemsRef.current.length) {
+                setStatus('loading');
+            }
             const results = await Promise.allSettled(
                 INTEL_SOURCES.map(async (source) => {
                     try {
@@ -149,8 +176,27 @@ export default function IntelWire({ embedded = false, hidden = false, onHide = n
                 .sort((a, b) => b.publishedAt - a.publishedAt)
                 .slice(0, MAX_ITEMS);
 
-            setItems(chosen);
-            setLastUpdatedAt(Date.now());
+            if (chosen.length) {
+                const now = Date.now();
+                setItems(chosen);
+                setLastUpdatedAt(now);
+                setStatus('active');
+                try {
+                    localStorage.setItem(INTEL_CACHE_KEY, JSON.stringify({
+                        items: chosen,
+                        lastUpdatedAt: now,
+                    }));
+                } catch (err) {
+                    // Ignore cache write errors.
+                }
+                return;
+            }
+
+            if (itemsRef.current.length) {
+                setStatus('stale');
+            } else {
+                setStatus('error');
+            }
         };
 
         loadIntel();
@@ -159,15 +205,15 @@ export default function IntelWire({ embedded = false, hidden = false, onHide = n
             cancelled = true;
             clearInterval(timer);
         };
-    }, []);
+    }, [reloadTick]);
 
-    const hasItems = items.length > 0;
     const updatedLabel = useMemo(() => {
-        if (!lastUpdatedAt) return 'syncing';
+        if (status === 'loading' && !lastUpdatedAt) return 'syncing';
+        if (!lastUpdatedAt) return 'offline';
         return relativeTime(lastUpdatedAt);
-    }, [lastUpdatedAt]);
+    }, [lastUpdatedAt, status]);
 
-    if (hidden || !hasItems) return null;
+    if (hidden) return null;
 
     const containerClass = embedded ? 'rcp-section' : 'glass-panel pointer-events-auto';
     const containerStyle = embedded
@@ -216,19 +262,40 @@ export default function IntelWire({ embedded = false, hidden = false, onHide = n
 
             {!isCollapsed && (
                 <div className={embedded ? 'max-h-[240px] overflow-y-auto' : 'max-h-[300px] overflow-y-auto'}>
-                    {items.map((item) => (
-                        <a
-                            key={item.id}
-                            href={item.link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={`block px-3 py-2 border-b border-cyan-500/10 hover:bg-cyan-500/10 transition-colors ${embedded ? 'text-[11px]' : ''}`}
-                        >
-                            <div className="text-[10px] tracking-[0.22em] uppercase text-cyan-300 mb-1">{item.source}</div>
-                            <div className="text-[12px] leading-snug text-slate-100">{item.title}</div>
-                            <div className="text-[10px] tracking-[0.2em] uppercase text-text-dim mt-1">{relativeTime(item.publishedAt)}</div>
-                        </a>
-                    ))}
+                    {items.length ? (
+                        items.map((item) => (
+                            <a
+                                key={item.id}
+                                href={item.link}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={`block px-3 py-2 border-b border-cyan-500/10 hover:bg-cyan-500/10 transition-colors ${embedded ? 'text-[11px]' : ''}`}
+                            >
+                                <div className="text-[10px] tracking-[0.22em] uppercase text-cyan-300 mb-1">{item.source}</div>
+                                <div className="text-[12px] leading-snug text-slate-100">{item.title}</div>
+                                <div className="text-[10px] tracking-[0.2em] uppercase text-text-dim mt-1">{relativeTime(item.publishedAt)}</div>
+                            </a>
+                        ))
+                    ) : (
+                        <div className="px-3 py-3 border-b border-cyan-500/10">
+                            <div className="text-[10px] tracking-[0.2em] uppercase text-cyan-300 mb-2">
+                                {status === 'loading' ? 'SYNCING FEEDS...' : 'WIRE OFFLINE'}
+                            </div>
+                            <div className="text-[11px] leading-snug text-text-dim">
+                                {status === 'loading'
+                                    ? 'Collecting intelligence headlines from public sources.'
+                                    : 'News providers are temporarily unreachable. Retry to refresh now.'}
+                            </div>
+                            {status !== 'loading' && (
+                                <button
+                                    onClick={() => setReloadTick((v) => v + 1)}
+                                    className="mt-2 px-2 py-1 border border-cyan-500/35 text-[10px] tracking-[0.2em] text-cyan-200 hover:bg-cyan-500/10 rounded-sm"
+                                >
+                                    RETRY
+                                </button>
+                            )}
+                        </div>
+                    )}
                 </div>
             )}
         </div>
