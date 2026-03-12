@@ -77,6 +77,7 @@ export default function SysTerminal() {
 
     // Position directly below the LayerPanel — same left, same width
     const leftPos = 'max(16px, env(safe-area-inset-left))';
+    const panelWidth = '16rem';
 
     // When hidden, show a small reopen button pinned to bottom-left
     if (!sysTerminalVisible) {
@@ -95,7 +96,7 @@ export default function SysTerminal() {
     return (
         <div
             className="sys-terminal pointer-events-auto"
-            style={{ position: 'absolute', bottom: '24px', left: leftPos, width: '19.5rem' }}
+            style={{ position: 'absolute', bottom: '24px', left: leftPos, width: panelWidth }}
         >
             <div className="sys-terminal-header">
                 <span className="sys-terminal-dot"></span>
