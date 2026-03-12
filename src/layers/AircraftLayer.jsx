@@ -10,6 +10,7 @@ const EARTH_RADIUS_M = 6371000;
 const ANIMATION_INTERVAL_MS = 350;
 const MAX_EXTRAPOLATION_SECONDS = 45;
 const ROTATING_REGION_BATCH_SIZE = 5;
+const MAX_RENDERED_AIRCRAFT = 12000;
 
 const MILITARY_CALLSIGN_PREFIXES = [
     'RCH', 'CMB', 'KING', 'DUKE', 'NAVY', 'SPAR', 'NATO', 'QID', 'MMF', 'BAF', 'CNV',
@@ -308,9 +309,27 @@ function getRotatingZones(cycleIndex) {
     return zones;
 }
 
+function getAircraftRenderBudget(activeShader, cameraHeightM) {
+    const isGodMode = activeShader === 'GOD';
+    if (cameraHeightM > 9000000) return isGodMode ? 2200 : 4200;
+    if (cameraHeightM > 3000000) return isGodMode ? 4200 : 7800;
+    return isGodMode ? 7000 : MAX_RENDERED_AIRCRAFT;
+}
+
+function downsampleFlightsForRender(flights, maxCount) {
+    if (!Array.isArray(flights) || flights.length <= maxCount) return flights;
+    const step = Math.max(1, Math.ceil(flights.length / maxCount));
+    const sampled = [];
+    for (let i = 0; i < flights.length && sampled.length < maxCount; i += step) {
+        sampled.push(flights[i]);
+    }
+    return sampled;
+}
+
 export default function AircraftLayer({ viewer }) {
     const aircraftEnabled = useStore((s) => s.layers.aircraft.enabled);
     const militaryActivityEnabled = useStore((s) => s.layers.militaryActivity.enabled);
+    const activeShader = useStore((s) => s.activeShader);
     const flightFilters = useStore((s) => s.flightFilters);
     const trackedTarget = useStore((s) => s.trackedTarget);
     const updateData = useStore((s) => s.updateLayerData);
@@ -429,10 +448,21 @@ export default function AircraftLayer({ viewer }) {
         setStatus('aircraft', 'active');
         updateData('aircraft', visibleFlights);
 
+        const cameraHeightM = viewer.camera.positionCartographic?.height || 0;
+        const renderBudget = getAircraftRenderBudget(activeShader, cameraHeightM);
+        let renderFlights = downsampleFlightsForRender(visibleFlights, renderBudget);
+        if (trackedEntityId) {
+            const trackedId = trackedEntityId.replace(/^aircraft-/, '');
+            const trackedFlight = visibleFlights.find((flight) => flight.id === trackedId);
+            if (trackedFlight && !renderFlights.some((flight) => flight.id === trackedId)) {
+                renderFlights = [trackedFlight, ...renderFlights.slice(0, Math.max(0, renderBudget - 1))];
+            }
+        }
+
         const currentIds = new Set();
         const nowMs = Date.now();
 
-        visibleFlights.forEach((flight) => {
+        renderFlights.forEach((flight) => {
             const id = flight.id;
             currentIds.add(id);
 
@@ -504,7 +534,7 @@ export default function AircraftLayer({ viewer }) {
                 flightStateRef.current.delete(id);
             }
         }
-    }, [clearEntities, setStatus, updateData, viewer]);
+    }, [activeShader, clearEntities, setStatus, updateData, viewer]);
 
     const pollAircraft = useCallback(async () => {
         if (!shouldIngest || !mountedRef.current) return;

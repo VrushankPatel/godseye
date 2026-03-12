@@ -113,8 +113,16 @@ function createSatelliteIconDataUri() {
     return canvas.toDataURL('image/png');
 }
 
+function getSatelliteRenderBudget(activeShader, cameraHeightM) {
+    const isGodMode = activeShader === 'GOD';
+    if (cameraHeightM > 9000000) return isGodMode ? 2800 : 5000;
+    if (cameraHeightM > 3000000) return isGodMode ? 4600 : 8500;
+    return isGodMode ? 7600 : MAX_RENDERED_SATELLITES;
+}
+
 export default function SatelliteLayer({ viewer }) {
     const isEnabled = useStore((s) => s.layers.satellites.enabled);
+    const activeShader = useStore((s) => s.activeShader);
     const updateData = useStore((s) => s.updateLayerData);
     const setStatus = useStore((s) => s.setLayerStatus);
 
@@ -140,7 +148,9 @@ export default function SatelliteLayer({ viewer }) {
 
         const now = new Date();
         const currentIds = new Set();
-        const activeRecords = satRecordsRef.current.slice(0, MAX_RENDERED_SATELLITES);
+        const cameraHeightM = viewer.camera.positionCartographic?.height || 0;
+        const renderBudget = getSatelliteRenderBudget(activeShader, cameraHeightM);
+        const activeRecords = satRecordsRef.current.slice(0, renderBudget);
 
         activeRecords.forEach(({ id, name, satrec }) => {
             const satId = `satellite-${id}`;
@@ -210,7 +220,7 @@ export default function SatelliteLayer({ viewer }) {
 
         // Force Cesium to redraw so updated positions are immediately visible
         viewer.scene.requestRender();
-    }, [viewer]);
+    }, [activeShader, viewer]);
 
     const startPropagation = useCallback(() => {
         clearInterval(updateTimerRef.current);

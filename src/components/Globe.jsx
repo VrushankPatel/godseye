@@ -45,6 +45,58 @@ const CITY_3D_DISABLE_HEIGHT_M = 3600000;
 const GOOGLE_3D_API_KEY = String(
     import.meta.env.VITE_GOOGLE_MAPS_3D_KEY || import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''
 ).trim();
+const GOD_MODE_REBALANCE_INTERVAL_MS = 900;
+
+function getGodModeLayerBudgets(cameraHeightM) {
+    if (cameraHeightM > 9000000) {
+        return {
+            aircraft: 2200,
+            satellites: 3000,
+            cctv: 1200,
+            traffic: 950,
+            airports: 1500,
+            seismicStations: 1200,
+            maritime: 1000,
+            militaryBases: 950,
+            metar: 900,
+            weather: 1300,
+            airQuality: 900,
+            oceanBuoys: 800,
+        };
+    }
+
+    if (cameraHeightM > 3000000) {
+        return {
+            aircraft: 4200,
+            satellites: 5200,
+            cctv: 2000,
+            traffic: 1500,
+            airports: 2200,
+            seismicStations: 1900,
+            maritime: 1500,
+            militaryBases: 1500,
+            metar: 1300,
+            weather: 1800,
+            airQuality: 1300,
+            oceanBuoys: 1100,
+        };
+    }
+
+    return {
+        aircraft: 7200,
+        satellites: 8500,
+        cctv: 3200,
+        traffic: 2200,
+        airports: 3200,
+        seismicStations: 2600,
+        maritime: 2200,
+        militaryBases: 2200,
+        metar: 2200,
+        weather: 2600,
+        airQuality: 1800,
+        oceanBuoys: 1600,
+    };
+}
 
 const AIRCRAFT_TRACK_VIEWS = {
     CHASE: new Cesium.Cartesian3(2200, 0, 700),
@@ -145,7 +197,9 @@ export default function Globe() {
     const city3DTilesRef = useRef({ tileset: null, source: 'none' });
     const cameraRecenterStateRef = useRef({ lastAppliedMs: 0 });
     const focusHiddenSnapshotRef = useRef(new Map());
+    const godModeHiddenSnapshotRef = useRef(new Map());
     const [viewerReady, setViewerReady] = useState(false);
+    const activeShader = useStore((s) => s.activeShader);
     const setViewerRefStore = useStore((s) => s.setViewerRef);
     const isAutoRotating = useStore((s) => s.isAutoRotating);
     const setAutoRotating = useStore((s) => s.setAutoRotating);
@@ -799,6 +853,86 @@ export default function Globe() {
             }
         };
     }, [focusHideEntities, trackedTarget]);
+
+    useEffect(() => {
+        const viewer = viewerRef.current;
+        if (!viewer || viewer.isDestroyed()) return;
+
+        // Tracked mode has its own visibility logic; don't interfere.
+        if (trackedTarget?.entityId) return;
+
+        const hiddenSnapshot = godModeHiddenSnapshotRef.current;
+        const restoreGodModeHiddenEntities = () => {
+            if (!hiddenSnapshot.size || viewer.isDestroyed()) return;
+            viewer.entities.suspendEvents();
+            for (const [id, wasVisible] of hiddenSnapshot.entries()) {
+                const entity = viewer.entities.getById(id);
+                if (entity) {
+                    entity.show = typeof wasVisible === 'boolean' ? wasVisible : true;
+                }
+            }
+            viewer.entities.resumeEvents();
+            hiddenSnapshot.clear();
+            viewer.scene.requestRender();
+        };
+
+        const shouldThrottleGodMode = activeShader === 'GOD' && !focusHideEntities;
+        if (!shouldThrottleGodMode) {
+            restoreGodModeHiddenEntities();
+            return;
+        }
+
+        const applyGodModeBudgets = () => {
+            if (viewer.isDestroyed()) return;
+            const cameraHeight = viewer.camera.positionCartographic?.height || DEFAULT_CAMERA.height;
+            const budgets = getGodModeLayerBudgets(cameraHeight);
+            const layerCounts = Object.create(null);
+
+            viewer.entities.suspendEvents();
+            const entities = viewer.entities.values;
+            for (let i = 0; i < entities.length; i += 1) {
+                const entity = entities[i];
+                const id = String(entity.id || '');
+                const layerType = inferLayerTypeFromEntityId(id);
+                const budget = budgets[layerType];
+
+                if (!Number.isFinite(budget)) {
+                    if (hiddenSnapshot.has(id)) {
+                        const previous = hiddenSnapshot.get(id);
+                        entity.show = typeof previous === 'boolean' ? previous : true;
+                        hiddenSnapshot.delete(id);
+                    }
+                    continue;
+                }
+
+                const nextCount = (layerCounts[layerType] || 0) + 1;
+                layerCounts[layerType] = nextCount;
+                const withinBudget = nextCount <= budget;
+
+                if (!withinBudget) {
+                    if (!hiddenSnapshot.has(id)) {
+                        hiddenSnapshot.set(id, entity.show ?? true);
+                    }
+                    entity.show = false;
+                } else if (hiddenSnapshot.has(id)) {
+                    const previous = hiddenSnapshot.get(id);
+                    entity.show = typeof previous === 'boolean' ? previous : true;
+                    hiddenSnapshot.delete(id);
+                }
+            }
+            viewer.entities.resumeEvents();
+            viewer.scene.requestRender();
+        };
+
+        applyGodModeBudgets();
+        const intervalId = setInterval(applyGodModeBudgets, GOD_MODE_REBALANCE_INTERVAL_MS);
+        return () => {
+            clearInterval(intervalId);
+            if (activeShader !== 'GOD' || focusHideEntities) {
+                restoreGodModeHiddenEntities();
+            }
+        };
+    }, [activeShader, focusHideEntities, trackedTarget]);
 
     return (
         <>
