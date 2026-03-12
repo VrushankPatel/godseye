@@ -40,6 +40,11 @@ const AUTO_RECENTER_MIN_INTERVAL_MS = 1500;
 const ZOOM_SNAP_PITCH_THRESHOLD_RAD = Cesium.Math.toRadians(-72);
 const LABEL_COUNTRY_MIN_HEIGHT_M = 2200000;
 const LABEL_CITY_MAX_HEIGHT_M = 5200000;
+const CITY_3D_ENABLE_HEIGHT_M = 2800000;
+const CITY_3D_DISABLE_HEIGHT_M = 3600000;
+const GOOGLE_3D_API_KEY = String(
+    import.meta.env.VITE_GOOGLE_MAPS_3D_KEY || import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''
+).trim();
 
 const AIRCRAFT_TRACK_VIEWS = {
     CHASE: new Cesium.Cartesian3(2200, 0, 700),
@@ -137,6 +142,7 @@ export default function Globe() {
     const hoveredEntityIdRef = useRef(null);
     const lastHoverUpdateMsRef = useRef(0);
     const labelLayersRef = useRef({ country: null, city: null });
+    const city3DTilesRef = useRef({ tileset: null, source: 'none' });
     const cameraRecenterStateRef = useRef({ lastAppliedMs: 0 });
     const focusHiddenSnapshotRef = useRef(new Map());
     const [viewerReady, setViewerReady] = useState(false);
@@ -292,6 +298,68 @@ export default function Globe() {
             labelLayersRef.current = { country: null, city: null };
         }
 
+        const update3DCityVisibility = () => {
+            const tileset = city3DTilesRef.current.tileset;
+            if (!tileset) return;
+            const height = viewer.camera.positionCartographic?.height || DEFAULT_CAMERA.height;
+            if (!tileset.show && height <= CITY_3D_ENABLE_HEIGHT_M) {
+                tileset.show = true;
+                viewer.scene.requestRender();
+                return;
+            }
+            if (tileset.show && height >= CITY_3D_DISABLE_HEIGHT_M) {
+                tileset.show = false;
+                viewer.scene.requestRender();
+            }
+        };
+
+        let disposed = false;
+        const add3DCityTiles = async () => {
+            const attachTileset = (tileset, source) => {
+                if (!tileset || disposed || viewer.isDestroyed()) return;
+                tileset.show = false;
+                viewer.scene.primitives.add(tileset);
+                city3DTilesRef.current = { tileset, source };
+                update3DCityVisibility();
+            };
+
+            if (GOOGLE_3D_API_KEY) {
+                try {
+                    const googleTileset = await Cesium.createGooglePhotorealistic3DTileset(
+                        {
+                            key: GOOGLE_3D_API_KEY,
+                        },
+                        {
+                            maximumScreenSpaceError: 12,
+                            preloadFlightDestinations: true,
+                            dynamicScreenSpaceError: true,
+                        }
+                    );
+                    attachTileset(googleTileset, 'google-photorealistic');
+                    return;
+                } catch (error) {
+                    console.warn('Google Photorealistic 3D tiles failed, falling back to OSM buildings.', error);
+                }
+            }
+
+            try {
+                const osmBuildingsTileset = await Cesium.createOsmBuildingsAsync({
+                    enableShowOutline: false,
+                    showOutline: false,
+                    dynamicScreenSpaceError: true,
+                    maximumScreenSpaceError: 16,
+                    style: new Cesium.Cesium3DTileStyle({
+                        color: "color('#d6e4ff', 0.62)",
+                    }),
+                });
+                attachTileset(osmBuildingsTileset, 'osm-buildings');
+            } catch (error) {
+                console.warn('OSM 3D buildings are unavailable in this environment.', error);
+            }
+        };
+
+        add3DCityTiles();
+
         // Set initial camera position
         viewer.camera.flyTo({
             destination: Cesium.Cartesian3.fromDegrees(
@@ -322,6 +390,7 @@ export default function Globe() {
             }
         };
         updateZoomLabelVisibility();
+        update3DCityVisibility();
 
         let lastGestureScale = 1;
 
@@ -368,6 +437,7 @@ export default function Globe() {
 
         const handleCameraChanged = () => {
             updateZoomLabelVisibility();
+            update3DCityVisibility();
             if (viewer.trackedEntity) return;
 
             const carto = viewer.camera.positionCartographic;
@@ -506,6 +576,11 @@ export default function Globe() {
             handler.destroy();
             removeTrail();
             restoreTrackedAircraftVisual();
+            disposed = true;
+            if (city3DTilesRef.current.tileset && viewer.scene.primitives.contains(city3DTilesRef.current.tileset)) {
+                viewer.scene.primitives.remove(city3DTilesRef.current.tileset);
+            }
+            city3DTilesRef.current = { tileset: null, source: 'none' };
             hoveredEntityIdRef.current = null;
             clearHoverInfo();
             if (viewerRef.current && !viewerRef.current.isDestroyed()) {

@@ -149,6 +149,7 @@ src/
 - Some feeds can intermittently fail due to CORS limits, region blocks, source downtime, or third-party rate limiting.
 - The app degrades gracefully and keeps other layers active when one source is unavailable.
 - Optional: set `VITE_AISSTREAM_API_KEY` in your local `.env` to enable realtime AIS vessel streaming in the Maritime layer.
+- Optional: set `VITE_GOOGLE_MAPS_3D_KEY` (or `VITE_GOOGLE_MAPS_API_KEY`) in your local `.env` to enable Google Photorealistic 3D city tiles on zoom-in. Without this key, the app falls back to OSM 3D buildings where available.
 
 ## Credits
 
