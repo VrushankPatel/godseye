@@ -5,8 +5,21 @@ const FETCH_TIMEOUT_MS = 12000;
 const MAX_ITEMS = 18;
 const INTEL_CACHE_KEY = 'godseye:intel-wire-cache:v1';
 const INTEL_KEYWORD_RE = /(military|defen[cs]e|army|navy|air\s*force|missile|drone|strike|conflict|war|border|security|intel|nato|ukraine|russia|china|taiwan|israel|iran|syria)/i;
+const GUARDIAN_API_BASE = 'https://content.guardianapis.com/search';
+const GUARDIAN_API_KEY = 'test';
+const HN_API_BASE = 'https://hn.algolia.com/api/v1/search';
+const GUARDIAN_QUERIES = [
+    'military conflict',
+    'war security',
+    'border tensions',
+    'missile strike',
+];
+const HN_QUERIES = [
+    'military conflict',
+    'open source intelligence',
+];
 
-const INTEL_SOURCES = [
+const RSS_INTEL_SOURCES = [
     { name: 'Defense One', url: 'https://www.defenseone.com/rss/all/' },
     { name: 'BBC World', url: 'https://feeds.bbci.co.uk/news/world/rss.xml' },
     { name: 'BBC Europe', url: 'https://feeds.bbci.co.uk/news/world/europe/rss.xml' },
@@ -30,7 +43,22 @@ function buildAllOriginsGetUrl(url) {
     return `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
 }
 
-async function fetchWithTimeout(url, timeoutMs = FETCH_TIMEOUT_MS) {
+async function fetchJsonWithTimeout(url, timeoutMs = FETCH_TIMEOUT_MS) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+        const response = await fetch(url, {
+            signal: controller.signal,
+            cache: 'no-store',
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+    } finally {
+        clearTimeout(timeout);
+    }
+}
+
+async function fetchTextWithTimeout(url, timeoutMs = FETCH_TIMEOUT_MS) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
     try {
@@ -50,7 +78,7 @@ async function fetchRssText(sourceUrl) {
     const getProxy = buildAllOriginsGetUrl(sourceUrl);
 
     try {
-        const raw = await fetchWithTimeout(rawProxy);
+        const raw = await fetchTextWithTimeout(rawProxy);
         if (raw && !/^\s*error code:\s*\d+/i.test(raw)) {
             return raw;
         }
@@ -58,12 +86,67 @@ async function fetchRssText(sourceUrl) {
         // fall through to get-proxy path
     }
 
-    const wrapped = await fetchWithTimeout(getProxy);
+    const wrapped = await fetchTextWithTimeout(getProxy);
     const parsed = JSON.parse(wrapped);
     if (!parsed?.contents) {
         throw new Error('Feed payload missing contents');
     }
     return String(parsed.contents);
+}
+
+async function fetchGuardianIntel() {
+    const requests = GUARDIAN_QUERIES.map((query) => {
+        const url = `${GUARDIAN_API_BASE}?q=${encodeURIComponent(query)}&api-key=${GUARDIAN_API_KEY}&page-size=12&show-fields=headline`;
+        return fetchJsonWithTimeout(url).catch(() => null);
+    });
+    const responses = await Promise.all(requests);
+    const items = [];
+
+    for (const data of responses) {
+        const results = data?.response?.results;
+        if (!Array.isArray(results)) continue;
+        for (const result of results) {
+            const title = normalizeText(result?.fields?.headline || result?.webTitle || '');
+            const link = normalizeText(result?.webUrl || '');
+            if (!title || !link) continue;
+            items.push({
+                id: `guardian-${link}`,
+                source: `Guardian ${normalizeText(result?.sectionName || 'World')}`.trim(),
+                title,
+                link,
+                publishedAt: parsePublishedAt(result?.webPublicationDate),
+            });
+        }
+    }
+
+    return items;
+}
+
+async function fetchHackerNewsIntel() {
+    const requests = HN_QUERIES.map((query) => {
+        const url = `${HN_API_BASE}?query=${encodeURIComponent(query)}&tags=story`;
+        return fetchJsonWithTimeout(url).catch(() => null);
+    });
+    const responses = await Promise.all(requests);
+    const items = [];
+
+    for (const data of responses) {
+        const hits = Array.isArray(data?.hits) ? data.hits : [];
+        for (const hit of hits) {
+            const title = normalizeText(hit?.title || hit?.story_title || '');
+            const link = normalizeText(hit?.url || hit?.story_url || '');
+            if (!title || !link) continue;
+            items.push({
+                id: `hn-${hit?.objectID || link}`,
+                source: 'Hacker News',
+                title,
+                link,
+                publishedAt: parsePublishedAt(hit?.created_at),
+            });
+        }
+    }
+
+    return items;
 }
 
 function extractFeedItems(feedText, sourceName) {
@@ -146,29 +229,40 @@ export default function IntelWire({ embedded = false, hidden = false, onHide = n
             if (!itemsRef.current.length) {
                 setStatus('loading');
             }
-            const results = await Promise.allSettled(
-                INTEL_SOURCES.map(async (source) => {
-                    try {
-                        const text = await fetchRssText(source.url);
-                        return extractFeedItems(text, source.name);
-                    } catch (err) {
-                        return [];
-                    }
-                })
-            );
+            const [guardianItems, hnItems, rssResults] = await Promise.all([
+                fetchGuardianIntel().catch(() => []),
+                fetchHackerNewsIntel().catch(() => []),
+                Promise.allSettled(
+                    RSS_INTEL_SOURCES.map(async (source) => {
+                        try {
+                            const text = await fetchRssText(source.url);
+                            return extractFeedItems(text, source.name);
+                        } catch (err) {
+                            return [];
+                        }
+                    })
+                ),
+            ]);
 
             if (cancelled) return;
 
             const merged = [];
             const seen = new Set();
-            for (const result of results) {
-                if (result.status !== 'fulfilled') continue;
-                for (const item of result.value) {
+
+            const ingest = (items) => {
+                for (const item of items) {
                     const dedupeKey = `${item.link}::${item.title}`;
                     if (seen.has(dedupeKey)) continue;
                     seen.add(dedupeKey);
                     merged.push(item);
                 }
+            };
+
+            ingest(guardianItems);
+            ingest(hnItems);
+            for (const result of rssResults) {
+                if (result.status !== 'fulfilled') continue;
+                ingest(result.value);
             }
 
             const keywordFiltered = merged.filter((item) => INTEL_KEYWORD_RE.test(item.title));
