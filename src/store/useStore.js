@@ -172,6 +172,8 @@ const useStore = create((set, get) => ({
     // Cesium viewer reference
     viewerRef: null,
     setViewerRef: (ref) => set({ viewerRef: ref }),
+    city3DActive: false,
+    setCity3DActive: (value) => set({ city3DActive: Boolean(value) }),
 
     // Layer panel collapsed state
     layerPanelOpen: true,

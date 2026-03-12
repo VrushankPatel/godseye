@@ -137,6 +137,22 @@ body {
   box-shadow: 0 0 6px var(--color-neon-green);
 }
 
+/* ── 3D City Tilt Control ───────────────────────── */
+.city-tilt-slider {
+  -webkit-appearance: slider-vertical;
+  appearance: slider-vertical;
+  writing-mode: bt-lr;
+  width: 16px;
+  height: 150px;
+  cursor: ns-resize;
+  background: transparent;
+  accent-color: var(--color-electric-blue);
+}
+
+.city-tilt-control {
+  border-color: rgba(0, 180, 255, 0.28);
+}
+
 /* ── Mode Button ──────────────────────────────────── */
 .mode-btn {
   display: inline-flex;

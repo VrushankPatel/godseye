@@ -201,6 +201,7 @@ export default function Globe() {
     const [viewerReady, setViewerReady] = useState(false);
     const activeShader = useStore((s) => s.activeShader);
     const setViewerRefStore = useStore((s) => s.setViewerRef);
+    const setCity3DActive = useStore((s) => s.setCity3DActive);
     const isAutoRotating = useStore((s) => s.isAutoRotating);
     const setAutoRotating = useStore((s) => s.setAutoRotating);
     const setInspector = useStore((s) => s.setInspector);
@@ -354,17 +355,24 @@ export default function Globe() {
 
         const update3DCityVisibility = () => {
             const tileset = city3DTilesRef.current.tileset;
-            if (!tileset) return;
+            if (!tileset) {
+                setCity3DActive(false);
+                return;
+            }
             const height = viewer.camera.positionCartographic?.height || DEFAULT_CAMERA.height;
             if (!tileset.show && height <= CITY_3D_ENABLE_HEIGHT_M) {
                 tileset.show = true;
+                setCity3DActive(true);
                 viewer.scene.requestRender();
                 return;
             }
             if (tileset.show && height >= CITY_3D_DISABLE_HEIGHT_M) {
                 tileset.show = false;
+                setCity3DActive(false);
                 viewer.scene.requestRender();
+                return;
             }
+            setCity3DActive(Boolean(tileset.show));
         };
 
         let disposed = false;
@@ -635,6 +643,7 @@ export default function Globe() {
                 viewer.scene.primitives.remove(city3DTilesRef.current.tileset);
             }
             city3DTilesRef.current = { tileset: null, source: 'none' };
+            setCity3DActive(false);
             hoveredEntityIdRef.current = null;
             clearHoverInfo();
             if (viewerRef.current && !viewerRef.current.isDestroyed()) {
@@ -650,6 +659,7 @@ export default function Globe() {
         setAutoRotating,
         setHoverInfo,
         setInspector,
+        setCity3DActive,
         setViewerRefStore,
     ]);
 
