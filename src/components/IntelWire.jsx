@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 const INTEL_REFRESH_MS = 5 * 60 * 1000;
 const FETCH_TIMEOUT_MS = 12000;
 const MAX_ITEMS = 18;
-const INTEL_CACHE_KEY = 'godseye:intel-wire-cache:v1';
+const INTEL_CACHE_KEY = 'godseye:intel-wire-cache:v2';
 const INTEL_KEYWORD_RE = /(military|defen[cs]e|army|navy|air\s*force|missile|drone|strike|conflict|war|border|security|intel|nato|ukraine|russia|china|taiwan|israel|iran|syria)/i;
 const GUARDIAN_API_BASE = 'https://content.guardianapis.com/search';
 const GUARDIAN_API_KEY = 'test';
@@ -18,9 +18,22 @@ const HN_QUERIES = [
     'military conflict',
     'open source intelligence',
 ];
+const GOOGLE_NEWS_QUERIES = [
+    'military OR defense OR conflict',
+    'war OR drone OR missile',
+    'border tensions OR geopolitical',
+];
 
 const RSS_INTEL_SOURCES = [
+    ...GOOGLE_NEWS_QUERIES.map((query) => ({
+        name: 'Google News',
+        url: `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=en-US&gl=US&ceid=US:en`,
+    })),
+    { name: 'Google News World', url: 'https://news.google.com/rss/headlines/section/topic/WORLD?hl=en-US&gl=US&ceid=US:en' },
+    { name: 'Google News US', url: 'https://news.google.com/rss/headlines/section/geo/US?hl=en-US&gl=US&ceid=US:en' },
     { name: 'Defense One', url: 'https://www.defenseone.com/rss/all/' },
+    { name: 'Reuters World', url: 'https://feeds.reuters.com/reuters/worldNews' },
+    { name: 'Reuters Top', url: 'https://feeds.reuters.com/reuters/topNews' },
     { name: 'BBC World', url: 'https://feeds.bbci.co.uk/news/world/rss.xml' },
     { name: 'BBC Europe', url: 'https://feeds.bbci.co.uk/news/world/europe/rss.xml' },
     { name: 'BBC Asia', url: 'https://feeds.bbci.co.uk/news/world/asia/rss.xml' },
@@ -41,6 +54,10 @@ function buildAllOriginsRawUrl(url) {
 
 function buildAllOriginsGetUrl(url) {
     return `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+}
+
+function buildCodeTabsProxyUrl(url) {
+    return `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`;
 }
 
 async function fetchJsonWithTimeout(url, timeoutMs = FETCH_TIMEOUT_MS) {
@@ -74,24 +91,44 @@ async function fetchTextWithTimeout(url, timeoutMs = FETCH_TIMEOUT_MS) {
 }
 
 async function fetchRssText(sourceUrl) {
+    // Try direct first for feeds that already expose CORS.
+    try {
+        const direct = await fetchTextWithTimeout(sourceUrl);
+        if (direct && direct.trim()) {
+            return direct;
+        }
+    } catch (err) {
+        // Fall through to proxies.
+    }
+
     const rawProxy = buildAllOriginsRawUrl(sourceUrl);
     const getProxy = buildAllOriginsGetUrl(sourceUrl);
+    const codeTabsProxy = buildCodeTabsProxyUrl(sourceUrl);
 
     try {
         const raw = await fetchTextWithTimeout(rawProxy);
-        if (raw && !/^\s*error code:\s*\d+/i.test(raw)) {
+        if (raw && raw.trim() && !/^\s*error code:\s*\d+/i.test(raw)) {
             return raw;
         }
     } catch (err) {
         // fall through to get-proxy path
     }
 
-    const wrapped = await fetchTextWithTimeout(getProxy);
-    const parsed = JSON.parse(wrapped);
-    if (!parsed?.contents) {
-        throw new Error('Feed payload missing contents');
+    try {
+        const wrapped = await fetchTextWithTimeout(getProxy);
+        const parsed = JSON.parse(wrapped);
+        if (parsed?.contents) {
+            return String(parsed.contents);
+        }
+    } catch (err) {
+        // fall through to CodeTabs path
     }
-    return String(parsed.contents);
+
+    const codeTabsBody = await fetchTextWithTimeout(codeTabsProxy);
+    if (codeTabsBody && codeTabsBody.trim()) {
+        return codeTabsBody;
+    }
+    throw new Error('Feed payload missing contents');
 }
 
 async function fetchGuardianIntel() {
@@ -175,9 +212,11 @@ function extractFeedItems(feedText, sourceName) {
             node.querySelector('updated')?.textContent ||
             '';
 
+        const itemSource = normalizeText(node.querySelector('source')?.textContent || sourceName);
+
         return {
             id: `${sourceName}-${index}-${title.slice(0, 24)}`,
-            source: sourceName,
+            source: itemSource || sourceName,
             title,
             link,
             publishedAt: parsePublishedAt(publishedRaw),
