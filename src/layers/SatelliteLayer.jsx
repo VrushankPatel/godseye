@@ -123,6 +123,7 @@ function getSatelliteRenderBudget(activeShader, cameraHeightM) {
 export default function SatelliteLayer({ viewer }) {
     const isEnabled = useStore((s) => s.layers.satellites.enabled);
     const activeShader = useStore((s) => s.activeShader);
+    const satelliteRefreshToken = useStore((s) => s.layerRefreshTokens.satellites);
     const updateData = useStore((s) => s.updateLayerData);
     const setStatus = useStore((s) => s.setLayerStatus);
 
@@ -131,6 +132,7 @@ export default function SatelliteLayer({ viewer }) {
     const updateTimerRef = useRef(null);
     const abortRef = useRef(null);
     const satelliteIconRef = useRef(null);
+    const lastRefreshTokenRef = useRef(0);
 
     const clearSatellites = useCallback(() => {
         clearInterval(updateTimerRef.current);
@@ -270,6 +272,9 @@ export default function SatelliteLayer({ viewer }) {
 
     const loadSatellites = useCallback(async () => {
         setStatus('satellites', 'loading');
+        if (abortRef.current) {
+            abortRef.current.abort();
+        }
         const controller = new AbortController();
         abortRef.current = controller;
 
@@ -294,6 +299,10 @@ export default function SatelliteLayer({ viewer }) {
             updateData('satellites', fallbackRecords);
             setStatus('satellites', fallbackRecords.length ? 'active' : 'error');
             startPropagation();
+        } finally {
+            if (abortRef.current === controller) {
+                abortRef.current = null;
+            }
         }
     }, [isEnabled, loadFromPaginatedApi, setStatus, updateData, startPropagation]);
 
@@ -318,6 +327,14 @@ export default function SatelliteLayer({ viewer }) {
             clearSatellites();
         };
     }, [isEnabled, clearSatellites, setStatus, updateData, loadSatellites]);
+
+    useEffect(() => {
+        if (!isEnabled || !satelliteRefreshToken) return;
+        if (lastRefreshTokenRef.current === satelliteRefreshToken) return;
+
+        lastRefreshTokenRef.current = satelliteRefreshToken;
+        loadSatellites();
+    }, [isEnabled, loadSatellites, satelliteRefreshToken]);
 
     return null;
 }

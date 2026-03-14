@@ -332,6 +332,7 @@ export default function AircraftLayer({ viewer }) {
     const activeShader = useStore((s) => s.activeShader);
     const flightFilters = useStore((s) => s.flightFilters);
     const trackedTarget = useStore((s) => s.trackedTarget);
+    const aircraftRefreshToken = useStore((s) => s.layerRefreshTokens.aircraft);
     const updateData = useStore((s) => s.updateLayerData);
     const setStatus = useStore((s) => s.setLayerStatus);
     const setAircraftFeedData = useStore((s) => s.setAircraftFeedData);
@@ -344,6 +345,7 @@ export default function AircraftLayer({ viewer }) {
     const mountedRef = useRef(true);
     const planeIconRef = useRef(null);
     const sourceCycleRef = useRef(0);
+    const lastRefreshTokenRef = useRef(0);
     const shouldIngest = aircraftEnabled || militaryActivityEnabled;
 
     const clearEntities = useCallback(() => {
@@ -657,6 +659,17 @@ export default function AircraftLayer({ viewer }) {
             : null;
         applyTrackedVisibility(trackedEntityId);
     }, [trackedTarget, applyTrackedVisibility, aircraftEnabled]);
+
+    useEffect(() => {
+        if (!shouldIngest || !aircraftRefreshToken) return;
+        if (lastRefreshTokenRef.current === aircraftRefreshToken) return;
+
+        lastRefreshTokenRef.current = aircraftRefreshToken;
+        if (aircraftEnabled) {
+            setStatus('aircraft', 'loading');
+        }
+        pollAircraft();
+    }, [aircraftEnabled, aircraftRefreshToken, pollAircraft, setStatus, shouldIngest]);
 
     useEffect(() => {
         mountedRef.current = true;

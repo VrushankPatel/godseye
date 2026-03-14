@@ -143,6 +143,19 @@ const useStore = create((set, get) => ({
             aircraftFeedData: Array.isArray(data) ? data : [],
         }),
 
+    // Manual live-layer refresh signals
+    layerRefreshTokens: {
+        aircraft: 0,
+        satellites: 0,
+    },
+    requestLayerRefresh: (layerName) =>
+        set((state) => ({
+            layerRefreshTokens: {
+                ...state.layerRefreshTokens,
+                [layerName]: Date.now(),
+            },
+        })),
+
     // Track target state (aircraft / satellite)
     trackedTarget: null,
     setTrackedTarget: (target) => set({ trackedTarget: target }),

@@ -198,6 +198,7 @@ export default function Globe() {
     const cameraRecenterStateRef = useRef({ lastAppliedMs: 0 });
     const focusHiddenSnapshotRef = useRef(new Map());
     const godModeHiddenSnapshotRef = useRef(new Map());
+    const previousTrackedTargetRef = useRef(null);
     const [viewerReady, setViewerReady] = useState(false);
     const activeShader = useStore((s) => s.activeShader);
     const setViewerRefStore = useStore((s) => s.setViewerRef);
@@ -210,6 +211,7 @@ export default function Globe() {
     const trackedTarget = useStore((s) => s.trackedTarget);
     const trackingView = useStore((s) => s.trackingView);
     const clearTrackedTarget = useStore((s) => s.clearTrackedTarget);
+    const requestLayerRefresh = useStore((s) => s.requestLayerRefresh);
     const focusHideEntities = useStore((s) => s.focusHideEntities);
 
     const restoreTrackedAircraftVisual = useCallback(() => {
@@ -794,6 +796,21 @@ export default function Globe() {
         viewer.trackedEntity = targetEntity;
         viewer.scene.requestRender();
     }, [trackedTarget, trackingView]);
+
+    useEffect(() => {
+        const previousTrackedTarget = previousTrackedTargetRef.current;
+        const didStopTracking = Boolean(previousTrackedTarget?.entityId) && !trackedTarget?.entityId;
+
+        if (didStopTracking) {
+            if (previousTrackedTarget.type === 'aircraft') {
+                requestLayerRefresh('aircraft');
+            } else if (previousTrackedTarget.type === 'satellites') {
+                requestLayerRefresh('satellites');
+            }
+        }
+
+        previousTrackedTargetRef.current = trackedTarget || null;
+    }, [trackedTarget, requestLayerRefresh]);
 
     useEffect(() => {
         const viewer = viewerRef.current;
