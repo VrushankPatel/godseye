@@ -3,6 +3,8 @@ import * as Cesium from 'cesium';
 import useStore from '../store/useStore';
 import { LAYER_DEFS, SURVEILLANCE_PRIMARY_LAYERS } from '../constants/dataSources';
 import IntelWire from './IntelWire';
+import IntelBriefPanel from './IntelBriefPanel';
+import LiveNewsRelayPanel from './LiveNewsRelayPanel';
 import StrategicIntelPanel from './StrategicIntelPanel';
 
 // ── Massive city database (250+ cities, ranked by global significance) ──
@@ -587,6 +589,8 @@ export default function MissionHud() {
                         </div>
                     )}
 
+                    {!inspector && <IntelBriefPanel />}
+                    {!inspector && <LiveNewsRelayPanel />}
                     {!inspector && <StrategicIntelPanel />}
 
                     {/* Entity Info — unified for all clicked entities including CCTV/Traffic */}

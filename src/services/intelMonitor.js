@@ -204,6 +204,21 @@ export function buildTrendingIntelKeywords(items, regionId = 'all', limit = 5) {
         .map(([label, count]) => ({ label, count }));
 }
 
+export function buildIntelSourceBreakdown(items, regionId = 'all', limit = 5) {
+    const counts = new Map();
+
+    for (const item of items || []) {
+        if (!matchesIntelRegion(item, regionId)) continue;
+        const source = String(item?.source || 'Unknown').trim() || 'Unknown';
+        counts.set(source, (counts.get(source) || 0) + 1);
+    }
+
+    return Array.from(counts.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, limit)
+        .map(([label, count]) => ({ label, count }));
+}
+
 function countLayerEntities(layer, regionId) {
     if (!layer?.enabled || !Array.isArray(layer.data)) return 0;
     return layer.data.reduce((total, item) => {
@@ -260,6 +275,86 @@ export function buildStrategicPosture(items, layers, regionId = 'all') {
         },
         domains: domainCounts,
         trending: buildTrendingIntelKeywords(scopedItems, 'all', 5),
+    };
+}
+
+export function buildLocalIntelBrief(items, layers, regionId = 'all') {
+    const scopedItems = (items || [])
+        .filter((item) => matchesIntelRegion(item, regionId))
+        .sort((a, b) => b.publishedAt - a.publishedAt);
+    const posture = buildStrategicPosture(scopedItems, layers, regionId);
+    const sources = buildIntelSourceBreakdown(scopedItems, 'all', 4);
+    const keywords = buildTrendingIntelKeywords(scopedItems, 'all', 4);
+    const lead = scopedItems[0] || null;
+    const criticalCount = scopedItems.filter((item) => classifyIntelSeverity(item) === 'critical').length;
+    const elevatedCount = scopedItems.filter((item) => classifyIntelSeverity(item) === 'elevated').length;
+
+    const domainSummary = Object.entries(posture.domains)
+        .filter(([, count]) => count > 0)
+        .sort((a, b) => b[1] - a[1])
+        .map(([domain]) => domain.toUpperCase())
+        .slice(0, 3);
+
+    const activeSignals = [
+        posture.signals.air > 0 ? `${posture.signals.air} air signals` : null,
+        posture.signals.sea > 0 ? `${posture.signals.sea} sea signals` : null,
+        posture.signals.ground > 0 ? `${posture.signals.ground} ground signals` : null,
+        posture.signals.alerts > 0 ? `${posture.signals.alerts} restricted-zone alerts` : null,
+    ].filter(Boolean);
+
+    if (!scopedItems.length) {
+        return {
+            summary: 'No live headlines are currently cached for this theater. The brief will populate automatically as public feeds recover.',
+            bullets: [
+                'Headline pressure is currently unavailable.',
+                'Layer-based surveillance signals can still be used independently.',
+                'Switch regions or wait for the next feed refresh cycle.',
+            ],
+            keywords: [],
+            sources: [],
+            lead: null,
+            posture,
+            confidence: 'LOW',
+        };
+    }
+
+    const confidenceScore =
+        Math.min(scopedItems.length, 12) +
+        Math.min(sources.length, 4) * 2 +
+        Math.min(criticalCount, 4) * 2;
+    const confidence =
+        confidenceScore >= 16 ? 'HIGH' : confidenceScore >= 9 ? 'MEDIUM' : 'LOW';
+
+    const summary =
+        posture.level === 'CRITICAL'
+            ? `Escalation is clustering fast. ${criticalCount} critical headlines are converging with live surveillance signals in this theater.`
+            : posture.level === 'ELEVATED'
+                ? `Pressure is elevated. ${criticalCount} critical and ${elevatedCount} elevated headlines are stacking across the current watch area.`
+                : posture.level === 'WATCH'
+                    ? `The theater is active but not yet saturated. Signals are building across headlines and mapped surveillance layers.`
+                    : `The signal picture is relatively stable. Activity is present, but clustering remains limited in the current scope.`;
+
+    const bullets = [
+        keywords.length
+            ? `Headline momentum is concentrating around ${keywords.map((item) => item.label).slice(0, 3).join(', ')}.`
+            : 'Headline momentum is spread across multiple low-density themes.',
+        activeSignals.length
+            ? `Cross-layer confirmation is coming from ${activeSignals.slice(0, 3).join(', ')}.`
+            : 'Mapped surveillance layers are not yet showing a strong regional confirmation pattern.',
+        lead
+            ? `Latest lead: ${lead.title}`
+            : 'No single lead headline has separated from the rest of the feed yet.',
+    ];
+
+    return {
+        summary,
+        bullets,
+        keywords,
+        sources,
+        lead,
+        posture,
+        confidence,
+        domainSummary,
     };
 }
 
