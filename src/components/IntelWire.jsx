@@ -11,6 +11,7 @@ const INTEL_REFRESH_MS = 5 * 60 * 1000;
 const FETCH_TIMEOUT_MS = 12000;
 const MAX_ITEMS = 18;
 const INTEL_CACHE_KEY = 'godseye:intel-wire-cache:v2';
+const INTEL_CACHE_MAX_AGE_MS = 4 * 60 * 60 * 1000;
 const INTEL_KEYWORD_RE = /(military|defen[cs]e|army|navy|air\s*force|missile|drone|strike|conflict|war|border|security|intel|nato|ukraine|russia|china|taiwan|israel|iran|syria)/i;
 const GUARDIAN_API_BASE = 'https://content.guardianapis.com/search';
 const GUARDIAN_API_KEY = 'test';
@@ -240,6 +241,25 @@ function relativeTime(timestampMs) {
     return `${Math.floor(diff / 86_400_000)}d ago`;
 }
 
+function readIntelCache() {
+    try {
+        const raw = localStorage.getItem(INTEL_CACHE_KEY);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (!parsed || !Array.isArray(parsed.items) || !parsed.items.length) return null;
+        const items = parsed.items.slice(0, MAX_ITEMS);
+        const lastUpdatedAt = Number.isFinite(parsed.lastUpdatedAt) ? parsed.lastUpdatedAt : 0;
+        return { items, lastUpdatedAt };
+    } catch (err) {
+        return null;
+    }
+}
+
+function isIntelCacheFresh(cache, now = Date.now()) {
+    if (!cache?.lastUpdatedAt) return false;
+    return now - cache.lastUpdatedAt < INTEL_CACHE_MAX_AGE_MS;
+}
+
 export default function IntelWire({ embedded = false, hidden = false, onHide = null }) {
     const sharedItems = useStore((s) => s.intelFeedItems);
     const sharedStatus = useStore((s) => s.intelFeedStatus);
@@ -267,19 +287,16 @@ export default function IntelWire({ embedded = false, hidden = false, onHide = n
 
     useEffect(() => {
         try {
-            const raw = localStorage.getItem(INTEL_CACHE_KEY);
-            if (!raw) return;
-            const parsed = JSON.parse(raw);
-            if (!parsed || !Array.isArray(parsed.items) || !parsed.items.length) return;
-            setItems(parsed.items.slice(0, MAX_ITEMS));
-            if (Number.isFinite(parsed.lastUpdatedAt)) {
-                setLastUpdatedAt(parsed.lastUpdatedAt);
-            }
-            setStatus('stale');
+            const cache = readIntelCache();
+            if (!cache) return;
+            const fresh = isIntelCacheFresh(cache);
+            setItems(cache.items);
+            setLastUpdatedAt(cache.lastUpdatedAt);
+            setStatus(fresh ? 'active' : 'stale');
             setIntelFeedSnapshot({
-                items: parsed.items.slice(0, MAX_ITEMS),
-                status: 'stale',
-                lastUpdatedAt: Number.isFinite(parsed.lastUpdatedAt) ? parsed.lastUpdatedAt : 0,
+                items: cache.items,
+                status: fresh ? 'active' : 'stale',
+                lastUpdatedAt: cache.lastUpdatedAt,
             });
         } catch (err) {
             // Ignore local cache issues.
@@ -290,6 +307,19 @@ export default function IntelWire({ embedded = false, hidden = false, onHide = n
         let cancelled = false;
 
         const loadIntel = async () => {
+            const cache = readIntelCache();
+            if (reloadTick === 0 && isIntelCacheFresh(cache)) {
+                setItems(cache.items);
+                setLastUpdatedAt(cache.lastUpdatedAt);
+                setStatus('active');
+                setIntelFeedSnapshot({
+                    items: cache.items,
+                    status: 'active',
+                    lastUpdatedAt: cache.lastUpdatedAt,
+                });
+                return;
+            }
+
             if (!itemsRef.current.length) {
                 setStatus('loading');
                 setIntelFeedSnapshot({
@@ -378,7 +408,11 @@ export default function IntelWire({ embedded = false, hidden = false, onHide = n
         };
 
         loadIntel();
-        const timer = setInterval(loadIntel, INTEL_REFRESH_MS);
+        const timer = setInterval(() => {
+            const cache = readIntelCache();
+            if (isIntelCacheFresh(cache)) return;
+            loadIntel();
+        }, INTEL_REFRESH_MS);
         return () => {
             cancelled = true;
             clearInterval(timer);
