@@ -179,7 +179,7 @@ function mergeFeeds(feedGroups) {
 }
 
 function getCameraRenderBudget(activeShader) {
-    if (activeShader === 'GOD') return 2800;
+    if (activeShader === 'GOD') return 1600;
     return DEFAULT_RENDERED_CAMERAS;
 }
 

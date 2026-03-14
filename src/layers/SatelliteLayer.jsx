@@ -115,9 +115,9 @@ function createSatelliteIconDataUri() {
 
 function getSatelliteRenderBudget(activeShader, cameraHeightM) {
     const isGodMode = activeShader === 'GOD';
-    if (cameraHeightM > 9000000) return isGodMode ? 2800 : 5000;
-    if (cameraHeightM > 3000000) return isGodMode ? 4600 : 8500;
-    return isGodMode ? 7600 : MAX_RENDERED_SATELLITES;
+    if (cameraHeightM > 9000000) return isGodMode ? 1800 : 5000;
+    if (cameraHeightM > 3000000) return isGodMode ? 3200 : 8500;
+    return isGodMode ? 4800 : MAX_RENDERED_SATELLITES;
 }
 
 export default function SatelliteLayer({ viewer }) {

@@ -19,7 +19,7 @@ function sliderToPitchDeg(sliderValue) {
     return MIN_PITCH_DEG + normalized * (MAX_PITCH_DEG - MIN_PITCH_DEG);
 }
 
-export default function CityTiltControl() {
+export default function CityTiltControl({ panelHeight = 176 }) {
     const viewerRef = useStore((s) => s.viewerRef);
     const city3DActive = useStore((s) => s.city3DActive);
     const setAutoRotating = useStore((s) => s.setAutoRotating);
@@ -83,10 +83,9 @@ export default function CityTiltControl() {
                 flexDirection: 'column',
                 alignItems: 'center',
                 gap: '5px',
-                alignSelf: 'center',
-                height: '50%',
-                minHeight: '138px',
-                maxHeight: '182px',
+                alignSelf: 'stretch',
+                height: `${panelHeight}px`,
+                boxSizing: 'border-box',
             }}
         >
             <span className="text-[9px] tracking-[0.2em] text-cyan-200 uppercase">3D</span>

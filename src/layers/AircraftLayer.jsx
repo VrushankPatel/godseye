@@ -311,9 +311,9 @@ function getRotatingZones(cycleIndex) {
 
 function getAircraftRenderBudget(activeShader, cameraHeightM) {
     const isGodMode = activeShader === 'GOD';
-    if (cameraHeightM > 9000000) return isGodMode ? 2200 : 4200;
-    if (cameraHeightM > 3000000) return isGodMode ? 4200 : 7800;
-    return isGodMode ? 7000 : MAX_RENDERED_AIRCRAFT;
+    if (cameraHeightM > 9000000) return isGodMode ? 1400 : 4200;
+    if (cameraHeightM > 3000000) return isGodMode ? 2600 : 7800;
+    return isGodMode ? 4200 : MAX_RENDERED_AIRCRAFT;
 }
 
 function downsampleFlightsForRender(flights, maxCount) {

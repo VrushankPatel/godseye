@@ -37,6 +37,8 @@ const TRAFFIC_PATHS = [
 
 const VEHICLES_PER_PATH = 34;
 const MAX_TRAFFIC_FEEDS = 700;
+const NORMAL_TRAFFIC_ANIMATION_INTERVAL_MS = 90;
+const GOD_MODE_TRAFFIC_ANIMATION_INTERVAL_MS = 180;
 const TRAFFIC_KEYWORDS = [
     'traffic', 'road', 'highway', 'street', 'bridge', 'airport', 'train', 'station', 'port',
 ];
@@ -56,6 +58,7 @@ function looksTrafficRelated(feed) {
 
 export default function TrafficLayer({ viewer }) {
     const isEnabled = useStore((s) => s.layers.traffic.enabled);
+    const activeShader = useStore((s) => s.activeShader);
     const updateData = useStore((s) => s.updateLayerData);
     const setStatus = useStore((s) => s.setLayerStatus);
 
@@ -63,6 +66,7 @@ export default function TrafficLayer({ viewer }) {
     const roadsRef = useRef([]);
     const vehiclesRef = useRef([]);
     const animationTimerRef = useRef(null);
+    const lastAnimationTickRef = useRef(0);
 
     const clearLayer = useCallback(() => {
         clearInterval(animationTimerRef.current);
@@ -83,6 +87,39 @@ export default function TrafficLayer({ viewer }) {
         });
     }, []);
 
+    const advanceVehicles = useCallback(() => {
+        if (!viewer || viewer.isDestroyed()) return;
+
+        const now = performance.now();
+        const previous = lastAnimationTickRef.current || now;
+        const dtSeconds = Math.max(0.016, Math.min((now - previous) / 1000, 0.33));
+        lastAnimationTickRef.current = now;
+
+        for (const vehicle of vehiclesRef.current) {
+            const curPath = TRAFFIC_PATHS[vehicle.pathIndex];
+            const maxSegment = curPath.length - 2;
+
+            vehicle.progress += vehicle.speed * dtSeconds;
+
+            while (vehicle.progress >= 1) {
+                vehicle.progress -= 1;
+                vehicle.segmentIndex += vehicle.direction;
+
+                if (vehicle.segmentIndex >= maxSegment || vehicle.segmentIndex <= 0) {
+                    vehicle.segmentIndex = Math.max(0, Math.min(maxSegment, vehicle.segmentIndex));
+                    vehicle.direction *= -1;
+                }
+            }
+
+            const [curLng, curLat] = getPointAlongPath(curPath, vehicle.segmentIndex, vehicle.progress);
+            if (vehicle.entity) {
+                vehicle.entity.position = Cesium.Cartesian3.fromDegrees(curLng, curLat, 30);
+            }
+        }
+
+        viewer.scene.requestRender();
+    }, [viewer]);
+
     useEffect(() => {
         if (!isEnabled) {
             clearInterval(animationTimerRef.current);
@@ -95,9 +132,11 @@ export default function TrafficLayer({ viewer }) {
         if (entitiesRef.current.length || roadsRef.current.length) {
             setLayerVisible(true);
             setStatus('traffic', 'active');
-            animationTimerRef.current = setInterval(() => {
-                if (!viewer.isDestroyed()) viewer.scene.requestRender();
-            }, 66);
+            lastAnimationTickRef.current = performance.now();
+            animationTimerRef.current = setInterval(
+                advanceVehicles,
+                activeShader === 'GOD' ? GOD_MODE_TRAFFIC_ANIMATION_INTERVAL_MS : NORMAL_TRAFFIC_ANIMATION_INTERVAL_MS
+            );
             return () => {
                 clearInterval(animationTimerRef.current);
                 animationTimerRef.current = null;
@@ -136,7 +175,7 @@ export default function TrafficLayer({ viewer }) {
                     pathIndex,
                     segmentIndex,
                     progress: Math.random(),
-                    speed: 0.002 + Math.random() * 0.005,
+                    speed: 0.18 + Math.random() * 0.42,
                     direction: Math.random() > 0.5 ? 1 : -1,
                 });
             }
@@ -149,23 +188,7 @@ export default function TrafficLayer({ viewer }) {
 
             const entity = viewer.entities.add({
                 id: vehicle.id,
-                position: new Cesium.CallbackProperty(() => {
-                    const curPath = TRAFFIC_PATHS[vehicle.pathIndex];
-                    const maxSegment = curPath.length - 2;
-                    vehicle.progress += vehicle.speed;
-
-                    if (vehicle.progress >= 1) {
-                        vehicle.progress = 0;
-                        vehicle.segmentIndex += vehicle.direction;
-                        if (vehicle.segmentIndex >= maxSegment || vehicle.segmentIndex <= 0) {
-                            vehicle.segmentIndex = Math.max(0, Math.min(maxSegment, vehicle.segmentIndex));
-                            vehicle.direction *= -1;
-                        }
-                    }
-
-                    const [curLng, curLat] = getPointAlongPath(curPath, vehicle.segmentIndex, vehicle.progress);
-                    return Cesium.Cartesian3.fromDegrees(curLng, curLat, 30);
-                }, false),
+                position: Cesium.Cartesian3.fromDegrees(lng, lat, 30),
                 point: {
                     pixelSize: 6,
                     color: Cesium.Color.fromCssColorString('#00ff95').withAlpha(0.96),
@@ -180,6 +203,7 @@ export default function TrafficLayer({ viewer }) {
                 },
             });
 
+            vehicle.entity = entity;
             entitiesRef.current.push(entity);
         });
 
@@ -221,15 +245,17 @@ export default function TrafficLayer({ viewer }) {
         updateData('traffic', [...vehicles, ...trafficFeeds]);
         setStatus('traffic', 'active');
 
-        animationTimerRef.current = setInterval(() => {
-            if (!viewer.isDestroyed()) viewer.scene.requestRender();
-        }, 66);
+        lastAnimationTickRef.current = performance.now();
+        animationTimerRef.current = setInterval(
+            advanceVehicles,
+            activeShader === 'GOD' ? GOD_MODE_TRAFFIC_ANIMATION_INTERVAL_MS : NORMAL_TRAFFIC_ANIMATION_INTERVAL_MS
+        );
 
         return () => {
             clearInterval(animationTimerRef.current);
             animationTimerRef.current = null;
         };
-    }, [isEnabled, viewer, updateData, setStatus, clearLayer, setLayerVisible]);
+    }, [activeShader, advanceVehicles, isEnabled, viewer, updateData, setStatus, clearLayer, setLayerVisible]);
 
     useEffect(
         () => () => {
