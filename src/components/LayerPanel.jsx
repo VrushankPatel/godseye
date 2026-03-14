@@ -40,21 +40,21 @@ export default function LayerPanel() {
         const def = LAYER_DEFS[key];
         if (!def) return null;
 
-        return (
-            <div key={key} className="flex flex-col gap-1 px-2 py-1">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                        <span style={{ color: def.color }} className="text-lg w-6 text-center shrink-0">
+    return (
+            <div key={key} className="flex flex-col gap-1 px-3 py-1.5">
+                <div className="flex items-center justify-between pl-0.5 pr-1">
+                    <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                        <span style={{ color: def.color }} className="text-[15px] w-5 text-center shrink-0">
                             {def.icon}
                         </span>
                         <div className="flex items-center gap-1.5 min-w-0">
-                            <span className={`px-[1px] py-[1px] text-sm leading-tight tracking-wider ${layer.enabled ? 'text-white' : 'text-text-dim'}`}>
+                            <span className={`px-[1px] py-[1px] text-[11px] leading-tight tracking-wider ${layer.enabled ? 'text-white' : 'text-text-dim'}`}>
                                 {def.label}
                             </span>
                             {def.description && (
                                 <div className="relative group pointer-events-auto">
                                     <span
-                                        className="inline-flex w-3.5 h-3.5 items-center justify-center rounded-full border border-electric-blue/40 text-[9px] text-electric-blue/85"
+                                        className="inline-flex w-3 h-3 items-center justify-center rounded-full border border-electric-blue/40 text-[8px] text-electric-blue/85"
                                         title={def.description}
                                     >
                                         i
@@ -68,12 +68,12 @@ export default function LayerPanel() {
                     </div>
 
                     <div
-                        className={`toggle-switch ${layer.enabled ? 'active' : ''}`}
+                        className={`toggle-switch mr-0.5 ${layer.enabled ? 'active' : ''}`}
                         onClick={() => toggleLayer(key)}
                     />
                 </div>
 
-                <div className="ml-[2.45rem] pr-1 flex justify-between items-center text-[9px] leading-tight tracking-widest uppercase">
+                <div className="ml-[2.45rem] pr-1.5 flex justify-between items-center text-[7px] leading-tight tracking-widest uppercase">
                     {layer.status === 'error' ? (
                         <span className="text-neon-red bg-neon-red/10 px-[5px] py-[2px] rounded">FEED OFFLINE</span>
                     ) : layer.status === 'loading' ? (
@@ -109,16 +109,16 @@ export default function LayerPanel() {
         );
     }
 
-    return (
+        return (
         <div
-            className="absolute top-24 bottom-[220px] w-[19.5rem] flex flex-col gap-2 pointer-events-none z-10 animate-slide-left"
+            className="absolute top-24 bottom-[220px] w-[16rem] flex flex-col gap-2 pointer-events-none z-10 animate-slide-left"
             style={{ left: 'max(16px, env(safe-area-inset-left))' }}
         >
             {/* Data Layers Panel */}
             <div className="glass-panel w-full flex-1 min-h-0 flex flex-col pointer-events-auto">
 
-                <div className="px-5 py-4 border-b border-border-panel flex justify-between items-center bg-black/20">
-                    <h2 className="text-[13px] tracking-[0.18em] leading-tight text-white/90">Data Layers</h2>
+                <div className="px-4 py-3 border-b border-border-panel flex justify-between items-center bg-black/20">
+                    <h2 className="text-[10px] tracking-[0.18em] leading-tight text-white/90">Data Layers</h2>
                     <button onClick={toggleLayerPanel} className="text-text-dim hover:text-white transition-colors">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-5 h-5">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -126,17 +126,17 @@ export default function LayerPanel() {
                     </button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto px-[14px] py-[10px] flex flex-col gap-1">
+                <div className="flex-1 overflow-y-auto px-[10px] py-[9px] flex flex-col gap-1">
                     {primaryEntries.map(renderLayerRow)}
 
                     {otherEntries.length > 0 && (
                         <div className="pt-1 border-t border-white/10">
                             <button
                                 onClick={() => setOthersOpen((open) => !open)}
-                                className="w-full flex items-center justify-between px-1 py-2 text-left text-xs tracking-[0.24em] text-text-dim hover:text-white transition-colors"
+                                className="w-full flex items-center justify-between px-1 py-2 text-left text-[9px] tracking-[0.24em] text-text-dim hover:text-white transition-colors"
                             >
                                 <span>OTHERS</span>
-                                <span className="flex items-center gap-2 text-[10px] tracking-[0.2em]">
+                                <span className="flex items-center gap-2 text-[8px] tracking-[0.2em]">
                                     {otherEntries.length}
                                     <svg
                                         className={`w-3.5 h-3.5 transition-transform ${othersOpen ? 'rotate-180' : ''}`}
@@ -158,10 +158,10 @@ export default function LayerPanel() {
                     )}
                 </div>
 
-                <div className="px-6 py-4 border-t border-border-panel bg-black/20">
+                <div className="px-4 py-3 border-t border-border-panel bg-black/20">
                     <button
                         onClick={enableAllLayers}
-                        className="w-full py-2 border border-neon-cyan/30 bg-neon-cyan/10 text-neon-cyan text-sm tracking-widest hover:bg-neon-cyan/20 hover:shadow-[0_0_15px_rgba(0,255,255,0.2)] transition-all font-bold uppercase rounded-sm"
+                        className="w-full py-2 border border-neon-cyan/30 bg-neon-cyan/10 text-neon-cyan text-[11px] tracking-widest hover:bg-neon-cyan/20 hover:shadow-[0_0_15px_rgba(0,255,255,0.2)] transition-all font-bold uppercase rounded-sm"
                     >
                         PANOPTIC OVERRIDE
                     </button>

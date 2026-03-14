@@ -137,6 +137,40 @@ body {
   box-shadow: 0 0 6px var(--color-neon-green);
 }
 
+/* ── 3D City Tilt Control ───────────────────────── */
+.city-tilt-slider {
+  -webkit-appearance: slider-vertical;
+  appearance: slider-vertical;
+  writing-mode: bt-lr;
+  width: 16px;
+  height: 150px;
+  cursor: ns-resize;
+  background: transparent;
+  accent-color: var(--color-electric-blue);
+}
+
+.city-tilt-control {
+  border-color: rgba(0, 180, 255, 0.28);
+}
+
+.city-tilt-control--docked {
+  border-radius: 22px;
+}
+
+.city-tilt-slider-wrap {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.city-tilt-slider--docked {
+  height: 100%;
+  min-height: 78px;
+}
+
 /* ── Mode Button ──────────────────────────────────── */
 .mode-btn {
   display: inline-flex;
@@ -168,6 +202,16 @@ body {
   background: rgba(0, 180, 255, 0.1);
   box-shadow: 0 0 12px rgba(0, 180, 255, 0.2), inset 0 0 12px rgba(0, 180, 255, 0.05);
   text-shadow: 0 0 8px rgba(0, 180, 255, 0.5);
+}
+
+.mode-btn-grid {
+  width: 100%;
+  justify-content: center;
+}
+
+.mode-btn-placeholder {
+  opacity: 0;
+  pointer-events: none;
 }
 
 /* ── Shader Overlays ──────────────────────────────── */
@@ -944,7 +988,7 @@ body {
 
 /* ── SysOps Terminal ─────────────────────────────── */
 .sys-terminal {
-  width: 320px;
+  width: 16rem;
   max-height: 180px;
   background: rgba(2, 8, 20, 0.45);
   border: 1px solid rgba(14, 165, 233, 0.15);

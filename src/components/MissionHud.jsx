@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import * as Cesium from 'cesium';
 import useStore from '../store/useStore';
 import { LAYER_DEFS, SURVEILLANCE_PRIMARY_LAYERS } from '../constants/dataSources';
+import IntelWire from './IntelWire';
 
 // ── Massive city database (250+ cities, ranked by global significance) ──
 const ALL_CITIES = [
@@ -419,6 +420,7 @@ export default function MissionHud() {
     const showNavShortcuts = !inspector || inspector.type !== 'aircraft';
 
     const [visibleCities, setVisibleCities] = useState(ALL_CITIES.slice(0, 6));
+    const [intelWireVisible, setIntelWireVisible] = useState(true);
     const [panelMediaSrc, setPanelMediaSrc] = useState('');
     const [panelMediaFailed, setPanelMediaFailed] = useState(false);
     const mediaVideoRef = useRef(null);
@@ -567,6 +569,23 @@ export default function MissionHud() {
             {/* ── Unified right column ── */}
             {citiesVisible ? (
                 <div className="right-column-panel pointer-events-auto z-10" style={{ right: rightPanelRight }}>
+                    <IntelWire
+                        embedded
+                        hidden={Boolean(inspector) || !intelWireVisible}
+                        onHide={() => setIntelWireVisible(false)}
+                    />
+
+                    {!inspector && !intelWireVisible && (
+                        <div className="rcp-section">
+                            <div className="rcp-header">
+                                <span>INTEL WIRE HIDDEN</span>
+                                <button onClick={() => setIntelWireVisible(true)} className="rcp-action" title="Show intel wire">
+                                    SHOW
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Entity Info — unified for all clicked entities including CCTV/Traffic */}
                     {inspector && (
                         <div className="rcp-section rcp-entity">

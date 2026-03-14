@@ -16,6 +16,7 @@ const MAX_ALBERTA_CAMERAS = 800;
 const MAX_TFL_CAMERAS = 850;
 const MAX_TOTAL_CAMERAS = 8000;
 const REQUEST_TIMEOUT_MS = 12000;
+const DEFAULT_RENDERED_CAMERAS = 6000;
 
 function parseJsonPayload(payload) {
     if (!payload) return null;
@@ -177,6 +178,21 @@ function mergeFeeds(feedGroups) {
     return merged;
 }
 
+function getCameraRenderBudget(activeShader) {
+    if (activeShader === 'GOD') return 2800;
+    return DEFAULT_RENDERED_CAMERAS;
+}
+
+function downsampleFeeds(feeds, maxCount) {
+    if (!Array.isArray(feeds) || feeds.length <= maxCount) return feeds;
+    const step = Math.max(1, Math.ceil(feeds.length / maxCount));
+    const sampled = [];
+    for (let i = 0; i < feeds.length && sampled.length < maxCount; i += step) {
+        sampled.push(feeds[i]);
+    }
+    return sampled;
+}
+
 function createCameraIcon() {
     const canvas = document.createElement('canvas');
     canvas.width = 48;
@@ -252,6 +268,7 @@ function addEntitiesToViewer(viewer, feeds, imageUrl) {
  */
 export default function CameraLayer({ viewer }) {
     const isEnabled = useStore((s) => s.layers.cctv.enabled);
+    const activeShader = useStore((s) => s.activeShader);
     const updateData = useStore((s) => s.updateLayerData);
     const setStatus = useStore((s) => s.setLayerStatus);
     const entitiesRef = useRef([]);
@@ -291,11 +308,13 @@ export default function CameraLayer({ viewer }) {
 
             let govFeeds = mergeFeeds([caltransFeeds, ontarioFeeds, albertaFeeds, tflFeeds, WORLDCAMS_FEEDS, CAMERA_FEEDS]);
             govFeeds = govFeeds.filter((f) => Boolean(f.videoUrl || f.url || f.fallbackUrl));
+            const renderBudget = getCameraRenderBudget(activeShader);
+            const renderFeeds = downsampleFeeds(govFeeds, renderBudget);
 
             if (cancelled || !isEnabled || viewer.isDestroyed()) return;
 
             // Render Phase 1 feeds immediately
-            entitiesRef.current = addEntitiesToViewer(viewer, govFeeds, imageUrl);
+            entitiesRef.current = addEntitiesToViewer(viewer, renderFeeds, imageUrl);
             updateData('cctv', govFeeds);
             setStatus('cctv', govFeeds.length ? 'active' : 'error');
 
@@ -310,7 +329,8 @@ export default function CameraLayer({ viewer }) {
                 // Only re-render if we discovered new feeds
                 if (displayable.length > govFeeds.length) {
                     clearEntities();
-                    entitiesRef.current = addEntitiesToViewer(viewer, displayable, imageUrl);
+                    const sampled = downsampleFeeds(displayable, renderBudget);
+                    entitiesRef.current = addEntitiesToViewer(viewer, sampled, imageUrl);
                     updateData('cctv', displayable);
                     setStatus('cctv', 'active');
                 }
@@ -331,7 +351,7 @@ export default function CameraLayer({ viewer }) {
             cancelled = true;
             clearEntities();
         };
-    }, [isEnabled, viewer, updateData, setStatus, clearEntities]);
+    }, [activeShader, isEnabled, viewer, updateData, setStatus, clearEntities]);
 
     return null;
 }
