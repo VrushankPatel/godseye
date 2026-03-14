@@ -107,7 +107,7 @@ export default function ShaderToolbar() {
                             })}
                         </div>
                     ) : (
-                        <div className="flex flex-col justify-between flex-1">
+                        <div className="flex flex-col justify-center items-center gap-3 flex-1">
                             <div className="flex gap-3">
                                 {row1.map((mode) => (
                                     <button
