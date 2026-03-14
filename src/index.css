@@ -944,6 +944,133 @@ body {
   text-transform: uppercase;
 }
 
+.rcp-level-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 54px;
+  padding: 2px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  font-size: 8px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.rcp-level-badge--critical {
+  color: #fecaca;
+  border-color: rgba(248, 113, 113, 0.45);
+  background: rgba(127, 29, 29, 0.22);
+}
+
+.rcp-level-badge--elevated {
+  color: #fde68a;
+  border-color: rgba(251, 191, 36, 0.4);
+  background: rgba(120, 53, 15, 0.2);
+}
+
+.rcp-level-badge--watch {
+  color: #bfdbfe;
+  border-color: rgba(59, 130, 246, 0.35);
+  background: rgba(30, 64, 175, 0.18);
+}
+
+.rcp-level-badge--stable {
+  color: #bbf7d0;
+  border-color: rgba(34, 197, 94, 0.35);
+  background: rgba(20, 83, 45, 0.2);
+}
+
+.rcp-brief-copy {
+  padding: 0 10px 10px;
+  font-size: 10px;
+  line-height: 1.55;
+  color: rgba(214, 222, 255, 0.7);
+}
+
+.rcp-keyword-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 0 10px 10px;
+}
+
+.rcp-keyword-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 7px;
+  font-size: 8px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(191, 219, 254, 0.92);
+  background: rgba(30, 41, 59, 0.5);
+  border: 1px solid rgba(59, 130, 246, 0.18);
+  border-radius: 999px;
+}
+
+.rcp-feed-list {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid rgba(14, 165, 233, 0.08);
+}
+
+.rcp-feed-item {
+  display: block;
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(14, 165, 233, 0.08);
+  text-decoration: none;
+  transition: background 0.2s ease;
+}
+
+.rcp-feed-item:hover {
+  background: rgba(0, 180, 255, 0.06);
+}
+
+.rcp-feed-source {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(125, 211, 252, 0.75);
+}
+
+.rcp-feed-title {
+  font-size: 11px;
+  line-height: 1.45;
+  color: rgba(241, 245, 255, 0.92);
+}
+
+.rcp-monitor-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 0 10px 10px;
+}
+
+.rcp-monitor-chip {
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 255, 65, 0.22);
+  background: rgba(0, 255, 65, 0.08);
+  color: rgba(187, 247, 208, 0.95);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-family: var(--font-mono);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.rcp-monitor-chip:hover {
+  border-color: rgba(248, 113, 113, 0.42);
+  color: #fecaca;
+  background: rgba(127, 29, 29, 0.18);
+}
+
 .city-chip {
   font-family: var(--font-mono);
   font-size: 9px;

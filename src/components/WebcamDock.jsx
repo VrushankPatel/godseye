@@ -1,8 +1,16 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import useStore from '../store/useStore';
+import { isWithinIntelRegion } from '../services/intelMonitor';
 
 const PREVIEW_REFRESH_MS = 9000;
 const MAX_DOCK_FEEDS = 6;
+const WEBCAM_REGIONS = [
+    { id: 'all', label: 'ALL' },
+    { id: 'mideast', label: 'MIDEAST' },
+    { id: 'europe', label: 'EUROPE' },
+    { id: 'asia', label: 'ASIA' },
+    { id: 'americas', label: 'AMERICAS' },
+];
 
 function isImageUrl(url) {
     return /\.(jpg|jpeg|png|webp|gif)(\?|$)/i.test(String(url || ''));
@@ -58,6 +66,7 @@ export default function WebcamDock() {
     const cctvFeeds = useStore((s) => s.layers.cctv.data);
     const setInspector = useStore((s) => s.setInspector);
     const [previewNonce, setPreviewNonce] = useState(Date.now());
+    const [activeRegion, setActiveRegion] = useState('all');
 
     useEffect(() => {
         if (!cctvEnabled) return undefined;
@@ -65,9 +74,41 @@ export default function WebcamDock() {
         return () => clearInterval(timer);
     }, [cctvEnabled]);
 
-    const featuredFeeds = useMemo(() => pickFeaturedFeeds(cctvFeeds, MAX_DOCK_FEEDS), [cctvFeeds]);
+    const regionCounts = useMemo(() => {
+        const counts = Object.fromEntries(WEBCAM_REGIONS.map((region) => [region.id, 0]));
+        counts.all = Array.isArray(cctvFeeds) ? cctvFeeds.length : 0;
 
-    if (!cctvEnabled || featuredFeeds.length === 0) return null;
+        for (const feed of cctvFeeds || []) {
+            const latitude = Number(feed.lat ?? feed.latitude);
+            const longitude = Number(feed.lng ?? feed.longitude);
+            if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) continue;
+            for (const region of WEBCAM_REGIONS) {
+                if (region.id === 'all') continue;
+                if (isWithinIntelRegion(latitude, longitude, region.id)) {
+                    counts[region.id] += 1;
+                }
+            }
+        }
+
+        return counts;
+    }, [cctvFeeds]);
+
+    const filteredFeeds = useMemo(() => {
+        if (activeRegion === 'all') return cctvFeeds;
+        return (cctvFeeds || []).filter((feed) => {
+            const latitude = Number(feed.lat ?? feed.latitude);
+            const longitude = Number(feed.lng ?? feed.longitude);
+            if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return false;
+            return isWithinIntelRegion(latitude, longitude, activeRegion);
+        });
+    }, [activeRegion, cctvFeeds]);
+
+    const featuredFeeds = useMemo(
+        () => pickFeaturedFeeds(filteredFeeds, MAX_DOCK_FEEDS),
+        [filteredFeeds]
+    );
+
+    if (!cctvEnabled || (cctvFeeds || []).length === 0) return null;
 
     const openFeed = (feed, index) => {
         setInspector({
@@ -109,6 +150,28 @@ export default function WebcamDock() {
                 <div className="text-[10px] tracking-[0.18em] uppercase text-text-dim">{featuredFeeds.length} live nodes</div>
             </div>
 
+            <div className="px-2 py-2 border-b border-green-500/10">
+                <div className="grid grid-cols-5 gap-1">
+                    {WEBCAM_REGIONS.map((region) => {
+                        const isActive = region.id === activeRegion;
+                        return (
+                            <button
+                                key={region.id}
+                                onClick={() => setActiveRegion(region.id)}
+                                className={`text-[8px] tracking-[0.16em] uppercase border px-1.5 py-1 rounded-sm transition-colors ${
+                                    isActive
+                                        ? 'border-green-400/60 text-green-200 bg-green-500/10'
+                                        : 'border-white/10 text-text-dim hover:border-green-500/30 hover:text-green-200'
+                                }`}
+                            >
+                                {region.label}
+                                <span className="ml-1 opacity-70">{regionCounts[region.id] || 0}</span>
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
+
             <div className="grid grid-cols-3 gap-2 p-2">
                 {featuredFeeds.map((feed, index) => {
                     const previewUrl = isImageUrl(feed.fallbackUrl)
@@ -148,6 +211,11 @@ export default function WebcamDock() {
                         </button>
                     );
                 })}
+                {featuredFeeds.length === 0 && (
+                    <div className="col-span-3 px-3 py-4 text-[10px] tracking-[0.16em] uppercase text-text-dim text-center border border-white/8 bg-black/30 rounded-sm">
+                        No feeds in this region
+                    </div>
+                )}
             </div>
         </div>
     );

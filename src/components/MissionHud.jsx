@@ -3,6 +3,7 @@ import * as Cesium from 'cesium';
 import useStore from '../store/useStore';
 import { LAYER_DEFS, SURVEILLANCE_PRIMARY_LAYERS } from '../constants/dataSources';
 import IntelWire from './IntelWire';
+import StrategicIntelPanel from './StrategicIntelPanel';
 
 // ── Massive city database (250+ cities, ranked by global significance) ──
 const ALL_CITIES = [
@@ -585,6 +586,8 @@ export default function MissionHud() {
                             </div>
                         </div>
                     )}
+
+                    {!inspector && <StrategicIntelPanel />}
 
                     {/* Entity Info — unified for all clicked entities including CCTV/Traffic */}
                     {inspector && (

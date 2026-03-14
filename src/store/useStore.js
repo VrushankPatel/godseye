@@ -187,6 +187,19 @@ const useStore = create((set, get) => ({
     citiesVisible: true,
     toggleCities: () => set((state) => ({ citiesVisible: !state.citiesVisible })),
 
+    // Shared intelligence feed state
+    intelFeedItems: [],
+    intelFeedStatus: 'idle',
+    intelFeedLastUpdatedAt: 0,
+    intelRegion: 'all',
+    setIntelFeedSnapshot: ({ items = [], status = 'idle', lastUpdatedAt = 0 }) =>
+        set({
+            intelFeedItems: Array.isArray(items) ? items : [],
+            intelFeedStatus: status,
+            intelFeedLastUpdatedAt: Number.isFinite(lastUpdatedAt) ? lastUpdatedAt : 0,
+        }),
+    setIntelRegion: (value) => set({ intelRegion: String(value || 'all') }),
+
     // Get total active feed count
     getActiveFeedCount: () => {
         const { layers } = get();

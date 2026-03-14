@@ -1,4 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import useStore from '../store/useStore';
+import {
+    INTEL_REGIONS,
+    buildIntelRegionCounts,
+    classifyIntelSeverity,
+    matchesIntelRegion,
+} from '../services/intelMonitor';
 
 const INTEL_REFRESH_MS = 5 * 60 * 1000;
 const FETCH_TIMEOUT_MS = 12000;
@@ -234,6 +241,12 @@ function relativeTime(timestampMs) {
 }
 
 export default function IntelWire({ embedded = false, hidden = false, onHide = null }) {
+    const sharedItems = useStore((s) => s.intelFeedItems);
+    const sharedStatus = useStore((s) => s.intelFeedStatus);
+    const sharedLastUpdatedAt = useStore((s) => s.intelFeedLastUpdatedAt);
+    const intelRegion = useStore((s) => s.intelRegion);
+    const setIntelRegion = useStore((s) => s.setIntelRegion);
+    const setIntelFeedSnapshot = useStore((s) => s.setIntelFeedSnapshot);
     const [items, setItems] = useState([]);
     const [lastUpdatedAt, setLastUpdatedAt] = useState(0);
     const [isCollapsed, setIsCollapsed] = useState(false);
@@ -246,6 +259,13 @@ export default function IntelWire({ embedded = false, hidden = false, onHide = n
     }, [items]);
 
     useEffect(() => {
+        if (!sharedItems.length && !sharedLastUpdatedAt && sharedStatus === 'idle') return;
+        setItems(sharedItems);
+        setLastUpdatedAt(sharedLastUpdatedAt);
+        setStatus(sharedStatus);
+    }, [sharedItems, sharedLastUpdatedAt, sharedStatus]);
+
+    useEffect(() => {
         try {
             const raw = localStorage.getItem(INTEL_CACHE_KEY);
             if (!raw) return;
@@ -256,10 +276,15 @@ export default function IntelWire({ embedded = false, hidden = false, onHide = n
                 setLastUpdatedAt(parsed.lastUpdatedAt);
             }
             setStatus('stale');
+            setIntelFeedSnapshot({
+                items: parsed.items.slice(0, MAX_ITEMS),
+                status: 'stale',
+                lastUpdatedAt: Number.isFinite(parsed.lastUpdatedAt) ? parsed.lastUpdatedAt : 0,
+            });
         } catch (err) {
             // Ignore local cache issues.
         }
-    }, []);
+    }, [setIntelFeedSnapshot]);
 
     useEffect(() => {
         let cancelled = false;
@@ -267,6 +292,11 @@ export default function IntelWire({ embedded = false, hidden = false, onHide = n
         const loadIntel = async () => {
             if (!itemsRef.current.length) {
                 setStatus('loading');
+                setIntelFeedSnapshot({
+                    items: itemsRef.current,
+                    status: 'loading',
+                    lastUpdatedAt,
+                });
             }
             const [guardianItems, hnItems, rssResults] = await Promise.all([
                 fetchGuardianIntel().catch(() => []),
@@ -314,6 +344,11 @@ export default function IntelWire({ embedded = false, hidden = false, onHide = n
                 setItems(chosen);
                 setLastUpdatedAt(now);
                 setStatus('active');
+                setIntelFeedSnapshot({
+                    items: chosen,
+                    status: 'active',
+                    lastUpdatedAt: now,
+                });
                 try {
                     localStorage.setItem(INTEL_CACHE_KEY, JSON.stringify({
                         items: chosen,
@@ -327,8 +362,18 @@ export default function IntelWire({ embedded = false, hidden = false, onHide = n
 
             if (itemsRef.current.length) {
                 setStatus('stale');
+                setIntelFeedSnapshot({
+                    items: itemsRef.current,
+                    status: 'stale',
+                    lastUpdatedAt,
+                });
             } else {
                 setStatus('error');
+                setIntelFeedSnapshot({
+                    items: [],
+                    status: 'error',
+                    lastUpdatedAt: 0,
+                });
             }
         };
 
@@ -338,13 +383,19 @@ export default function IntelWire({ embedded = false, hidden = false, onHide = n
             cancelled = true;
             clearInterval(timer);
         };
-    }, [reloadTick]);
+    }, [reloadTick, setIntelFeedSnapshot]);
 
     const updatedLabel = useMemo(() => {
         if (status === 'loading' && !lastUpdatedAt) return 'syncing';
         if (!lastUpdatedAt) return 'offline';
         return relativeTime(lastUpdatedAt);
     }, [lastUpdatedAt, status]);
+
+    const regionCounts = useMemo(() => buildIntelRegionCounts(items), [items]);
+    const visibleItems = useMemo(
+        () => items.filter((item) => matchesIntelRegion(item, intelRegion)),
+        [items, intelRegion]
+    );
 
     if (hidden) return null;
 
@@ -393,10 +444,35 @@ export default function IntelWire({ embedded = false, hidden = false, onHide = n
                 </div>
             </div>
 
+            <div className="px-2 py-2 border-b border-cyan-500/10">
+                <div className="grid grid-cols-3 gap-1.5">
+                    {INTEL_REGIONS.map((region) => {
+                        const isActive = intelRegion === region.id;
+                        return (
+                            <button
+                                key={region.id}
+                                onClick={() => setIntelRegion(region.id)}
+                                className={`text-[9px] tracking-[0.18em] uppercase border px-2 py-1.5 rounded-sm transition-colors ${
+                                    isActive
+                                        ? 'border-cyan-300/60 text-cyan-100 bg-cyan-500/10'
+                                        : 'border-white/10 text-text-dim hover:border-cyan-500/30 hover:text-cyan-200'
+                                }`}
+                                title={`${region.label} intelligence`}
+                            >
+                                <span>{region.label}</span>{' '}
+                                <span className={isActive ? 'text-cyan-300' : 'text-text-dim'}>
+                                    {regionCounts[region.id] || 0}
+                                </span>
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
+
             {!isCollapsed && (
                 <div className={embedded ? 'max-h-[240px] overflow-y-auto' : 'max-h-[300px] overflow-y-auto'}>
-                    {items.length ? (
-                        items.map((item) => (
+                    {visibleItems.length ? (
+                        visibleItems.map((item) => (
                             <a
                                 key={item.id}
                                 href={item.link}
@@ -404,7 +480,20 @@ export default function IntelWire({ embedded = false, hidden = false, onHide = n
                                 rel="noopener noreferrer"
                                 className={`block px-3 py-2 border-b border-cyan-500/10 hover:bg-cyan-500/10 transition-colors ${embedded ? 'text-[11px]' : ''}`}
                             >
-                                <div className="text-[10px] tracking-[0.22em] uppercase text-cyan-300 mb-1">{item.source}</div>
+                                <div className="flex items-center justify-between gap-2 mb-1">
+                                    <div className="text-[10px] tracking-[0.22em] uppercase text-cyan-300">{item.source}</div>
+                                    <span
+                                        className={`text-[8px] tracking-[0.16em] uppercase ${
+                                            classifyIntelSeverity(item) === 'critical'
+                                                ? 'text-red-300'
+                                                : classifyIntelSeverity(item) === 'elevated'
+                                                    ? 'text-amber-300'
+                                                    : 'text-emerald-300'
+                                        }`}
+                                    >
+                                        {classifyIntelSeverity(item)}
+                                    </span>
+                                </div>
                                 <div className="text-[12px] leading-snug text-slate-100">{item.title}</div>
                                 <div className="text-[10px] tracking-[0.2em] uppercase text-text-dim mt-1">{relativeTime(item.publishedAt)}</div>
                             </a>
@@ -412,14 +501,16 @@ export default function IntelWire({ embedded = false, hidden = false, onHide = n
                     ) : (
                         <div className="px-3 py-3 border-b border-cyan-500/10">
                             <div className="text-[10px] tracking-[0.2em] uppercase text-cyan-300 mb-2">
-                                {status === 'loading' ? 'SYNCING FEEDS...' : 'WIRE OFFLINE'}
+                                {items.length && status !== 'loading' ? 'NO REGIONAL MATCHES' : status === 'loading' ? 'SYNCING FEEDS...' : 'WIRE OFFLINE'}
                             </div>
                             <div className="text-[11px] leading-snug text-text-dim">
-                                {status === 'loading'
+                                {items.length && status !== 'loading'
+                                    ? 'This region currently has no matching live intelligence headlines.'
+                                    : status === 'loading'
                                     ? 'Collecting intelligence headlines from public sources.'
                                     : 'News providers are temporarily unreachable. Retry to refresh now.'}
                             </div>
-                            {status !== 'loading' && (
+                            {status !== 'loading' && !items.length && (
                                 <button
                                     onClick={() => setReloadTick((v) => v + 1)}
                                     className="mt-2 px-2 py-1 border border-cyan-500/35 text-[10px] tracking-[0.2em] text-cyan-200 hover:bg-cyan-500/10 rounded-sm"

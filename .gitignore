@@ -38,3 +38,6 @@ coverage
 .eslintcache
 .parcel-cache
 .firebase/
+
+# Local research / reference repos
+.research/
