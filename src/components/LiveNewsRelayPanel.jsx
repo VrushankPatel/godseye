@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import useStore from '../store/useStore';
 import {
-    NEWS_RELAY_GROUPS,
+    getDefaultRelayTopicId,
     getRelayChannels,
-    getRelayGroupForIntelRegion,
+    resolveRelayTopics,
 } from '../constants/newsRelay';
 import { matchesIntelRegion } from '../services/intelMonitor';
 
@@ -102,15 +102,13 @@ export default function LiveNewsRelayPanel() {
     const intelRegion = useStore((s) => s.intelRegion);
     const items = useStore((s) => s.intelFeedItems);
     const lastUpdatedAt = useStore((s) => s.intelFeedLastUpdatedAt);
-    const [activeGroup, setActiveGroup] = useState(getRelayGroupForIntelRegion(intelRegion));
+    const [relayTopics, setRelayTopics] = useState([]);
+    const [activeTopicId, setActiveTopicId] = useState('');
     const [activeChannelId, setActiveChannelId] = useState('');
     const [streamFailed, setStreamFailed] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false);
     const theaterRef = useRef(null);
-
-    useEffect(() => {
-        setActiveGroup(getRelayGroupForIntelRegion(intelRegion));
-    }, [intelRegion]);
+    const previousRegionRef = useRef(intelRegion);
 
     useEffect(() => {
         if (!isExpanded) return undefined;
@@ -123,7 +121,41 @@ export default function LiveNewsRelayPanel() {
         return () => window.removeEventListener('keydown', onKeyDown);
     }, [isExpanded]);
 
-    const channels = useMemo(() => getRelayChannels(activeGroup), [activeGroup]);
+    useEffect(() => {
+        setRelayTopics(resolveRelayTopics(items, lastUpdatedAt));
+    }, [items, lastUpdatedAt]);
+
+    useEffect(() => {
+        if (!relayTopics.length) {
+            setActiveTopicId('');
+            return;
+        }
+        const fallbackTopicId = getDefaultRelayTopicId(intelRegion, relayTopics);
+        if (!relayTopics.some((topic) => topic.id === activeTopicId)) {
+            setActiveTopicId(fallbackTopicId);
+            return;
+        }
+
+        if (!activeTopicId) {
+            setActiveTopicId(fallbackTopicId);
+        }
+    }, [activeTopicId, intelRegion, relayTopics]);
+
+    useEffect(() => {
+        if (!relayTopics.length) return;
+        if (previousRegionRef.current === intelRegion) return;
+        previousRegionRef.current = intelRegion;
+        setActiveTopicId(getDefaultRelayTopicId(intelRegion, relayTopics));
+    }, [intelRegion, relayTopics]);
+
+    const activeTopic = useMemo(() => {
+        return relayTopics.find((topic) => topic.id === activeTopicId) || relayTopics[0] || null;
+    }, [activeTopicId, relayTopics]);
+
+    const channels = useMemo(
+        () => getRelayChannels(activeTopic, relayTopics),
+        [activeTopic, relayTopics]
+    );
 
     useEffect(() => {
         if (!channels.length) {
@@ -143,23 +175,19 @@ export default function LiveNewsRelayPanel() {
         setStreamFailed(false);
     }, [activeChannel?.id, isExpanded]);
 
-    const contextRegion = activeGroup === 'mideast' || activeGroup === 'europe' || activeGroup === 'asia'
-        ? activeGroup
-        : intelRegion;
+    const contextRegion = activeTopic?.channelGroups?.includes('mideast')
+        ? 'mideast'
+        : activeTopic?.channelGroups?.includes('europe')
+            ? 'europe'
+            : activeTopic?.channelGroups?.includes('asia')
+                ? 'asia'
+                : intelRegion;
 
     const scopedItems = useMemo(() => {
         return (items || [])
             .filter((item) => matchesIntelRegion(item, contextRegion))
             .slice(0, 2);
     }, [contextRegion, items]);
-
-    const groupCounts = useMemo(() => {
-        const counts = {};
-        for (const group of NEWS_RELAY_GROUPS) {
-            counts[group.id] = getRelayChannels(group.id).length;
-        }
-        return counts;
-    }, []);
 
     const activeSourceUrl = activeChannel?.sourceUrl || activeChannel?.streamUrl || '';
 
@@ -238,16 +266,17 @@ export default function LiveNewsRelayPanel() {
                 </div>
 
                 <div className="news-relay-tabs">
-                    {NEWS_RELAY_GROUPS.map((group) => {
-                        const isActive = group.id === activeGroup;
+                    {relayTopics.map((topic) => {
+                        const isActive = topic.id === activeTopic?.id;
                         return (
                             <button
-                                key={group.id}
-                                onClick={() => setActiveGroup(group.id)}
+                                key={topic.id}
+                                onClick={() => setActiveTopicId(topic.id)}
                                 className={`news-relay-tab ${isActive ? 'is-active' : ''}`}
+                                title={`${topic.label} priority ${topic.score || 0}`}
                             >
-                                <span>{group.label}</span>
-                                <span>{groupCounts[group.id] || 0}</span>
+                                <span>{topic.label}</span>
+                                <span>{topic.matchCount || topic.score || 0}</span>
                             </button>
                         );
                     })}
