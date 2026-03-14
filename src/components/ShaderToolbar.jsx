@@ -3,7 +3,7 @@ import useStore from '../store/useStore';
 import { SHADER_MODES } from '../constants/dataSources';
 import CityTiltControl from './CityTiltControl';
 
-const TOOLBAR_PANEL_HEIGHT_PX = 176;
+const THREE_D_TOOLBAR_PANEL_HEIGHT_PX = 176;
 
 export default function ShaderToolbar() {
     const activeShader = useStore((s) => s.activeShader);
@@ -15,6 +15,7 @@ export default function ShaderToolbar() {
     const toggleFocusMode = useStore((s) => s.toggleFocusMode);
     const focusHideEntities = useStore((s) => s.focusHideEntities);
     const setFocusHideEntities = useStore((s) => s.setFocusHideEntities);
+    const toolbarPanelHeight = city3DActive ? THREE_D_TOOLBAR_PANEL_HEIGHT_PX : null;
 
     const handleModeClick = (modeId) => {
         setShader(modeId);
@@ -41,9 +42,9 @@ export default function ShaderToolbar() {
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 pointer-events-none z-10 animate-slide-up">
             <div className="flex items-stretch gap-3">
                 <div
-                    className="glass-panel px-8 py-5 flex flex-col items-center gap-4 pointer-events-auto rounded-full"
+                    className="glass-panel px-8 pt-3 pb-4 flex flex-col items-center gap-3 pointer-events-auto rounded-full"
                     style={{
-                        height: `${TOOLBAR_PANEL_HEIGHT_PX}px`,
+                        height: toolbarPanelHeight ? `${toolbarPanelHeight}px` : 'auto',
                         boxSizing: 'border-box',
                     }}
                 >
@@ -152,7 +153,7 @@ export default function ShaderToolbar() {
                         </div>
                     )}
                 </div>
-                <CityTiltControl panelHeight={TOOLBAR_PANEL_HEIGHT_PX} />
+                <CityTiltControl panelHeight={toolbarPanelHeight || THREE_D_TOOLBAR_PANEL_HEIGHT_PX} />
             </div>
         </div>
     );
