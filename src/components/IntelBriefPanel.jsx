@@ -11,7 +11,7 @@ function relativeTime(timestampMs) {
     return `${Math.floor(diff / 86_400_000)}d ago`;
 }
 
-export default function IntelBriefPanel() {
+export default function IntelBriefPanel({ onHide = null }) {
     const items = useStore((s) => s.intelFeedItems);
     const status = useStore((s) => s.intelFeedStatus);
     const lastUpdatedAt = useStore((s) => s.intelFeedLastUpdatedAt);
@@ -35,6 +35,11 @@ export default function IntelBriefPanel() {
                 <div className="flex items-center gap-2">
                     <span className="rcp-level-badge rcp-level-badge--watch">LOCAL</span>
                     <span className="text-text-dim">{relativeTime(lastUpdatedAt)}</span>
+                    {onHide && (
+                        <button onClick={onHide} className="rcp-action" title="Hide local intel brief">
+                            ✕
+                        </button>
+                    )}
                 </div>
             </div>
 

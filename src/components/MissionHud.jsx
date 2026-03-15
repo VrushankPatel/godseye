@@ -424,6 +424,10 @@ export default function MissionHud() {
 
     const [visibleCities, setVisibleCities] = useState(ALL_CITIES.slice(0, 6));
     const [intelWireVisible, setIntelWireVisible] = useState(true);
+    const [intelBriefVisible, setIntelBriefVisible] = useState(true);
+    const [newsRelayVisible, setNewsRelayVisible] = useState(true);
+    const [strategicIntelVisible, setStrategicIntelVisible] = useState(true);
+    const [snapshotVisible, setSnapshotVisible] = useState(true);
     const [panelMediaSrc, setPanelMediaSrc] = useState('');
     const [panelMediaFailed, setPanelMediaFailed] = useState(false);
     const mediaVideoRef = useRef(null);
@@ -542,6 +546,16 @@ export default function MissionHud() {
 
     // Right panel stays fixed; all entity types render in this same column.
     const rightPanelRight = 'max(18px, env(safe-area-inset-right))';
+    const HiddenPanelStub = ({ label, onShow }) => (
+        <div className="rcp-section">
+            <div className="rcp-header">
+                <span>{label} HIDDEN</span>
+                <button onClick={onShow} className="rcp-action" title={`Show ${label.toLowerCase()}`}>
+                    SHOW
+                </button>
+            </div>
+        </div>
+    );
 
     return (
         <>
@@ -589,9 +603,21 @@ export default function MissionHud() {
                         </div>
                     )}
 
-                    {!inspector && <IntelBriefPanel />}
-                    {!inspector && <LiveNewsRelayPanel />}
-                    {!inspector && <StrategicIntelPanel />}
+                    {!inspector && (
+                        intelBriefVisible
+                            ? <IntelBriefPanel onHide={() => setIntelBriefVisible(false)} />
+                            : <HiddenPanelStub label="LOCAL INTEL BRIEF" onShow={() => setIntelBriefVisible(true)} />
+                    )}
+                    {!inspector && (
+                        newsRelayVisible
+                            ? <LiveNewsRelayPanel onHide={() => setNewsRelayVisible(false)} />
+                            : <HiddenPanelStub label="LIVE NEWS RELAY" onShow={() => setNewsRelayVisible(true)} />
+                    )}
+                    {!inspector && (
+                        strategicIntelVisible
+                            ? <StrategicIntelPanel onHide={() => setStrategicIntelVisible(false)} />
+                            : <HiddenPanelStub label="STRATEGIC INTEL" onShow={() => setStrategicIntelVisible(true)} />
+                    )}
 
                     {/* Entity Info — unified for all clicked entities including CCTV/Traffic */}
                     {inspector && (
@@ -720,25 +746,32 @@ export default function MissionHud() {
                     )}
 
                     {/* Compact surveillance snapshot inside same right column */}
-                    <div className="rcp-section">
-                        <div className="rcp-header">
-                            <span>SURV SNAPSHOT</span>
-                        </div>
-                        {snapshotRows.length > 0 ? (
-                            <div className="rcp-snapshot-list">
-                                {snapshotRows.map((item) => (
-                                    <div key={item.key} className="rcp-snapshot-item">
-                                        <div className="rcp-snapshot-top">
-                                            <span>{item.label}</span>
-                                            <span>{item.count.toLocaleString()}</span>
-                                        </div>
-                                    </div>
-                                ))}
+                    {snapshotVisible ? (
+                        <div className="rcp-section">
+                            <div className="rcp-header">
+                                <span>SURV SNAPSHOT</span>
+                                <button onClick={() => setSnapshotVisible(false)} className="rcp-action" title="Hide surveillance snapshot">
+                                    ✕
+                                </button>
                             </div>
-                        ) : (
-                            <div className="rcp-snapshot-empty">NO ENABLED LAYERS</div>
-                        )}
-                    </div>
+                            {snapshotRows.length > 0 ? (
+                                <div className="rcp-snapshot-list">
+                                    {snapshotRows.map((item) => (
+                                        <div key={item.key} className="rcp-snapshot-item">
+                                            <div className="rcp-snapshot-top">
+                                                <span>{item.label}</span>
+                                                <span>{item.count.toLocaleString()}</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="rcp-snapshot-empty">NO ENABLED LAYERS</div>
+                            )}
+                        </div>
+                    ) : (
+                        <HiddenPanelStub label="SURV SNAPSHOT" onShow={() => setSnapshotVisible(true)} />
+                    )}
                 </div>
             ) : (
                 <button onClick={toggleCities} className="pointer-events-auto z-10 sys-terminal-toggle"

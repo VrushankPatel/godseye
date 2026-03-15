@@ -19,7 +19,7 @@ function sliderToPitchDeg(sliderValue) {
     return MIN_PITCH_DEG + normalized * (MAX_PITCH_DEG - MIN_PITCH_DEG);
 }
 
-export default function CityTiltControl({ panelHeight = 176 }) {
+export default function CityTiltControl({ panelHeight = 124 }) {
     const viewerRef = useStore((s) => s.viewerRef);
     const city3DActive = useStore((s) => s.city3DActive);
     const setAutoRotating = useStore((s) => s.setAutoRotating);

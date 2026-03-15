@@ -98,7 +98,7 @@ function RelayPlayer({ channel, onError, className = '' }) {
     );
 }
 
-export default function LiveNewsRelayPanel() {
+export default function LiveNewsRelayPanel({ onHide = null }) {
     const intelRegion = useStore((s) => s.intelRegion);
     const items = useStore((s) => s.intelFeedItems);
     const lastUpdatedAt = useStore((s) => s.intelFeedLastUpdatedAt);
@@ -261,6 +261,15 @@ export default function LiveNewsRelayPanel() {
                             >
                                 OPEN
                             </a>
+                        )}
+                        {onHide && (
+                            <button
+                                onClick={onHide}
+                                className="rcp-action"
+                                title="Hide live news relay"
+                            >
+                                ✕
+                            </button>
                         )}
                     </div>
                 </div>

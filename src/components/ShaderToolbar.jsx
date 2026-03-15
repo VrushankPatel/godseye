@@ -3,6 +3,8 @@ import useStore from '../store/useStore';
 import { SHADER_MODES } from '../constants/dataSources';
 import CityTiltControl from './CityTiltControl';
 
+const DOCKED_TOOLBAR_HEIGHT_PX = 124;
+
 export default function ShaderToolbar() {
     const activeShader = useStore((s) => s.activeShader);
     const setShader = useStore((s) => s.setShader);
@@ -28,11 +30,11 @@ export default function ShaderToolbar() {
 
     return (
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 pointer-events-none z-10 animate-slide-up">
-            <div className="flex items-stretch gap-3">
+            <div className="flex items-start gap-3">
                 <div
                     className="glass-panel px-8 pt-3 pb-4 flex flex-col items-center gap-3 pointer-events-auto rounded-full"
                     style={{
-                        height: 'auto',
+                        height: `${DOCKED_TOOLBAR_HEIGHT_PX}px`,
                         boxSizing: 'border-box',
                     }}
                 >
@@ -41,7 +43,7 @@ export default function ShaderToolbar() {
                         VISUAL_MODE_OVERRIDE
                     </div>
 
-                    <div className="flex flex-col justify-center items-center gap-3">
+                    <div className="flex flex-col justify-center items-center gap-3 flex-1">
                         <div className="flex gap-3">
                             {row1.map((mode) => (
                                 <button
@@ -85,7 +87,7 @@ export default function ShaderToolbar() {
                         </div>
                     </div>
                 </div>
-                <CityTiltControl />
+                <CityTiltControl panelHeight={DOCKED_TOOLBAR_HEIGHT_PX} />
             </div>
         </div>
     );

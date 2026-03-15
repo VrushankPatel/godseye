@@ -29,7 +29,7 @@ function uniqueMonitorTerms(values) {
     ).slice(0, 8);
 }
 
-export default function StrategicIntelPanel() {
+export default function StrategicIntelPanel({ onHide = null }) {
     const items = useStore((s) => s.intelFeedItems);
     const status = useStore((s) => s.intelFeedStatus);
     const lastUpdatedAt = useStore((s) => s.intelFeedLastUpdatedAt);
@@ -98,6 +98,11 @@ export default function StrategicIntelPanel() {
                         <span className={`rcp-level-badge rcp-level-badge--${posture.level.toLowerCase()}`}>
                             {posture.level}
                         </span>
+                        {onHide && (
+                            <button onClick={onHide} className="rcp-action" title="Hide strategic intel">
+                                ✕
+                            </button>
+                        )}
                     </div>
                 </div>
 
