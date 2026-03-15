@@ -43,8 +43,8 @@ export default function ShaderToolbar() {
                         VISUAL_MODE_OVERRIDE
                     </div>
 
-                    <div className="flex flex-col justify-center items-center gap-3 flex-1 px-1.5">
-                        <div className="flex gap-3">
+                    <div className="flex flex-col justify-center items-center gap-3 flex-1 w-full">
+                        <div className="flex w-full justify-center gap-3 px-4">
                             {row1.map((mode) => (
                                 <button
                                     key={mode.id}
@@ -57,7 +57,7 @@ export default function ShaderToolbar() {
                             ))}
                         </div>
 
-                        <div className="flex gap-3">
+                        <div className="flex w-full justify-center gap-3 px-4">
                             {row2.map((mode) => (
                                 <button
                                     key={mode.id}
