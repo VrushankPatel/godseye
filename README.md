@@ -52,6 +52,29 @@ I used **Codex** as a programming assistant for selected implementation tasks su
 - Zustand (state)
 - Browser `fetch` + timer/WebSocket-style polling patterns
 
+## Access Model
+
+Godseye uses a BYOK model: Bring Your Own Key.
+
+- Use the hosted build directly at [https://godseye-x.web.app/](https://godseye-x.web.app/)
+- If you want to run it locally or self-host it, bring your own API keys for the keyed integrations listed below
+
+## BYOK Keys
+
+If you want the full local/self-hosted experience, provide these keys in `scripts/local-secrets.sh`.
+
+- `VITE_GOOGLE_MAPS_3D_KEY` or `VITE_GOOGLE_MAPS_API_KEY`
+  Google Photorealistic 3D city tiles on zoom-in
+- `VITE_YOUTUBE_API_KEY`
+  YouTube live CCTV / webcam discovery
+- `VITE_GUARDIAN_API_KEY`
+  Guardian news enrichment for the intelligence wire
+- `VITE_AISSTREAM_API_KEY`
+  AISstream realtime vessel tracking for the Maritime layer
+
+If a key is missing, Godseye does not crash.
+It logs a browser console error stating that the key is missing and that the related data may or may not be available.
+
 ## Run Locally
 
 ### Requirements
@@ -62,8 +85,10 @@ I used **Codex** as a programming assistant for selected implementation tasks su
 ### Install and start
 
 ```bash
+cp scripts/local-secrets.example.sh scripts/local-secrets.sh
+# fill in your keys
 npm install
-npm run dev
+./scripts/with-local-secrets.sh npm run dev
 ```
 
 Open `http://localhost:5173/`.
@@ -71,8 +96,8 @@ Open `http://localhost:5173/`.
 ### Build
 
 ```bash
-npm run build
-npm run preview
+./scripts/with-local-secrets.sh npm run build
+./scripts/with-local-secrets.sh npm run preview
 ```
 
 ### Feed Audit (curl-based)
@@ -148,8 +173,9 @@ src/
 - This project is intentionally backend-free: no server, no database, no auth.
 - Some feeds can intermittently fail due to CORS limits, region blocks, source downtime, or third-party rate limiting.
 - The app degrades gracefully and keeps other layers active when one source is unavailable.
-- Optional: set `VITE_AISSTREAM_API_KEY` in your local `.env` to enable realtime AIS vessel streaming in the Maritime layer.
-- Optional: set `VITE_GOOGLE_MAPS_3D_KEY` (or `VITE_GOOGLE_MAPS_API_KEY`) in your local `.env` to enable Google Photorealistic 3D city tiles on zoom-in. Without this key, the app falls back to OSM 3D buildings where available.
+- Local secrets are loaded through `scripts/local-secrets.sh`, which is gitignored.
+- GitHub Actions builds use repository secrets for the same keyed integrations.
+- Without `VITE_GOOGLE_MAPS_3D_KEY` / `VITE_GOOGLE_MAPS_API_KEY`, the globe falls back to OSM 3D buildings where available.
 
 ## Credits
 
