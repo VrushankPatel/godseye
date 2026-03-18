@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import useStore from '../store/useStore';
+import { getRuntimeKey } from '../utils/runtimeEnv';
 import {
     INTEL_REGIONS,
     buildIntelRegionCounts,
@@ -14,7 +15,7 @@ const INTEL_CACHE_KEY = 'godseye:intel-wire-cache:v2';
 const INTEL_CACHE_MAX_AGE_MS = 4 * 60 * 60 * 1000;
 const INTEL_KEYWORD_RE = /(military|defen[cs]e|army|navy|air\s*force|missile|drone|strike|conflict|war|border|security|intel|nato|ukraine|russia|china|taiwan|israel|iran|syria)/i;
 const GUARDIAN_API_BASE = 'https://content.guardianapis.com/search';
-const GUARDIAN_API_KEY = 'test';
+const GUARDIAN_API_KEY = getRuntimeKey('VITE_GUARDIAN_API_KEY', ' Guardian intelligence enrichment');
 const HN_API_BASE = 'https://hn.algolia.com/api/v1/search';
 const GUARDIAN_QUERIES = [
     'military conflict',
@@ -140,6 +141,8 @@ async function fetchRssText(sourceUrl) {
 }
 
 async function fetchGuardianIntel() {
+    if (!GUARDIAN_API_KEY) return [];
+
     const requests = GUARDIAN_QUERIES.map((query) => {
         const url = `${GUARDIAN_API_BASE}?q=${encodeURIComponent(query)}&api-key=${GUARDIAN_API_KEY}&page-size=12&show-fields=headline`;
         return fetchJsonWithTimeout(url).catch(() => null);

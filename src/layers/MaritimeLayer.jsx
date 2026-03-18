@@ -2,13 +2,14 @@ import React, { useEffect, useRef, useCallback } from 'react';
 import * as Cesium from 'cesium';
 import useStore from '../store/useStore';
 import { API_URLS, POLL_INTERVALS } from '../constants/dataSources';
+import { getRuntimeKey } from '../utils/runtimeEnv';
 
 const REQUEST_TIMEOUT_MS = 16000;
 const PORT_PAGE_SIZE = 2000;
 const MAX_PORTS = 4200;
 const MAX_VESSELS = 5000;
 const AIS_SYNC_INTERVAL_MS = 2000;
-const AIS_API_KEY = String(import.meta.env.VITE_AISSTREAM_API_KEY || '').trim();
+const AIS_API_KEY = getRuntimeKey('VITE_AISSTREAM_API_KEY', ' AIS live vessel tracking');
 
 function toNumber(value) {
     const parsed = Number.parseFloat(String(value ?? ''));

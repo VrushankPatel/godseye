@@ -10,7 +10,9 @@
  *   { id, name, lat, lng, url, videoUrl, city, country, mediaType, provider }
  */
 
-const YOUTUBE_API_KEY = 'AIzaSyD9zHMlGfcXth9vhyyFvngio5uDdJJWpNU';
+import { getRuntimeKey } from '../utils/runtimeEnv';
+
+const YOUTUBE_API_KEY = getRuntimeKey('VITE_YOUTUBE_API_KEY', ' YouTube live CCTV discovery');
 const YOUTUBE_SEARCH_URL = 'https://www.googleapis.com/youtube/v3/search';
 const YOUTUBE_OEMBED = 'https://www.youtube.com/oembed';
 const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
@@ -217,6 +219,8 @@ function geolocateFromTitle(title) {
  * Runs multiple search queries in parallel for global coverage.
  */
 export async function discoverYouTubeLiveFeeds(maxPerQuery = 15) {
+    if (!YOUTUBE_API_KEY) return [];
+
     const feeds = [];
     const seenVideoIds = new Set();
 

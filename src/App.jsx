@@ -10,6 +10,7 @@ import MissionHud from './components/MissionHud';
 import FocusMask from './components/FocusMask';
 import SysTerminal from './components/SysTerminal';
 import WebcamDock from './components/WebcamDock';
+import { reportMissingOptionalRuntimeConfig } from './utils/runtimeEnv';
 import useStore from './store/useStore';
 import { SHADER_MODES } from './constants/dataSources';
 
@@ -23,6 +24,10 @@ export default function App() {
     const toggleFocusMode = useStore((s) => s.toggleFocusMode);
     const focusHideEntities = useStore((s) => s.focusHideEntities);
     const setFocusHideEntities = useStore((s) => s.setFocusHideEntities);
+
+    useEffect(() => {
+        reportMissingOptionalRuntimeConfig();
+    }, []);
 
     // Keyboard shortcuts: 1-6 shader modes, 7 Focus, 8 Hide Entities, Escape close
     useEffect(() => {

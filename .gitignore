@@ -27,6 +27,7 @@ dist-ssr
 .env
 .env.*
 !.env.example
+scripts/local-secrets.sh
 
 # Build / test artifacts
 coverage
