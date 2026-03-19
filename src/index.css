@@ -539,7 +539,7 @@ body {
 }
 
 .mission-hud-left--offset {
-  left: calc(max(16px, env(safe-area-inset-left)) + 19.5rem + 14px);
+  left: calc(max(16px, env(safe-area-inset-left)) + 16rem + 10px);
 }
 
 .mission-label {
