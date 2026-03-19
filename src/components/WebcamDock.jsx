@@ -67,6 +67,13 @@ export default function WebcamDock() {
     const setInspector = useStore((s) => s.setInspector);
     const [previewNonce, setPreviewNonce] = useState(Date.now());
     const [activeRegion, setActiveRegion] = useState('all');
+    const [dockVisible, setDockVisible] = useState(true);
+
+    useEffect(() => {
+        if (!cctvEnabled) {
+            setDockVisible(true);
+        }
+    }, [cctvEnabled]);
 
     useEffect(() => {
         if (!cctvEnabled) return undefined;
@@ -131,6 +138,33 @@ export default function WebcamDock() {
         });
     };
 
+    if (!dockVisible) {
+        return (
+            <button
+                onClick={() => setDockVisible(true)}
+                className="glass-panel pointer-events-auto"
+                style={{
+                    position: 'absolute',
+                    right: '16px',
+                    bottom: '114px',
+                    zIndex: 34,
+                    border: '1px solid rgba(0, 255, 65, 0.28)',
+                    background: 'rgba(6, 11, 18, 0.84)',
+                    boxShadow: '0 12px 28px rgba(0, 0, 0, 0.46)',
+                    padding: '10px 14px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    cursor: 'pointer',
+                }}
+                title="Show live webcam dock"
+            >
+                <span className="text-[11px] tracking-[0.26em] uppercase text-green-300">Live Webcam Dock</span>
+                <span className="text-[10px] tracking-[0.18em] uppercase text-text-dim">Show</span>
+            </button>
+        );
+    }
+
     return (
         <div
             className="glass-panel pointer-events-auto"
@@ -147,7 +181,22 @@ export default function WebcamDock() {
         >
             <div className="px-3 py-2 border-b border-green-500/20 flex items-center justify-between">
                 <div className="text-[11px] tracking-[0.25em] uppercase text-green-300">Live Webcam Dock</div>
-                <div className="text-[10px] tracking-[0.18em] uppercase text-text-dim">{featuredFeeds.length} live nodes</div>
+                <div className="flex items-center gap-2">
+                    <div className="text-[10px] tracking-[0.18em] uppercase text-text-dim">{featuredFeeds.length} live nodes</div>
+                    <button
+                        onClick={() => setDockVisible(false)}
+                        className="text-[10px] tracking-[0.16em] uppercase text-text-dim hover:text-green-200 transition-colors"
+                        style={{
+                            border: '1px solid rgba(0, 255, 65, 0.22)',
+                            background: 'rgba(0, 255, 65, 0.05)',
+                            padding: '3px 7px',
+                            lineHeight: 1,
+                        }}
+                        title="Hide live webcam dock"
+                    >
+                        Hide
+                    </button>
+                </div>
             </div>
 
             <div className="px-2 py-2 border-b border-green-500/10">
