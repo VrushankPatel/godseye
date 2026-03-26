@@ -12,7 +12,6 @@ import SysTerminal from './components/SysTerminal';
 import WebcamDock from './components/WebcamDock';
 import RenderBoundary from './components/RenderBoundary';
 import SharedRuntimeCacheBootstrap from './components/SharedRuntimeCacheBootstrap';
-import { reportMissingOptionalRuntimeConfig } from './utils/runtimeEnv';
 import useStore from './store/useStore';
 import { SHADER_MODES } from './constants/dataSources';
 
@@ -27,10 +26,6 @@ export default function App() {
     const toggleFocusMode = useStore((s) => s.toggleFocusMode);
     const focusHideEntities = useStore((s) => s.focusHideEntities);
     const setFocusHideEntities = useStore((s) => s.setFocusHideEntities);
-
-    useEffect(() => {
-        reportMissingOptionalRuntimeConfig();
-    }, []);
 
     useEffect(() => {
         const computeAppIsActive = () => {

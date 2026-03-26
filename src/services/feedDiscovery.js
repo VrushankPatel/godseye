@@ -12,7 +12,6 @@
 import { getRuntimeKey } from '../utils/runtimeEnv';
 import { fetchJsonWithPolicy } from '../utils/network';
 
-const YOUTUBE_API_KEY = getRuntimeKey('VITE_YOUTUBE_API_KEY', ' YouTube live CCTV discovery');
 const YOUTUBE_SEARCH_URL = 'https://www.googleapis.com/youtube/v3/search';
 // ── Built-in geocoder for location extraction from video titles ──
 
@@ -203,7 +202,8 @@ function geolocateFromTitle(title) {
  * Runs multiple search queries in parallel for global coverage.
  */
 export async function discoverYouTubeLiveFeeds(maxPerQuery = 15) {
-    if (!YOUTUBE_API_KEY) return [];
+    const youtubeApiKey = getRuntimeKey('VITE_YOUTUBE_API_KEY', ' YouTube live CCTV discovery');
+    if (!youtubeApiKey) return [];
 
     const feeds = [];
     const seenVideoIds = new Set();
@@ -220,7 +220,7 @@ export async function discoverYouTubeLiveFeeds(maxPerQuery = 15) {
                 eventType: 'live',          // Only live streams!
                 maxResults: String(maxPerQuery),
                 order: 'viewCount',         // Prefer popular streams
-                key: YOUTUBE_API_KEY,
+                key: youtubeApiKey,
             });
             const url = `${YOUTUBE_SEARCH_URL}?${params}`;
             return fetchJsonWithPolicy(url, {

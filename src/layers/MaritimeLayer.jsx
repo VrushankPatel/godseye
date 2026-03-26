@@ -10,7 +10,6 @@ const PORT_PAGE_SIZE = 2000;
 const MAX_PORTS = 4200;
 const MAX_VESSELS = 5000;
 const AIS_SYNC_INTERVAL_MS = 2000;
-const AIS_API_KEY = getRuntimeKey('VITE_AISSTREAM_API_KEY', ' AIS live vessel tracking');
 
 function toNumber(value) {
     const parsed = Number.parseFloat(String(value ?? ''));
@@ -478,7 +477,8 @@ export default function MaritimeLayer({ viewer }) {
     }, []);
 
     const openAisSocket = useCallback(() => {
-        if (!appIsActive || !AIS_API_KEY || wsRef.current) return;
+        const aisApiKey = getRuntimeKey('VITE_AISSTREAM_API_KEY', ' AIS live vessel tracking');
+        if (!appIsActive || !aisApiKey || wsRef.current) return;
 
         const ws = new WebSocket(API_URLS.AISSTREAM_WS);
         wsRef.current = ws;
@@ -491,8 +491,8 @@ export default function MaritimeLayer({ viewer }) {
                 FilterMessageTypes: ['PositionReport', 'ShipStaticData'],
             };
 
-            ws.send(JSON.stringify({ ...baseSubscription, APIKey: AIS_API_KEY }));
-            ws.send(JSON.stringify({ ...baseSubscription, Apikey: AIS_API_KEY }));
+            ws.send(JSON.stringify({ ...baseSubscription, APIKey: aisApiKey }));
+            ws.send(JSON.stringify({ ...baseSubscription, Apikey: aisApiKey }));
         };
 
         ws.onmessage = (event) => {

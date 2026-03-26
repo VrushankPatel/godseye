@@ -98,7 +98,6 @@ export default function CityTiltControl({ panelHeight = 124 }) {
                     value={Math.round(sliderValue)}
                     onChange={handleSliderChange}
                     className="city-tilt-slider city-tilt-slider--docked"
-                    orient="vertical"
                     aria-label="3D camera angle"
                     title="Adjust 3D camera angle"
                 />

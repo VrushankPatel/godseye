@@ -27,7 +27,7 @@ import TrafficLayer from '../layers/TrafficLayer';
 import MilitaryActivityLayer from '../layers/MilitaryActivityLayer';
 import MilitaryBasesLayer from '../layers/MilitaryBasesLayer';
 import ForbiddenZonesLayer from '../layers/ForbiddenZonesLayer';
-import { getRuntimeKey } from '../utils/runtimeEnv';
+import { readEnvValue } from '../utils/runtimeEnv';
 
 const TRACK_SAMPLE_INTERVAL_MS = 1000;
 const MAX_TRACK_POINTS = 220;
@@ -43,10 +43,6 @@ const LABEL_COUNTRY_MIN_HEIGHT_M = 2200000;
 const LABEL_CITY_MAX_HEIGHT_M = 5200000;
 const CITY_3D_ENABLE_HEIGHT_M = 2800000;
 const CITY_3D_DISABLE_HEIGHT_M = 3600000;
-const GOOGLE_3D_API_KEY = getRuntimeKey(
-    ['VITE_GOOGLE_MAPS_3D_KEY', 'VITE_GOOGLE_MAPS_API_KEY'],
-    ' Google Photorealistic 3D tiles'
-);
 const GOD_MODE_REBALANCE_INTERVAL_MS = 900;
 
 function getGodModeLayerBudgets(cameraHeightM) {
@@ -382,6 +378,7 @@ export default function Globe() {
 
         let disposed = false;
         const add3DCityTiles = async () => {
+            const google3DKey = readEnvValue(['VITE_GOOGLE_MAPS_3D_KEY', 'VITE_GOOGLE_MAPS_API_KEY']);
             const attachTileset = (tileset, source) => {
                 if (!tileset || disposed || viewer.isDestroyed()) return;
                 tileset.show = false;
@@ -390,11 +387,11 @@ export default function Globe() {
                 update3DCityVisibility();
             };
 
-            if (GOOGLE_3D_API_KEY) {
+            if (google3DKey) {
                 try {
                     const googleTileset = await Cesium.createGooglePhotorealistic3DTileset(
                         {
-                            key: GOOGLE_3D_API_KEY,
+                            key: google3DKey,
                         },
                         {
                             maximumScreenSpaceError: 12,

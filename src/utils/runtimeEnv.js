@@ -1,14 +1,35 @@
 const missingRuntimeWarnings = new Set();
+const INVALID_ENV_SENTINELS = new Set([
+    '',
+    '-',
+    'test',
+    'demo',
+    'placeholder',
+    'changeme',
+    'replace-me',
+    'your_key_here',
+    'your-api-key',
+    'undefined',
+    'null',
+    'false',
+    '0',
+]);
 
 function normalizeEnvKeys(keys) {
     return Array.isArray(keys) ? keys.filter(Boolean) : [keys].filter(Boolean);
+}
+
+function isUsableEnvValue(value) {
+    const normalized = String(value || '').trim();
+    if (!normalized) return false;
+    return !INVALID_ENV_SENTINELS.has(normalized.toLowerCase());
 }
 
 export function readEnvValue(keys) {
     const env = import.meta.env || {};
     for (const key of normalizeEnvKeys(keys)) {
         const value = String(env[key] || '').trim();
-        if (value) return value;
+        if (isUsableEnvValue(value)) return value;
     }
     return '';
 }

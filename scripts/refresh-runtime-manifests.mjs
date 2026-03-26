@@ -27,6 +27,7 @@ const MAX_INTEL_ITEMS = 80;
 const MAX_CCTV_WORLD_FEEDS = 2500;
 const CCTV_VERIFY_CONCURRENCY = 16;
 const CALTRANS_STREAM_RESOLUTION_LIMIT = 180;
+const INVALID_OPTIONAL_KEY_VALUES = new Set(['', '-', 'test', 'demo', 'placeholder', 'changeme', 'replace-me', 'your_key_here', 'your-api-key', 'undefined', 'null', 'false', '0']);
 const INTEL_RSS_SOURCES = [
   { name: 'Google News World', url: 'https://news.google.com/rss/headlines/section/topic/WORLD?hl=en-US&gl=US&ceid=US:en' },
   { name: 'Google News Military', url: 'https://news.google.com/rss/search?q=military%20OR%20defense%20OR%20conflict&hl=en-US&gl=US&ceid=US:en' },
@@ -36,6 +37,10 @@ const INTEL_RSS_SOURCES = [
   { name: 'BBC World', url: 'https://feeds.bbci.co.uk/news/world/rss.xml' },
   { name: 'Defense One', url: 'https://www.defenseone.com/rss/all/' },
 ];
+
+function hasUsableOptionalKey(value) {
+  return !INVALID_OPTIONAL_KEY_VALUES.has(String(value || '').trim().toLowerCase());
+}
 
 function withTimeout(ms = FETCH_TIMEOUT_MS) {
   const controller = new AbortController();
@@ -132,7 +137,9 @@ function parseFeedItems(xml, sourceName) {
 }
 
 async function buildIntelManifest(existingManifest) {
-  const guardianKey = process.env.VITE_GUARDIAN_API_KEY || '';
+  const guardianKey = hasUsableOptionalKey(process.env.VITE_GUARDIAN_API_KEY)
+    ? String(process.env.VITE_GUARDIAN_API_KEY || '').trim()
+    : '';
   const allItems = [];
   const seen = new Set();
 

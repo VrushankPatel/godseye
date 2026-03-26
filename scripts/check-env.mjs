@@ -42,11 +42,13 @@ const CAPABILITIES = [
     mode: 'all',
   },
 ];
+const INVALID_OPTIONAL_KEY_VALUES = new Set(['', '-', 'test', 'demo', 'placeholder', 'changeme', 'replace-me', 'your_key_here', 'your-api-key', 'undefined', 'null', 'false', '0']);
 
 function normalizeValue(value) {
   const text = String(value || '').trim();
   if (!text) return '';
   if (/^\$\{\{\s*secrets\./.test(text)) return '';
+  if (INVALID_OPTIONAL_KEY_VALUES.has(text.toLowerCase())) return '';
   return text;
 }
 

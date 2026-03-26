@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import useStore from '../store/useStore';
 import { API_URLS } from '../constants/dataSources';
-import { getRuntimeKey } from '../utils/runtimeEnv';
 import { fetchJsonWithPolicy } from '../utils/network';
 import { isSharedCacheFresh } from '../services/sharedRuntimeCache';
 import {
@@ -17,15 +16,7 @@ const MAX_ITEMS = 18;
 const INTEL_CACHE_KEY = 'godseye:intel-wire-cache:v2';
 const INTEL_CACHE_MAX_AGE_MS = 4 * 60 * 60 * 1000;
 const INTEL_KEYWORD_RE = /(military|defen[cs]e|army|navy|air\s*force|missile|drone|strike|conflict|war|border|security|intel|nato|ukraine|russia|china|taiwan|israel|iran|syria)/i;
-const GUARDIAN_API_BASE = 'https://content.guardianapis.com/search';
-const GUARDIAN_API_KEY = getRuntimeKey('VITE_GUARDIAN_API_KEY', ' Guardian intelligence enrichment');
 const HN_API_BASE = 'https://hn.algolia.com/api/v1/search';
-const GUARDIAN_QUERIES = [
-    'military conflict',
-    'war security',
-    'border tensions',
-    'missile strike',
-];
 const HN_QUERIES = [
     'military conflict',
     'open source intelligence',
@@ -38,40 +29,6 @@ function normalizeText(value) {
 function parsePublishedAt(raw) {
     const ts = Date.parse(String(raw || ''));
     return Number.isFinite(ts) ? ts : 0;
-}
-
-async function fetchGuardianIntel() {
-    if (!GUARDIAN_API_KEY) return [];
-
-    const requests = GUARDIAN_QUERIES.map((query) => {
-        const url = `${GUARDIAN_API_BASE}?q=${encodeURIComponent(query)}&api-key=${GUARDIAN_API_KEY}&page-size=12&show-fields=headline`;
-        return fetchJsonWithPolicy(url, {
-            timeoutMs: FETCH_TIMEOUT_MS,
-            retries: 1,
-            circuitKey: `intel:guardian:${query}`,
-        }).catch(() => null);
-    });
-    const responses = await Promise.all(requests);
-    const items = [];
-
-    for (const data of responses) {
-        const results = data?.response?.results;
-        if (!Array.isArray(results)) continue;
-        for (const result of results) {
-            const title = normalizeText(result?.fields?.headline || result?.webTitle || '');
-            const link = normalizeText(result?.webUrl || '');
-            if (!title || !link) continue;
-            items.push({
-                id: `guardian-${link}`,
-                source: `Guardian ${normalizeText(result?.sectionName || 'World')}`.trim(),
-                title,
-                link,
-                publishedAt: parsePublishedAt(result?.webPublicationDate),
-            });
-        }
-    }
-
-    return items;
 }
 
 async function fetchHackerNewsIntel() {
@@ -234,8 +191,7 @@ export default function IntelWire({ embedded = false, hidden = false, onHide = n
                     lastUpdatedAt,
                 });
             }
-            const [guardianItems, hnItems, manifestItems] = await Promise.all([
-                fetchGuardianIntel().catch(() => []),
+            const [hnItems, manifestItems] = await Promise.all([
                 fetchHackerNewsIntel().catch(() => []),
                 fetchManifestIntel().catch(() => []),
             ]);
@@ -255,7 +211,6 @@ export default function IntelWire({ embedded = false, hidden = false, onHide = n
             };
 
             ingest(manifestItems);
-            ingest(guardianItems);
             ingest(hnItems);
 
             const keywordFiltered = merged.filter((item) => INTEL_KEYWORD_RE.test(item.title));

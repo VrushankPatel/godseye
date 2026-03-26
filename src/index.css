@@ -139,9 +139,10 @@ body {
 
 /* ── 3D City Tilt Control ───────────────────────── */
 .city-tilt-slider {
-  -webkit-appearance: slider-vertical;
-  appearance: slider-vertical;
-  writing-mode: bt-lr;
+  -webkit-appearance: none;
+  appearance: none;
+  writing-mode: vertical-lr;
+  direction: rtl;
   width: 16px;
   height: 150px;
   cursor: ns-resize;
