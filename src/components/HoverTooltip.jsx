@@ -1,6 +1,11 @@
 import React from 'react';
 import useStore from '../store/useStore';
 import { LAYER_DEFS } from '../constants/dataSources';
+import {
+    formatLayerAge,
+    getLayerHealthColorClass,
+    getLayerHealthLabel,
+} from '../utils/layerHealth';
 
 const TOOLTIP_WIDTH = 290;
 const TOOLTIP_HEIGHT = 210;
@@ -35,10 +40,16 @@ function shouldHideField(key, value) {
 export default function HoverTooltip() {
     const hoverInfo = useStore((s) => s.hoverInfo);
     const inspector = useStore((s) => s.inspector);
+    const layers = useStore((s) => s.layers);
 
     if (!hoverInfo || inspector) return null;
 
     const def = LAYER_DEFS[hoverInfo.type] || { color: '#ffffff', icon: '❓', label: 'UNKNOWN' };
+    const layerMeta = layers?.[hoverInfo.type]?.meta || {};
+    const sourceLabel = String(layerMeta.sourceName || '').trim();
+    const healthLabel = getLayerHealthLabel(layerMeta);
+    const healthColorClass = getLayerHealthColorClass(layerMeta);
+    const ageLabel = formatLayerAge(layerMeta.ageMs);
     const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1440;
     const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 900;
     const left = clamp(hoverInfo.screenX + TOOLTIP_OFFSET, 12, viewportWidth - TOOLTIP_WIDTH - 12);
@@ -62,6 +73,23 @@ export default function HoverTooltip() {
                 <div className="text-sm text-white tracking-wide truncate mb-2">
                     {hoverInfo.name || hoverInfo.callsign || hoverInfo.id || 'UNIDENTIFIED'}
                 </div>
+
+                {(sourceLabel || layerMeta.lastSuccessAt || layerMeta.health === 'error') && (
+                    <div className="mb-2 grid grid-cols-2 gap-x-3 gap-y-1 rounded border border-white/6 bg-black/20 px-2 py-1.5">
+                        <div className="min-w-0">
+                            <div className="text-[9px] text-text-dim tracking-widest uppercase">Source</div>
+                            <div className="text-[11px] text-text-primary tracking-wide truncate" title={sourceLabel || 'Source unavailable'}>
+                                {sourceLabel || 'Source unavailable'}
+                            </div>
+                        </div>
+                        <div className="min-w-0">
+                            <div className="text-[9px] text-text-dim tracking-widest uppercase">Freshness</div>
+                            <div className={`text-[11px] tracking-wide truncate ${healthColorClass}`} title={`${healthLabel} · ${ageLabel}`}>
+                                {healthLabel}{layerMeta.lastSuccessAt ? ` · ${ageLabel}` : ''}
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
                     {fields.map(([key, value]) => (

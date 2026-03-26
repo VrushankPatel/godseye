@@ -1,6 +1,11 @@
 import React, { useMemo, useState } from 'react';
 import useStore from '../store/useStore';
 import { LAYER_DEFS, SURVEILLANCE_PRIMARY_LAYERS } from '../constants/dataSources';
+import {
+    formatLayerAge,
+    getLayerHealthColorClass,
+    getLayerHealthLabel,
+} from '../utils/layerHealth';
 
 export default function LayerPanel() {
     const {
@@ -39,6 +44,11 @@ export default function LayerPanel() {
     const renderLayerRow = ([key, layer]) => {
         const def = LAYER_DEFS[key];
         if (!def) return null;
+        const meta = layer.meta || {};
+        const ageLabel = formatLayerAge(meta.ageMs);
+        const sourceLabel = String(meta.sourceName || '').trim();
+        const healthLabel = getLayerHealthLabel(meta);
+        const healthColorClass = getLayerHealthColorClass(meta);
 
     return (
             <div key={key} className="flex flex-col gap-1 px-3 py-1.5">
@@ -90,6 +100,16 @@ export default function LayerPanel() {
                         </span>
                     )}
                 </div>
+                {layer.enabled && (sourceLabel || meta.lastSuccessAt || layer.status === 'error') && (
+                    <div className="ml-[2.45rem] pr-1.5 flex justify-between items-center gap-2 text-[7px] leading-tight tracking-[0.16em] uppercase">
+                        <span className="text-text-dim truncate" title={sourceLabel || 'Source unavailable'}>
+                            {sourceLabel || 'Source unavailable'}
+                        </span>
+                        <span className={`${healthColorClass} shrink-0`} title={`${healthLabel} · ${ageLabel}`}>
+                            {healthLabel} {meta.lastSuccessAt ? `· ${ageLabel}` : ''}
+                        </span>
+                    </div>
+                )}
                 <div className="w-full h-[1px] bg-white/5" />
             </div>
         );

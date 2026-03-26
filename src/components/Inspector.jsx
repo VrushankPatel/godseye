@@ -15,8 +15,6 @@ const SATELLITE_TRACK_VIEWS = [
     { id: 'NADIR', label: 'Nadir' },
     { id: 'WIDE', label: 'Wide' },
 ];
-const CALTRANS_PAGE_PROXY = 'https://api.allorigins.win/raw?url=';
-const CALTRANS_STREAM_CACHE = new Map();
 
 function appendCacheBuster(url) {
     if (!url) return '';
@@ -64,12 +62,6 @@ function unwrapWorldcamsPlayer(url) {
     } catch (err) {
         return '';
     }
-}
-
-function extractCaltransStreamUrl(html) {
-    if (!html) return '';
-    const match = String(html).match(/var\s+videoStreamURL\s*=\s*"([^"]+)"/i);
-    return match?.[1] || '';
 }
 
 export default function Inspector() {
@@ -136,57 +128,15 @@ export default function Inspector() {
         if (inspector.provider !== 'Caltrans') return;
         if (!inspector.streamCapable) return;
         if (effectiveStreamUrl || streamResolveFailed) return;
-
-        const detailsUrl = inspector.detailsUrl || inspector.videoUrl;
-        if (!detailsUrl) return;
-        if (CALTRANS_STREAM_CACHE.has(detailsUrl)) {
-            setResolvedStreamUrl(CALTRANS_STREAM_CACHE.get(detailsUrl));
-            setIsResolvingStream(false);
-            setStreamResolveFailed(false);
+        const resolvedUrl = inspector.videoUrl || inspector.url || '';
+        if (!resolvedUrl) {
+            setStreamResolveFailed(true);
             return;
         }
-
-        const controller = new AbortController();
-        let cancelled = false;
-
-        const resolveCaltransStream = async () => {
-            try {
-                setIsResolvingStream(true);
-                const response = await fetch(
-                    `${CALTRANS_PAGE_PROXY}${encodeURIComponent(detailsUrl)}`,
-                    { signal: controller.signal, cache: 'no-store' }
-                );
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                const html = await response.text();
-                if (cancelled) return;
-
-                const streamUrl = extractCaltransStreamUrl(html);
-                if (!streamUrl) throw new Error('No stream URL found');
-                CALTRANS_STREAM_CACHE.set(detailsUrl, streamUrl);
-                setResolvedStreamUrl(streamUrl);
-                setVideoFailed(false);
-                setStreamResolveFailed(false);
-            } catch (err) {
-                if (cancelled || controller.signal.aborted) return;
-                setStreamResolveFailed(true);
-            } finally {
-                if (!cancelled) {
-                    setIsResolvingStream(false);
-                }
-            }
-        };
-
-        resolveCaltransStream();
-
-        return () => {
-            cancelled = true;
-            controller.abort();
-        };
-    }, [
-        inspector,
-        effectiveStreamUrl,
-        streamResolveFailed,
-    ]);
+        setResolvedStreamUrl(resolvedUrl);
+        setIsResolvingStream(false);
+        setStreamResolveFailed(false);
+    }, [inspector, effectiveStreamUrl, streamResolveFailed]);
 
     useEffect(() => {
         const videoEl = hlsVideoRef.current;

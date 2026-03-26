@@ -235,6 +235,7 @@ export default function MaritimeLayer({ viewer }) {
     const cachedData = useStore((s) => s.layers.maritime.data);
     const updateData = useStore((s) => s.updateLayerData);
     const setStatus = useStore((s) => s.setLayerStatus);
+    const markLayerFetchStart = useStore((s) => s.markLayerFetchStart);
 
     const portEntitiesRef = useRef(new Map());
     const vesselEntitiesRef = useRef(new Map());
@@ -270,7 +271,11 @@ export default function MaritimeLayer({ viewer }) {
             ...portsDataRef.current.values(),
             ...vesselDataRef.current.values(),
         ];
-        updateData('maritime', merged);
+        updateData('maritime', merged, {
+            sourceName: vesselDataRef.current.size ? 'WFP ports + AISstream' : 'WFP ports',
+            isCached: false,
+            health: 'live',
+        });
     }, [updateData]);
 
     const upsertPortEntities = useCallback((ports) => {
@@ -515,7 +520,8 @@ export default function MaritimeLayer({ viewer }) {
         if (!appIsActive || !isEnabled) return;
         try {
             if (!portsDataRef.current.size) {
-                setStatus('maritime', 'loading');
+                markLayerFetchStart('maritime', { sourceName: 'WFP ports + AISstream' });
+                setStatus('maritime', 'loading', { sourceName: 'WFP ports + AISstream' });
             }
 
             const ports = await fetchPortsAllPages();
@@ -524,15 +530,27 @@ export default function MaritimeLayer({ viewer }) {
             upsertPortEntities(ports);
             setEntitiesVisible(true);
             syncStoreData();
-            setStatus('maritime', 'active');
+            setStatus('maritime', 'active', {
+                sourceName: vesselDataRef.current.size ? 'WFP ports + AISstream' : 'WFP ports',
+                isCached: false,
+                health: 'live',
+            });
             viewer.scene.requestRender();
         } catch (err) {
-            setStatus('maritime', portEntitiesRef.current.size ? 'active' : 'error');
+            setStatus('maritime', portEntitiesRef.current.size ? 'active' : 'error', {
+                sourceName: 'WFP ports + AISstream',
+                health: portEntitiesRef.current.size ? 'degraded' : 'error',
+                errorCode: portEntitiesRef.current.size ? null : 'maritime_ports_unavailable',
+            });
             if (!portEntitiesRef.current.size) {
-                updateData('maritime', []);
+                updateData('maritime', [], {
+                    sourceName: 'WFP ports + AISstream',
+                    health: 'error',
+                    errorCode: 'maritime_ports_unavailable',
+                });
             }
         }
-    }, [appIsActive, isEnabled, setStatus, setEntitiesVisible, syncStoreData, updateData, upsertPortEntities, viewer]);
+    }, [appIsActive, isEnabled, setStatus, setEntitiesVisible, syncStoreData, updateData, upsertPortEntities, viewer, markLayerFetchStart]);
 
     const hydrateFromCache = useCallback(() => {
         if (!Array.isArray(cachedData) || !cachedData.length) return;
@@ -551,7 +569,11 @@ export default function MaritimeLayer({ viewer }) {
             });
         });
         setEntitiesVisible(true);
-        setStatus('maritime', 'active');
+        setStatus('maritime', 'active', {
+            sourceName: 'Hydrated maritime cache',
+            isCached: true,
+            health: 'cached',
+        });
     }, [cachedData, setEntitiesVisible, setStatus, upsertPortEntities, upsertVesselEntity]);
 
     useEffect(() => {
@@ -566,7 +588,7 @@ export default function MaritimeLayer({ viewer }) {
             aisSyncTimerRef.current = null;
             closeAisSocket();
             setEntitiesVisible(false);
-            setStatus('maritime', 'idle');
+            setStatus('maritime', 'idle', { sourceName: 'Maritime layer disabled', health: 'idle' });
             viewer.scene.requestRender();
             return undefined;
         }

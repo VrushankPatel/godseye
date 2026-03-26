@@ -302,6 +302,7 @@ export default function WeatherLayer({ viewer }) {
     const appIsActive = useStore((s) => s.appIsActive);
     const updateData = useStore((s) => s.updateLayerData);
     const setStatus = useStore((s) => s.setLayerStatus);
+    const markLayerFetchStart = useStore((s) => s.markLayerFetchStart);
 
     const entitiesRef = useRef(new Map());
     const pollTimerRef = useRef(null);
@@ -394,7 +395,8 @@ export default function WeatherLayer({ viewer }) {
         if (!isEnabled || !appIsActive) return;
         try {
             if (!entitiesRef.current.size) {
-                setStatus('weather', 'loading');
+                markLayerFetchStart('weather', { sourceName: 'Open-Meteo + NOAA Alerts' });
+                setStatus('weather', 'loading', { sourceName: 'Open-Meteo + NOAA Alerts' });
             }
 
             const chunks = chunkArray(WEATHER_NODES, BATCH_SIZE);
@@ -420,24 +422,40 @@ export default function WeatherLayer({ viewer }) {
             if (!entries.length) throw new Error('No weather entries');
 
             upsertWeather(entries);
-            updateData('weather', entries);
-            setStatus('weather', 'active');
+            updateData('weather', entries, {
+                sourceName: alertEntries.length ? 'Open-Meteo + NOAA Alerts' : 'Open-Meteo',
+                isCached: false,
+                health: 'live',
+            });
+            setStatus('weather', 'active', {
+                sourceName: alertEntries.length ? 'Open-Meteo + NOAA Alerts' : 'Open-Meteo',
+                isCached: false,
+                health: 'live',
+            });
             viewer.scene.requestRender();
         } catch (err) {
-            setStatus('weather', entitiesRef.current.size ? 'active' : 'error');
+            setStatus('weather', entitiesRef.current.size ? 'active' : 'error', {
+                sourceName: 'Open-Meteo + NOAA Alerts',
+                health: entitiesRef.current.size ? 'degraded' : 'error',
+                errorCode: entitiesRef.current.size ? null : 'weather_feed_unavailable',
+            });
             if (!entitiesRef.current.size) {
-                updateData('weather', []);
+                updateData('weather', [], {
+                    sourceName: 'Open-Meteo + NOAA Alerts',
+                    health: 'error',
+                    errorCode: 'weather_feed_unavailable',
+                });
             }
         }
-    }, [appIsActive, isEnabled, setStatus, upsertWeather, updateData, viewer]);
+    }, [appIsActive, isEnabled, setStatus, upsertWeather, updateData, viewer, markLayerFetchStart]);
 
     useEffect(() => {
         if (!isEnabled) {
             clearInterval(pollTimerRef.current);
             pollTimerRef.current = null;
             clearEntities();
-            updateData('weather', []);
-            setStatus('weather', 'idle');
+            updateData('weather', [], { status: 'idle', sourceName: 'Weather layer disabled', health: 'idle' });
+            setStatus('weather', 'idle', { sourceName: 'Weather layer disabled', health: 'idle' });
             return;
         }
 

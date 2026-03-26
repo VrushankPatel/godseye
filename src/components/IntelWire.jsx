@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import useStore from '../store/useStore';
+import { API_URLS } from '../constants/dataSources';
 import { getRuntimeKey } from '../utils/runtimeEnv';
-import { fetchJsonWithPolicy, fetchTextWithPolicy } from '../utils/network';
+import { fetchJsonWithPolicy } from '../utils/network';
 import {
     INTEL_REGIONS,
     buildIntelRegionCounts,
@@ -28,26 +29,6 @@ const HN_QUERIES = [
     'military conflict',
     'open source intelligence',
 ];
-const GOOGLE_NEWS_QUERIES = [
-    'military OR defense OR conflict',
-    'war OR drone OR missile',
-    'border tensions OR geopolitical',
-];
-
-const RSS_INTEL_SOURCES = [
-    ...GOOGLE_NEWS_QUERIES.map((query) => ({
-        name: 'Google News',
-        url: `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=en-US&gl=US&ceid=US:en`,
-    })),
-    { name: 'Google News World', url: 'https://news.google.com/rss/headlines/section/topic/WORLD?hl=en-US&gl=US&ceid=US:en' },
-    { name: 'Google News US', url: 'https://news.google.com/rss/headlines/section/geo/US?hl=en-US&gl=US&ceid=US:en' },
-    { name: 'Defense One', url: 'https://www.defenseone.com/rss/all/' },
-    { name: 'Reuters World', url: 'https://feeds.reuters.com/reuters/worldNews' },
-    { name: 'Reuters Top', url: 'https://feeds.reuters.com/reuters/topNews' },
-    { name: 'BBC World', url: 'https://feeds.bbci.co.uk/news/world/rss.xml' },
-    { name: 'BBC Europe', url: 'https://feeds.bbci.co.uk/news/world/europe/rss.xml' },
-    { name: 'BBC Asia', url: 'https://feeds.bbci.co.uk/news/world/asia/rss.xml' },
-];
 
 function normalizeText(value) {
     return String(value || '').replace(/\s+/g, ' ').trim();
@@ -56,75 +37,6 @@ function normalizeText(value) {
 function parsePublishedAt(raw) {
     const ts = Date.parse(String(raw || ''));
     return Number.isFinite(ts) ? ts : 0;
-}
-
-function buildAllOriginsRawUrl(url) {
-    return `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-}
-
-function buildAllOriginsGetUrl(url) {
-    return `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-}
-
-function buildCodeTabsProxyUrl(url) {
-    return `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`;
-}
-
-async function fetchRssText(sourceUrl) {
-    // Try direct first for feeds that already expose CORS.
-    try {
-        const direct = await fetchTextWithPolicy(sourceUrl, {
-            timeoutMs: FETCH_TIMEOUT_MS,
-            retries: 1,
-            circuitKey: `intel:rss:direct:${sourceUrl}`,
-        });
-        if (direct && direct.trim()) {
-            return direct;
-        }
-    } catch (err) {
-        // Fall through to proxies.
-    }
-
-    const rawProxy = buildAllOriginsRawUrl(sourceUrl);
-    const getProxy = buildAllOriginsGetUrl(sourceUrl);
-    const codeTabsProxy = buildCodeTabsProxyUrl(sourceUrl);
-
-    try {
-        const raw = await fetchTextWithPolicy(rawProxy, {
-            timeoutMs: FETCH_TIMEOUT_MS,
-            retries: 0,
-            circuitKey: `intel:rss:proxy:allorigins-raw:${sourceUrl}`,
-        });
-        if (raw && raw.trim() && !/^\s*error code:\s*\d+/i.test(raw)) {
-            return raw;
-        }
-    } catch (err) {
-        // fall through to get-proxy path
-    }
-
-    try {
-        const wrapped = await fetchTextWithPolicy(getProxy, {
-            timeoutMs: FETCH_TIMEOUT_MS,
-            retries: 0,
-            circuitKey: `intel:rss:proxy:allorigins-get:${sourceUrl}`,
-        });
-        const parsed = JSON.parse(wrapped);
-        if (parsed?.contents) {
-            return String(parsed.contents);
-        }
-    } catch (err) {
-        // fall through to CodeTabs path
-    }
-
-    const codeTabsBody = await fetchTextWithPolicy(codeTabsProxy, {
-        timeoutMs: FETCH_TIMEOUT_MS,
-        retries: 0,
-        circuitKey: `intel:rss:proxy:codetabs:${sourceUrl}`,
-    });
-    if (codeTabsBody && codeTabsBody.trim()) {
-        return codeTabsBody;
-    }
-    throw new Error('Feed payload missing contents');
 }
 
 async function fetchGuardianIntel() {
@@ -192,44 +104,6 @@ async function fetchHackerNewsIntel() {
     return items;
 }
 
-function extractFeedItems(feedText, sourceName) {
-    if (!feedText || typeof DOMParser === 'undefined') return [];
-    const doc = new DOMParser().parseFromString(feedText, 'text/xml');
-
-    const parserError = doc.querySelector('parsererror');
-    if (parserError) return [];
-
-    const itemNodes = [
-        ...Array.from(doc.querySelectorAll('item')),
-        ...Array.from(doc.querySelectorAll('entry')),
-    ];
-
-    return itemNodes.map((node, index) => {
-        const title = normalizeText(node.querySelector('title')?.textContent || 'Untitled');
-        const linkNode = node.querySelector('link');
-        const link = normalizeText(
-            linkNode?.getAttribute('href') ||
-            linkNode?.textContent ||
-            ''
-        );
-        const publishedRaw =
-            node.querySelector('pubDate')?.textContent ||
-            node.querySelector('published')?.textContent ||
-            node.querySelector('updated')?.textContent ||
-            '';
-
-        const itemSource = normalizeText(node.querySelector('source')?.textContent || sourceName);
-
-        return {
-            id: `${sourceName}-${index}-${title.slice(0, 24)}`,
-            source: itemSource || sourceName,
-            title,
-            link,
-            publishedAt: parsePublishedAt(publishedRaw),
-        };
-    }).filter((item) => item.title && item.link);
-}
-
 function relativeTime(timestampMs) {
     if (!timestampMs) return 'now';
     const diff = Date.now() - timestampMs;
@@ -256,6 +130,15 @@ function readIntelCache() {
 function isIntelCacheFresh(cache, now = Date.now()) {
     if (!cache?.lastUpdatedAt) return false;
     return now - cache.lastUpdatedAt < INTEL_CACHE_MAX_AGE_MS;
+}
+
+async function fetchManifestIntel() {
+    const payload = await fetchJsonWithPolicy(API_URLS.INTEL_WIRE_MANIFEST, {
+        timeoutMs: FETCH_TIMEOUT_MS,
+        retries: 1,
+        circuitKey: 'intel:manifest',
+    });
+    return Array.isArray(payload?.items) ? payload.items : [];
 }
 
 export default function IntelWire({ embedded = false, hidden = false, onHide = null }) {
@@ -328,19 +211,10 @@ export default function IntelWire({ embedded = false, hidden = false, onHide = n
                     lastUpdatedAt,
                 });
             }
-            const [guardianItems, hnItems, rssResults] = await Promise.all([
+            const [guardianItems, hnItems, manifestItems] = await Promise.all([
                 fetchGuardianIntel().catch(() => []),
                 fetchHackerNewsIntel().catch(() => []),
-                Promise.allSettled(
-                    RSS_INTEL_SOURCES.map(async (source) => {
-                        try {
-                            const text = await fetchRssText(source.url);
-                            return extractFeedItems(text, source.name);
-                        } catch (err) {
-                            return [];
-                        }
-                    })
-                ),
+                fetchManifestIntel().catch(() => []),
             ]);
 
             if (cancelled) return;
@@ -357,12 +231,9 @@ export default function IntelWire({ embedded = false, hidden = false, onHide = n
                 }
             };
 
+            ingest(manifestItems);
             ingest(guardianItems);
             ingest(hnItems);
-            for (const result of rssResults) {
-                if (result.status !== 'fulfilled') continue;
-                ingest(result.value);
-            }
 
             const keywordFiltered = merged.filter((item) => INTEL_KEYWORD_RE.test(item.title));
             const chosen = (keywordFiltered.length >= 6 ? keywordFiltered : merged)

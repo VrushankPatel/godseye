@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "manifests:refresh": "node ./scripts/refresh-runtime-manifests.mjs",
+    "build": "npm run manifests:refresh && vite build",
     "preview": "vite preview",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",

@@ -1,5 +1,47 @@
 import { create } from 'zustand';
 import { SURVEILLANCE_PRIMARY_LAYERS } from '../constants/dataSources';
+import { createLayerMeta, mergeLayerMeta } from '../utils/layerHealth';
+
+function createLayerState() {
+    return {
+        enabled: false,
+        data: [],
+        count: 0,
+        status: 'idle',
+        meta: createLayerMeta(),
+    };
+}
+
+function createLayersState() {
+    return {
+        aircraft: createLayerState(),
+        satellites: createLayerState(),
+        seismic: createLayerState(),
+        airports: createLayerState(),
+        seismicStations: createLayerState(),
+        maritime: createLayerState(),
+        powerGrid: createLayerState(),
+        hazards: createLayerState(),
+        disasters: createLayerState(),
+        conflicts: createLayerState(),
+        weatherAlerts: createLayerState(),
+        oceanBuoys: createLayerState(),
+        volcanoes: createLayerState(),
+        spaceWeather: createLayerState(),
+        metar: createLayerState(),
+        fireHotspots: createLayerState(),
+        aviationHazards: createLayerState(),
+        solarFlares: createLayerState(),
+        weather: createLayerState(),
+        airQuality: createLayerState(),
+        cctv: createLayerState(),
+        traffic: createLayerState(),
+        militaryActivity: createLayerState(),
+        militaryBases: createLayerState(),
+        forbiddenZones: createLayerState(),
+        airspace: createLayerState(),
+    };
+}
 
 const useStore = create((set, get) => ({
     // Shader mode
@@ -7,34 +49,7 @@ const useStore = create((set, get) => ({
     setShader: (mode) => set({ activeShader: mode }),
 
     // Layers
-    layers: {
-        aircraft: { enabled: false, data: [], count: 0, status: 'idle' },
-        satellites: { enabled: false, data: [], count: 0, status: 'idle' },
-        seismic: { enabled: false, data: [], count: 0, status: 'idle' },
-        airports: { enabled: false, data: [], count: 0, status: 'idle' },
-        seismicStations: { enabled: false, data: [], count: 0, status: 'idle' },
-        maritime: { enabled: false, data: [], count: 0, status: 'idle' },
-        powerGrid: { enabled: false, data: [], count: 0, status: 'idle' },
-        hazards: { enabled: false, data: [], count: 0, status: 'idle' },
-        disasters: { enabled: false, data: [], count: 0, status: 'idle' },
-        conflicts: { enabled: false, data: [], count: 0, status: 'idle' },
-        weatherAlerts: { enabled: false, data: [], count: 0, status: 'idle' },
-        oceanBuoys: { enabled: false, data: [], count: 0, status: 'idle' },
-        volcanoes: { enabled: false, data: [], count: 0, status: 'idle' },
-        spaceWeather: { enabled: false, data: [], count: 0, status: 'idle' },
-        metar: { enabled: false, data: [], count: 0, status: 'idle' },
-        fireHotspots: { enabled: false, data: [], count: 0, status: 'idle' },
-        aviationHazards: { enabled: false, data: [], count: 0, status: 'idle' },
-        solarFlares: { enabled: false, data: [], count: 0, status: 'idle' },
-        weather: { enabled: false, data: [], count: 0, status: 'idle' },
-        airQuality: { enabled: false, data: [], count: 0, status: 'idle' },
-        cctv: { enabled: false, data: [], count: 0, status: 'idle' },
-        traffic: { enabled: false, data: [], count: 0, status: 'idle' },
-        militaryActivity: { enabled: false, data: [], count: 0, status: 'idle' },
-        militaryBases: { enabled: false, data: [], count: 0, status: 'idle' },
-        forbiddenZones: { enabled: false, data: [], count: 0, status: 'idle' },
-        airspace: { enabled: false, data: [], count: 0, status: 'idle' },
-    },
+    layers: createLayersState(),
 
     toggleLayer: (layerName) =>
         set((state) => ({
@@ -69,29 +84,95 @@ const useStore = create((set, get) => ({
             return { layers: newLayers };
         }),
 
-    updateLayerData: (layerName, data) =>
-        set((state) => ({
-            layers: {
-                ...state.layers,
-                [layerName]: {
-                    ...state.layers[layerName],
-                    data: data,
-                    count: Array.isArray(data) ? data.length : 0,
-                    status: 'active',
+    markLayerFetchStart: (layerName, metaPatch = {}) =>
+        set((state) => {
+            const currentLayer = state.layers[layerName];
+            if (!currentLayer) return state;
+            const now = Date.now();
+            return {
+                layers: {
+                    ...state.layers,
+                    [layerName]: {
+                        ...currentLayer,
+                        status: currentLayer.data?.length ? currentLayer.status : 'loading',
+                        meta: mergeLayerMeta(
+                            currentLayer.meta,
+                            {
+                                lastAttemptAt: now,
+                                health: currentLayer.data?.length ? currentLayer.meta?.health || 'degraded' : 'loading',
+                                errorCode: null,
+                                ...metaPatch,
+                            },
+                            { now }
+                        ),
+                    },
                 },
-            },
-        })),
+            };
+        }),
 
-    setLayerStatus: (layerName, status) =>
-        set((state) => ({
-            layers: {
-                ...state.layers,
-                [layerName]: {
-                    ...state.layers[layerName],
-                    status: status,
+    updateLayerData: (layerName, data, metaPatch = {}) =>
+        set((state) => {
+            const currentLayer = state.layers[layerName];
+            if (!currentLayer) return state;
+            const now = Date.now();
+            const isCached = Boolean(metaPatch.isCached);
+            const nextStatus = metaPatch.status || 'active';
+            return {
+                layers: {
+                    ...state.layers,
+                    [layerName]: {
+                        ...currentLayer,
+                        data,
+                        count: Array.isArray(data) ? data.length : 0,
+                        status: nextStatus,
+                        meta: mergeLayerMeta(
+                            currentLayer.meta,
+                            {
+                                lastAttemptAt: metaPatch.lastAttemptAt ?? currentLayer.meta?.lastAttemptAt ?? now,
+                                lastSuccessAt: metaPatch.lastSuccessAt ?? now,
+                                sourceName: metaPatch.sourceName ?? currentLayer.meta?.sourceName ?? '',
+                                isCached,
+                                health: metaPatch.health || (isCached ? 'cached' : 'live'),
+                                errorCode: metaPatch.errorCode ?? null,
+                            },
+                            { now }
+                        ),
+                    },
                 },
-            },
-        })),
+            };
+        }),
+
+    setLayerStatus: (layerName, status, metaPatch = {}) =>
+        set((state) => {
+            const currentLayer = state.layers[layerName];
+            if (!currentLayer) return state;
+            const now = Date.now();
+            const statusHealthMap = {
+                idle: 'idle',
+                loading: 'loading',
+                error: 'error',
+                stale: 'stale',
+                active: currentLayer.meta?.isCached ? 'cached' : 'live',
+            };
+            const impliedPatch = {
+                ...metaPatch,
+                lastAttemptAt: status === 'loading' ? now : metaPatch.lastAttemptAt,
+                health: metaPatch.health || statusHealthMap[status] || currentLayer.meta?.health || 'idle',
+                errorCode: status === 'error'
+                    ? metaPatch.errorCode || currentLayer.meta?.errorCode || 'feed_unavailable'
+                    : metaPatch.errorCode ?? null,
+            };
+            return {
+                layers: {
+                    ...state.layers,
+                    [layerName]: {
+                        ...currentLayer,
+                        status,
+                        meta: mergeLayerMeta(currentLayer.meta, impliedPatch, { now }),
+                    },
+                },
+            };
+        }),
 
     // Inspector
     inspector: null,

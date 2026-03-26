@@ -276,6 +276,7 @@ export default function AircraftLayer({ viewer }) {
     const aircraftRefreshToken = useStore((s) => s.layerRefreshTokens.aircraft);
     const updateData = useStore((s) => s.updateLayerData);
     const setStatus = useStore((s) => s.setLayerStatus);
+    const markLayerFetchStart = useStore((s) => s.markLayerFetchStart);
     const setAircraftFeedData = useStore((s) => s.setAircraftFeedData);
 
     const entitiesRef = useRef(new Map());
@@ -363,8 +364,15 @@ export default function AircraftLayer({ viewer }) {
     const handleData = useCallback((flights) => {
         if (!Array.isArray(flights) || !flights.length) {
             clearEntities();
-            updateData('aircraft', []);
-            setStatus('aircraft', 'error');
+            updateData('aircraft', [], {
+                sourceName: 'ADS-B union',
+                health: 'error',
+                errorCode: 'no_aircraft_tracks',
+            });
+            setStatus('aircraft', 'error', {
+                sourceName: 'ADS-B union',
+                errorCode: 'no_aircraft_tracks',
+            });
             return;
         }
 
@@ -388,8 +396,16 @@ export default function AircraftLayer({ viewer }) {
             );
         });
 
-        setStatus('aircraft', 'active');
-        updateData('aircraft', visibleFlights);
+        setStatus('aircraft', 'active', {
+            sourceName: 'ADS-B union',
+            isCached: false,
+            health: 'live',
+        });
+        updateData('aircraft', visibleFlights, {
+            sourceName: 'ADS-B union',
+            isCached: false,
+            health: 'live',
+        });
 
         const cameraHeightM = viewer.camera.positionCartographic?.height || 0;
         const renderBudget = getAircraftRenderBudget(activeShader, cameraHeightM);
@@ -550,11 +566,18 @@ export default function AircraftLayer({ viewer }) {
         if (!flights.length) {
             clearEntities();
             if (aircraftEnabled) {
-                updateData('aircraft', []);
-                setStatus('aircraft', 'error');
+                updateData('aircraft', [], {
+                    sourceName: 'ADS-B union',
+                    health: 'error',
+                    errorCode: 'aircraft_fetch_failed',
+                });
+                setStatus('aircraft', 'error', {
+                    sourceName: 'ADS-B union',
+                    errorCode: 'aircraft_fetch_failed',
+                });
             } else {
-                updateData('aircraft', []);
-                setStatus('aircraft', 'idle');
+                updateData('aircraft', [], { status: 'idle', sourceName: 'Aircraft layer disabled', health: 'idle' });
+                setStatus('aircraft', 'idle', { sourceName: 'Aircraft layer disabled', health: 'idle' });
             }
             return;
         }
@@ -563,8 +586,8 @@ export default function AircraftLayer({ viewer }) {
             handleData(flights);
         } else {
             clearEntities();
-            updateData('aircraft', []);
-            setStatus('aircraft', 'idle');
+            updateData('aircraft', [], { status: 'idle', sourceName: 'Aircraft layer disabled', health: 'idle' });
+            setStatus('aircraft', 'idle', { sourceName: 'Aircraft layer disabled', health: 'idle' });
         }
     }, [
         aircraftEnabled,
@@ -606,10 +629,11 @@ export default function AircraftLayer({ viewer }) {
 
         lastRefreshTokenRef.current = aircraftRefreshToken;
         if (aircraftEnabled) {
-            setStatus('aircraft', 'loading');
+            markLayerFetchStart('aircraft', { sourceName: 'ADS-B union' });
+            setStatus('aircraft', 'loading', { sourceName: 'ADS-B union' });
         }
         pollAircraft();
-    }, [appIsActive, aircraftEnabled, aircraftRefreshToken, pollAircraft, setStatus, shouldIngest]);
+    }, [appIsActive, aircraftEnabled, aircraftRefreshToken, pollAircraft, setStatus, shouldIngest, markLayerFetchStart]);
 
     useEffect(() => {
         mountedRef.current = true;
@@ -619,8 +643,8 @@ export default function AircraftLayer({ viewer }) {
             clearInterval(animationTimerRef.current);
             sourceCycleRef.current = 0;
             clearEntities();
-            updateData('aircraft', []);
-            setStatus('aircraft', 'idle');
+            updateData('aircraft', [], { status: 'idle', sourceName: 'Aircraft layer disabled', health: 'idle' });
+            setStatus('aircraft', 'idle', { sourceName: 'Aircraft layer disabled', health: 'idle' });
             setAircraftFeedData([]);
             return;
         }
@@ -636,11 +660,12 @@ export default function AircraftLayer({ viewer }) {
         }
 
         if (aircraftEnabled) {
-            setStatus('aircraft', 'loading');
+            markLayerFetchStart('aircraft', { sourceName: 'ADS-B union' });
+            setStatus('aircraft', 'loading', { sourceName: 'ADS-B union' });
         } else {
-            setStatus('aircraft', 'idle');
+            setStatus('aircraft', 'idle', { sourceName: 'Aircraft layer disabled', health: 'idle' });
             clearEntities();
-            updateData('aircraft', []);
+            updateData('aircraft', [], { status: 'idle', sourceName: 'Aircraft layer disabled', health: 'idle' });
         }
         pollAircraft();
         pollTimerRef.current = setInterval(pollAircraft, POLL_INTERVALS.AIRCRAFT);
@@ -661,6 +686,7 @@ export default function AircraftLayer({ viewer }) {
         setAircraftFeedData,
         setStatus,
         shouldIngest,
+        markLayerFetchStart,
         updateData,
         viewer,
     ]);

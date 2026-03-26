@@ -1,5 +1,8 @@
 // ── API Endpoints ────────────────────────────────────
 export const API_URLS = {
+    INTEL_WIRE_MANIFEST: '/manifests/intel-wire.json',
+    VERIFIED_CCTV_MANIFEST: '/manifests/cctv-verified.json',
+    SATELLITE_ACTIVE_MANIFEST: '/manifests/satellite-active.json',
     // OpenSky Network - anonymous access, no API key needed
     // CORS: Browser requests are blocked; this stays as a last-resort source.
     OPENSKY: 'https://opensky-network.org/api/states/all',
@@ -17,20 +20,8 @@ export const API_URLS = {
     AISSTREAM_WS: 'wss://stream.aisstream.io/v0/stream',
     TLE_API_BASE: 'https://tle.ivanstanojevic.me/api/tle/',
 
-    // CelesTrak - TLE data for satellites
-    // We proxy this as well to prevent "Feed Offline" errors from strict browser CORS
-    CELESTRAK_ACTIVE: 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=tle'),
-    CELESTRAK_ACTIVE_TLE_FALLBACK:
-        'https://r.jina.ai/http://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=tle',
-    CELESTRAK_STATIONS: 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://celestrak.org/NORAD/elements/gp.php?GROUP=stations&FORMAT=tle'),
-    CELESTRAK_STARLINK: 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://celestrak.org/NORAD/elements/gp.php?GROUP=starlink&FORMAT=tle'),
-    CELESTRAK_WEATHER: 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://celestrak.org/NORAD/elements/gp.php?GROUP=weather&FORMAT=tle'),
-    CELESTRAK_GEO: 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://celestrak.org/NORAD/elements/gp.php?GROUP=geo&FORMAT=tle'),
-    CELESTRAK_GPS_OPS: 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://celestrak.org/NORAD/elements/gp.php?GROUP=gps-ops&FORMAT=tle'),
-    CELESTRAK_SCIENCE: 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://celestrak.org/NORAD/elements/gp.php?GROUP=science&FORMAT=tle'),
-    CELESTRAK_COSMOS_DEBRIS: 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://celestrak.org/NORAD/elements/gp.php?GROUP=cosmos-2251-debris&FORMAT=tle'),
-    CELESTRAK_IRIDIUM_DEBRIS: 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://celestrak.org/NORAD/elements/gp.php?GROUP=iridium-33-debris&FORMAT=tle'),
-    CELESTRAK_FENGYUN_DEBRIS: 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://celestrak.org/NORAD/elements/gp.php?GROUP=fengyun-1c-debris&FORMAT=tle'),
+    // CelesTrak - fetched during build into local manifests for runtime-safe fallback.
+    CELESTRAK_ACTIVE_DIRECT: 'https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=tle',
 
     // USGS Earthquake feed - excellent CORS support
     USGS_EARTHQUAKES_DAY: 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson',
@@ -122,11 +113,7 @@ export const API_URLS = {
     OSM_OVERPASS: 'https://overpass-api.de/api/interpreter',
     CAMERA_CALTRANS_CATALOG: 'https://cwwp2.dot.ca.gov/vm/js/cctv08.js',
     CAMERA_ONTARIO_511: 'https://511on.ca/api/v2/get/cameras',
-    CAMERA_ONTARIO_511_PROXY:
-        'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://511on.ca/api/v2/get/cameras'),
     CAMERA_ALBERTA_511: 'https://511.alberta.ca/api/v2/get/cameras',
-    CAMERA_ALBERTA_511_PROXY:
-        'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://511.alberta.ca/api/v2/get/cameras'),
     CAMERA_TFL_JAMCAMS: 'https://api.tfl.gov.uk/Place/Type/JamCam',
 
     // GPSJam - GPS interference data

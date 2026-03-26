@@ -14,8 +14,6 @@ import { fetchJsonWithPolicy } from '../utils/network';
 
 const YOUTUBE_API_KEY = getRuntimeKey('VITE_YOUTUBE_API_KEY', ' YouTube live CCTV discovery');
 const YOUTUBE_SEARCH_URL = 'https://www.googleapis.com/youtube/v3/search';
-const YOUTUBE_OEMBED = 'https://www.youtube.com/oembed';
-const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
 // ── Built-in geocoder for location extraction from video titles ──
 
 const LOCATION_DB = {
@@ -275,83 +273,9 @@ export async function discoverYouTubeLiveFeeds(maxPerQuery = 15) {
     return feeds;
 }
 
-// ── 2. YouTube oEmbed validation ────────────────────────────────
-
-/**
- * Validate a batch of YouTube video IDs via oEmbed.
- * Returns a Set of valid (alive) video IDs.
- */
-export async function validateYouTubeIds(videoIds, concurrency = 15) {
-    const valid = new Set();
-    const batches = [];
-
-    for (let i = 0; i < videoIds.length; i += concurrency) {
-        batches.push(videoIds.slice(i, i + concurrency));
-    }
-
-    for (const batch of batches) {
-        await Promise.allSettled(
-            batch.map(async (videoId) => {
-                try {
-                    const url = `${CORS_PROXY}${encodeURIComponent(`${YOUTUBE_OEMBED}?url=https://www.youtube.com/watch?v=${videoId}&format=json`)}`;
-                    const data = await fetchJsonWithPolicy(url, {
-                        timeoutMs: 5000,
-                        retries: 0,
-                        circuitKey: `feed-discovery:youtube-oembed:${videoId}`,
-                    });
-                    if (data && data.title) {
-                        valid.add(videoId);
-                    }
-                } catch { /* dead video */ }
-            })
-        );
-    }
-
-    return valid;
-}
-
-/**
- * Filter feeds, removing YouTube videos that are dead/deleted/private.
- * Non-YouTube feeds pass through unchanged.
- */
 export async function filterDeadYouTubeFeeds(feeds, sampleSize = 50) {
-    const ytFeeds = [];
-    const nonYtFeeds = [];
-    const idToVideoId = new Map();
-
-    for (const feed of feeds) {
-        const videoId = extractYouTubeId(feed.videoUrl);
-        if (videoId) {
-            ytFeeds.push(feed);
-            idToVideoId.set(feed.id, videoId);
-        } else {
-            nonYtFeeds.push(feed);
-        }
-    }
-
-    if (ytFeeds.length === 0) return feeds;
-
-    // Sample validation — check a random subset to avoid quota exhaustion
-    const uniqueIds = [...new Set(idToVideoId.values())];
-    const toValidate = uniqueIds.length > sampleSize
-        ? uniqueIds.sort(() => Math.random() - 0.5).slice(0, sampleSize)
-        : uniqueIds;
-
-    const validIds = await validateYouTubeIds(toValidate);
-
-    // Keep YT feeds whose ID was validated OR wasn't in the sample
-    const checkedSet = new Set(toValidate);
-    const validYtFeeds = ytFeeds.filter((feed) => {
-        const videoId = idToVideoId.get(feed.id);
-        if (!checkedSet.has(videoId)) return true; // wasn't checked, keep it
-        return validIds.has(videoId);               // was checked, keep only if valid
-    });
-
-    console.log(
-        `[FeedDiscovery] YouTube validation: ${validIds.size}/${toValidate.length} sampled feeds alive, kept ${validYtFeeds.length}/${ytFeeds.length} total`
-    );
-
-    return [...nonYtFeeds, ...validYtFeeds];
+    void sampleSize;
+    return feeds.filter((feed) => Boolean(extractYouTubeId(feed.videoUrl) || feed.url || feed.videoUrl));
 }
 
 // ── 4. Aggregated discovery ─────────────────────────────────────

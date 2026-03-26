@@ -5,7 +5,7 @@ import useStore from '../store/useStore';
 import { API_URLS, POLL_INTERVALS } from '../constants/dataSources';
 import { getSatelliteLiveView, getSatellitePriorityScore } from '../constants/satelliteLiveViews';
 import { readLayerCache, writeLayerCache } from '../utils/layerCache';
-import { fetchJsonWithPolicy, fetchTextWithPolicy } from '../utils/network';
+import { fetchJsonWithPolicy } from '../utils/network';
 
 const PAGE_SIZE = 100;
 const MAX_FETCH_PAGES = 120; // up to ~12,000 records from fallback API
@@ -114,12 +114,12 @@ async function fetchTlePage(page, signal) {
     });
 }
 
-async function fetchOfficialFallbackTle(signal) {
-    return fetchTextWithPolicy(API_URLS.CELESTRAK_ACTIVE_TLE_FALLBACK, {
+async function fetchManifestFallback(signal) {
+    return fetchJsonWithPolicy(API_URLS.SATELLITE_ACTIVE_MANIFEST, {
         signal,
         timeoutMs: 15000,
         retries: 1,
-        circuitKey: 'satellites:celestrak-active-fallback',
+        circuitKey: 'satellites:manifest-fallback',
     });
 }
 
@@ -169,6 +169,7 @@ export default function SatelliteLayer({ viewer }) {
     const satelliteRefreshToken = useStore((s) => s.layerRefreshTokens.satellites);
     const updateData = useStore((s) => s.updateLayerData);
     const setStatus = useStore((s) => s.setLayerStatus);
+    const markLayerFetchStart = useStore((s) => s.markLayerFetchStart);
 
     const entitiesRef = useRef(new Map());
     const satRecordsRef = useRef([]);
@@ -299,12 +300,20 @@ export default function SatelliteLayer({ viewer }) {
         );
 
         const initialRecords = hydrateTleRecords(rawAggregate);
-        updateData('satellites', initialRecords);
+        updateData('satellites', initialRecords, {
+            sourceName: 'TLE API live pages',
+            isCached: false,
+            health: 'live',
+        });
         writeLayerCache(SATELLITE_CACHE_KEY, rawAggregate);
 
         // Render immediately after first page
         satRecordsRef.current = [...initialRecords];
-        setStatus('satellites', 'active');
+        setStatus('satellites', 'active', {
+            sourceName: 'TLE API live pages',
+            isCached: false,
+            health: 'live',
+        });
         startPropagation();
 
         const totalPages = getTotalPages(firstPage.view) || 1;
@@ -332,7 +341,11 @@ export default function SatelliteLayer({ viewer }) {
             // Progressive update — propagation timer will render new ones
             const hydratedRecords = hydrateTleRecords(rawAggregate);
             satRecordsRef.current = [...hydratedRecords];
-            updateData('satellites', hydratedRecords);
+            updateData('satellites', hydratedRecords, {
+                sourceName: 'TLE API live pages',
+                isCached: false,
+                health: 'live',
+            });
         }
 
         writeLayerCache(SATELLITE_CACHE_KEY, rawAggregate);
@@ -341,7 +354,8 @@ export default function SatelliteLayer({ viewer }) {
 
     const loadSatellites = useCallback(async () => {
         if (!appIsActive) return;
-        setStatus('satellites', 'loading');
+        markLayerFetchStart('satellites', { sourceName: 'TLE API live pages' });
+        setStatus('satellites', 'loading', { sourceName: 'TLE API live pages' });
         if (abortRef.current) {
             abortRef.current.abort();
         }
@@ -353,8 +367,16 @@ export default function SatelliteLayer({ viewer }) {
             const cachedRecords = hydrateTleRecords(cachedRawRecords);
             if (cachedRecords.length) {
                 satRecordsRef.current = cachedRecords;
-                updateData('satellites', cachedRecords);
-                setStatus('satellites', 'active');
+                updateData('satellites', cachedRecords, {
+                    sourceName: 'Local satellite cache',
+                    isCached: true,
+                    health: 'cached',
+                });
+                setStatus('satellites', 'active', {
+                    sourceName: 'Local satellite cache',
+                    isCached: true,
+                    health: 'cached',
+                });
                 startPropagation();
             }
         }
@@ -366,8 +388,16 @@ export default function SatelliteLayer({ viewer }) {
             if (!records.length) throw new Error('No satellite records available');
 
             satRecordsRef.current = records;
-            updateData('satellites', records);
-            setStatus('satellites', 'active');
+            updateData('satellites', records, {
+                sourceName: 'TLE API live pages',
+                isCached: false,
+                health: 'live',
+            });
+            setStatus('satellites', 'active', {
+                sourceName: 'TLE API live pages',
+                isCached: false,
+                health: 'live',
+            });
 
             // startPropagation is called progressively inside loadFromPaginatedApi now
             // but ensure final state is propagating
@@ -377,8 +407,10 @@ export default function SatelliteLayer({ viewer }) {
 
             let fallbackRecords = [];
             try {
-                const officialTleText = await fetchOfficialFallbackTle(controller.signal);
-                const officialRawRecords = parseTleTextLoose(officialTleText);
+                const manifestPayload = await fetchManifestFallback(controller.signal);
+                const officialRawRecords = Array.isArray(manifestPayload?.records)
+                    ? manifestPayload.records.map(normalizeRawTleRecord).filter(Boolean)
+                    : [];
                 if (officialRawRecords.length) {
                     writeLayerCache(SATELLITE_CACHE_KEY, officialRawRecords);
                     fallbackRecords = hydrateTleRecords(officialRawRecords);
@@ -392,15 +424,25 @@ export default function SatelliteLayer({ viewer }) {
             }
 
             satRecordsRef.current = fallbackRecords;
-            updateData('satellites', fallbackRecords);
-            setStatus('satellites', fallbackRecords.length ? 'active' : 'error');
+            updateData('satellites', fallbackRecords, {
+                sourceName: fallbackRecords.length ? 'Satellite fallback manifest' : 'Bundled emergency TLE',
+                isCached: true,
+                health: fallbackRecords.length ? 'cached' : 'error',
+                errorCode: fallbackRecords.length ? null : 'satellite_feed_unavailable',
+            });
+            setStatus('satellites', fallbackRecords.length ? 'active' : 'error', {
+                sourceName: fallbackRecords.length ? 'Satellite fallback manifest' : 'Bundled emergency TLE',
+                isCached: fallbackRecords.length,
+                health: fallbackRecords.length ? 'cached' : 'error',
+                errorCode: fallbackRecords.length ? null : 'satellite_feed_unavailable',
+            });
             startPropagation();
         } finally {
             if (abortRef.current === controller) {
                 abortRef.current = null;
             }
         }
-    }, [appIsActive, isEnabled, loadFromPaginatedApi, setStatus, updateData, startPropagation]);
+    }, [appIsActive, isEnabled, loadFromPaginatedApi, setStatus, updateData, startPropagation, markLayerFetchStart]);
 
     useEffect(() => {
         if (!satelliteIconRef.current) {
@@ -411,8 +453,8 @@ export default function SatelliteLayer({ viewer }) {
     useEffect(() => {
         if (!isEnabled) {
             clearSatellites();
-            setStatus('satellites', 'idle');
-            updateData('satellites', []);
+            setStatus('satellites', 'idle', { sourceName: 'Satellite layer disabled', health: 'idle' });
+            updateData('satellites', [], { status: 'idle', sourceName: 'Satellite layer disabled', health: 'idle' });
             return;
         }
 
