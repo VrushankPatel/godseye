@@ -39,7 +39,13 @@ function extractYoutubeId(url) {
 function pickFeaturedFeeds(feeds, limit = MAX_DOCK_FEEDS) {
     if (!Array.isArray(feeds) || feeds.length === 0) return [];
 
-    const filtered = feeds.filter((feed) => feed && (feed.videoUrl || feed.url || feed.fallbackUrl));
+    const filtered = feeds
+        .filter((feed) => feed && (feed.videoUrl || feed.url || feed.fallbackUrl))
+        .sort((a, b) => {
+            const aScore = (a?.videoUrl ? 3 : 0) + (a?.mediaType === 'video' ? 2 : 0) + (a?.mediaType === 'embed' ? 1 : 0);
+            const bScore = (b?.videoUrl ? 3 : 0) + (b?.mediaType === 'video' ? 2 : 0) + (b?.mediaType === 'embed' ? 1 : 0);
+            return bScore - aScore;
+        });
     if (filtered.length <= limit) return filtered;
 
     const picked = [];
@@ -132,6 +138,7 @@ export default function WebcamDock() {
             fallbackUrl: feed.fallbackUrl || feed.url || null,
             detailsUrl: feed.detailsUrl || null,
             mediaType: feed.mediaType || (feed.videoUrl ? 'video' : 'image'),
+            mediaEnabled: true,
             streamCapable: Boolean(feed.streamCapable || feed.videoUrl),
             refreshSeconds: feed.refreshSeconds || 5,
             status: 'LIVE',
@@ -145,8 +152,9 @@ export default function WebcamDock() {
                 className="glass-panel pointer-events-auto"
                 style={{
                     position: 'absolute',
-                    right: '16px',
-                    bottom: '114px',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    bottom: '172px',
                     zIndex: 34,
                     border: '1px solid rgba(0, 255, 65, 0.28)',
                     background: 'rgba(6, 11, 18, 0.84)',
@@ -170,9 +178,10 @@ export default function WebcamDock() {
             className="glass-panel pointer-events-auto"
             style={{
                 position: 'absolute',
-                right: '16px',
-                bottom: '114px',
-                width: '460px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                bottom: '172px',
+                width: 'clamp(320px, 28vw, 420px)',
                 zIndex: 34,
                 border: '1px solid rgba(0, 255, 65, 0.28)',
                 background: 'rgba(6, 11, 18, 0.76)',

@@ -235,6 +235,7 @@ export default function TrafficLayer({ viewer }) {
                     videoUrl: feed.videoUrl || null,
                     fallbackUrl: feed.fallbackUrl || feed.url || null,
                     mediaType: feed.mediaType || 'embed',
+                    mediaEnabled: true,
                     refreshSeconds: feed.refreshSeconds || 12,
                     status: 'LIVE',
                 },

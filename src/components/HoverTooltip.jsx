@@ -24,6 +24,7 @@ function shouldHideField(key, value) {
         key === 'fallbackUrl' ||
         key === 'detailsUrl' ||
         key === 'mediaType' ||
+        key === 'mediaEnabled' ||
         key === 'refreshSeconds'
     ) {
         return true;

@@ -1,14 +1,11 @@
 import React, { useEffect, useRef, useCallback } from 'react';
 import * as Cesium from 'cesium';
 import useStore from '../store/useStore';
+import { API_URLS } from '../constants/dataSources';
 import { CAMERA_FEEDS } from '../constants/staticData';
 import { WORLDCAMS_FEEDS } from '../constants/worldcamsFeeds';
 import { discoverAllFeeds } from '../services/feedDiscovery';
-
-const CALTRANS_CCTV_CATALOG_URL = 'https://cwwp2.dot.ca.gov/vm/js/cctv08.js';
-const ONTARIO_511_CAMERAS_URL = `https://api.allorigins.win/raw?url=${encodeURIComponent('https://511on.ca/api/v2/get/cameras')}`;
-const ALBERTA_511_CAMERAS_URL = `https://api.allorigins.win/raw?url=${encodeURIComponent('https://511.alberta.ca/api/v2/get/cameras')}`;
-const TFL_JAMCAMS_URL = 'https://api.tfl.gov.uk/Place/Type/JamCam?app_key=';
+import { readLayerCache, writeLayerCache } from '../utils/layerCache';
 
 const MAX_CALTRANS_CAMERAS = 2400;
 const MAX_ONTARIO_CAMERAS = 850;
@@ -17,6 +14,8 @@ const MAX_TFL_CAMERAS = 850;
 const MAX_TOTAL_CAMERAS = 8000;
 const REQUEST_TIMEOUT_MS = 12000;
 const DEFAULT_RENDERED_CAMERAS = 6000;
+const CAMERA_CACHE_KEY = 'cctv-feeds-v3';
+const CAMERA_CACHE_TTL_MS = 12 * 60 * 60 * 1000;
 
 function parseJsonPayload(payload) {
     if (!payload) return null;
@@ -107,10 +106,11 @@ function normalizeCaltransFeed(text) {
     return feeds;
 }
 
-function normalize511Feeds(payload, provider, region, maxFeeds) {
+function normalize511Feeds(payload, provider, region, maxFeeds, originBase) {
     const parsed = parseJsonPayload(payload);
     if (!Array.isArray(parsed)) return [];
     const feeds = [];
+    const normalizedBase = String(originBase || '').replace(/\/$/, '');
     for (const cam of parsed) {
         const lat = Number(cam?.Latitude);
         const lng = Number(cam?.Longitude);
@@ -119,7 +119,9 @@ function normalize511Feeds(payload, provider, region, maxFeeds) {
             ? cam.Views.find((v) => v && v.Status === 'Enabled' && v.Url)
             : null;
         if (!firstView) continue;
-        const viewUrl = firstView.Url.startsWith('http') ? firstView.Url : `https://511on.ca${firstView.Url}`;
+        const viewUrl = firstView.Url.startsWith('http')
+            ? firstView.Url
+            : `${normalizedBase}${firstView.Url.startsWith('/') ? '' : '/'}${firstView.Url}`;
         feeds.push({
             id: `${provider.toLowerCase().replace(/\s+/g, '-')}-${cam.Id}-${firstView.Id || 'main'}`,
             name: cam.Location || `${cam.Roadway || 'Road'} ${cam.Direction || ''}`.trim(),
@@ -176,6 +178,21 @@ function mergeFeeds(feedGroups) {
         }
     }
     return merged;
+}
+
+function getCameraPriority(feed) {
+    let score = 0;
+    if (feed?.videoUrl) score += 50;
+    if (feed?.streamCapable) score += 20;
+    if (feed?.mediaType === 'video') score += 25;
+    if (feed?.mediaType === 'embed') score += 18;
+    if (feed?.provider === 'YouTube Live') score += 12;
+    if (feed?.provider === 'TfL JamCams') score += 10;
+    return score;
+}
+
+function prioritizeFeeds(feeds) {
+    return [...(feeds || [])].sort((a, b) => getCameraPriority(b) - getCameraPriority(a));
 }
 
 function getCameraRenderBudget(activeShader) {
@@ -252,6 +269,7 @@ function addEntitiesToViewer(viewer, feeds, imageUrl) {
                 fallbackUrl: cam.fallbackUrl || cam.url || null,
                 detailsUrl: cam.detailsUrl || null,
                 mediaType: cam.mediaType || 'image',
+                mediaEnabled: true,
                 streamCapable: Boolean(cam.streamCapable),
                 refreshSeconds: cam.refreshSeconds || 5,
                 status: cam.url || cam.videoUrl ? 'LIVE' : 'NO FEED URL',
@@ -292,38 +310,58 @@ export default function CameraLayer({ viewer }) {
                 setStatus('cctv', 'error');
                 return;
             }
+            const renderBudget = getCameraRenderBudget(activeShader);
+            const cachedFeeds = readLayerCache(CAMERA_CACHE_KEY, CAMERA_CACHE_TTL_MS);
+            if (Array.isArray(cachedFeeds) && cachedFeeds.length && !cancelled && isEnabled && !viewer.isDestroyed()) {
+                const prioritizedCachedFeeds = prioritizeFeeds(
+                    cachedFeeds.filter((f) => Boolean(f.videoUrl || f.url || f.fallbackUrl))
+                );
+                const cachedRenderFeeds = downsampleFeeds(prioritizedCachedFeeds, renderBudget);
+                entitiesRef.current = addEntitiesToViewer(viewer, cachedRenderFeeds, imageUrl);
+                updateData('cctv', prioritizedCachedFeeds);
+                setStatus('cctv', 'active');
+            }
 
             // Phase 1: Government / traffic APIs (fast, reliable)
             const [caltransRes, ontarioRes, albertaRes, tflRes] = await Promise.allSettled([
-                fetchWithTimeout(CALTRANS_CCTV_CATALOG_URL),
-                fetchWithTimeout(ONTARIO_511_CAMERAS_URL),
-                fetchWithTimeout(ALBERTA_511_CAMERAS_URL),
-                fetchWithTimeout(TFL_JAMCAMS_URL),
+                fetchWithTimeout(API_URLS.CAMERA_CALTRANS_CATALOG),
+                fetchWithTimeout(API_URLS.CAMERA_ONTARIO_511_PROXY),
+                fetchWithTimeout(API_URLS.CAMERA_ALBERTA_511_PROXY),
+                fetchWithTimeout(API_URLS.CAMERA_TFL_JAMCAMS),
             ]);
 
             const caltransFeeds = caltransRes.status === 'fulfilled' ? normalizeCaltransFeed(caltransRes.value) : [];
-            const ontarioFeeds = ontarioRes.status === 'fulfilled' ? normalize511Feeds(ontarioRes.value, 'Ontario 511', 'Ontario', MAX_ONTARIO_CAMERAS) : [];
-            const albertaFeeds = albertaRes.status === 'fulfilled' ? normalize511Feeds(albertaRes.value, 'Alberta 511', 'Alberta', MAX_ALBERTA_CAMERAS) : [];
+            const ontarioFeeds = ontarioRes.status === 'fulfilled'
+                ? normalize511Feeds(ontarioRes.value, 'Ontario 511', 'Ontario', MAX_ONTARIO_CAMERAS, 'https://511on.ca')
+                : [];
+            const albertaFeeds = albertaRes.status === 'fulfilled'
+                ? normalize511Feeds(albertaRes.value, 'Alberta 511', 'Alberta', MAX_ALBERTA_CAMERAS, 'https://511.alberta.ca')
+                : [];
             const tflFeeds = tflRes.status === 'fulfilled' ? normalizeTflFeeds(tflRes.value) : [];
 
             let govFeeds = mergeFeeds([caltransFeeds, ontarioFeeds, albertaFeeds, tflFeeds, WORLDCAMS_FEEDS, CAMERA_FEEDS]);
             govFeeds = govFeeds.filter((f) => Boolean(f.videoUrl || f.url || f.fallbackUrl));
-            const renderBudget = getCameraRenderBudget(activeShader);
+            govFeeds = prioritizeFeeds(govFeeds);
             const renderFeeds = downsampleFeeds(govFeeds, renderBudget);
 
             if (cancelled || !isEnabled || viewer.isDestroyed()) return;
 
-            // Render Phase 1 feeds immediately
-            entitiesRef.current = addEntitiesToViewer(viewer, renderFeeds, imageUrl);
-            updateData('cctv', govFeeds);
-            setStatus('cctv', govFeeds.length ? 'active' : 'error');
+            if (govFeeds.length) {
+                clearEntities();
+                entitiesRef.current = addEntitiesToViewer(viewer, renderFeeds, imageUrl);
+                updateData('cctv', govFeeds);
+                setStatus('cctv', 'active');
+                writeLayerCache(CAMERA_CACHE_KEY, govFeeds);
+            } else if (!cachedFeeds?.length) {
+                setStatus('cctv', 'error');
+            }
 
-            // Phase 2: Dynamic discovery (Windy, WorldCams) — background
+            // Phase 2: Supplemental discovery — background enrichment only.
             try {
-                const discoveredFeeds = await discoverAllFeeds(CAMERA_FEEDS);
+                const discoveredFeeds = await discoverAllFeeds();
                 if (cancelled || !isEnabled || viewer.isDestroyed()) return;
 
-                const allFeeds = mergeFeeds([govFeeds, discoveredFeeds]);
+                const allFeeds = prioritizeFeeds(mergeFeeds([govFeeds, discoveredFeeds]));
                 const displayable = allFeeds.filter((f) => Boolean(f.videoUrl || f.url || f.fallbackUrl));
 
                 // Only re-render if we discovered new feeds
@@ -333,6 +371,7 @@ export default function CameraLayer({ viewer }) {
                     entitiesRef.current = addEntitiesToViewer(viewer, sampled, imageUrl);
                     updateData('cctv', displayable);
                     setStatus('cctv', 'active');
+                    writeLayerCache(CAMERA_CACHE_KEY, displayable);
                 }
             } catch (err) {
                 console.warn('[CameraLayer] Discovery phase failed:', err.message);

@@ -3,8 +3,7 @@
  *
  * Discovers live camera feeds at runtime from multiple sources:
  *   1. YouTube Data API v3 — searches for live CCTV/webcam streams globally
- *   2. Windy Webcams API — worldwide webcams with lat/lng
- *   3. YouTube oEmbed validation — filters out dead/deleted YouTube videos
+ *   2. YouTube oEmbed validation — filters out dead/deleted YouTube videos
  *
  * All results normalized to:
  *   { id, name, lat, lng, url, videoUrl, city, country, mediaType, provider }
@@ -286,51 +285,7 @@ export async function discoverYouTubeLiveFeeds(maxPerQuery = 15) {
     return feeds;
 }
 
-// ── 2. Windy Webcams API ────────────────────────────────────────
-
-export async function discoverWindyWebcams(limit = 200) {
-    const feeds = [];
-    try {
-        const exportUrl = `${CORS_PROXY}${encodeURIComponent('https://api.windy.com/webcams/api/v3/webcams?limit=' + limit + '&offset=0&include=location,urls,images,categories')}`;
-        const res = await fetchWithTimeout(exportUrl);
-        const data = await res.json();
-
-        const webcams = data?.webcams || data?.result?.webcams || [];
-        for (const cam of webcams) {
-            const loc = cam.location || cam.position || {};
-            const lat = Number(loc.latitude ?? loc.lat);
-            const lng = Number(loc.longitude ?? loc.lng);
-            if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
-
-            const playerId = cam.id || cam.webcamId;
-            const embedUrl = playerId
-                ? `https://webcams.windy.com/webcams/public/embed/player/${playerId}/day`
-                : null;
-
-            const images = cam.images || cam.image || {};
-            const currentImg = images?.current?.preview || images?.daylight?.preview || null;
-
-            feeds.push({
-                id: `windy-${playerId || feeds.length}`,
-                name: cam.title || cam.name || `Windy Cam ${feeds.length + 1}`,
-                lat, lng,
-                url: currentImg,
-                videoUrl: embedUrl,
-                fallbackUrl: currentImg,
-                city: loc.city || '',
-                country: loc.country || '',
-                mediaType: embedUrl ? 'embed' : 'image',
-                refreshSeconds: 900,
-                provider: 'Windy',
-            });
-        }
-    } catch (err) {
-        console.warn('[FeedDiscovery] Windy API failed:', err.message);
-    }
-    return feeds;
-}
-
-// ── 3. YouTube oEmbed validation ────────────────────────────────
+// ── 2. YouTube oEmbed validation ────────────────────────────────
 
 /**
  * Validate a batch of YouTube video IDs via oEmbed.
@@ -409,25 +364,19 @@ export async function filterDeadYouTubeFeeds(feeds, sampleSize = 50) {
 // ── 4. Aggregated discovery ─────────────────────────────────────
 
 /**
- * Run all discovery sources in parallel, merge, and return.
+ * Run discovery sources in parallel, validate the results, and return.
  * This is called as Phase 2 by CameraLayer.
  */
-export async function discoverAllFeeds(seedFeeds = []) {
-    console.log('[FeedDiscovery] Starting multi-source discovery...');
+export async function discoverAllFeeds() {
+    console.log('[FeedDiscovery] Starting supplemental discovery...');
 
-    const [ytResult, windyResult] = await Promise.allSettled([
+    const [ytResult] = await Promise.allSettled([
         discoverYouTubeLiveFeeds(15),
-        discoverWindyWebcams(200),
     ]);
 
     const ytFeeds = ytResult.status === 'fulfilled' ? ytResult.value : [];
-    const windyFeeds = windyResult.status === 'fulfilled' ? windyResult.value : [];
+    const validatedFeeds = await filterDeadYouTubeFeeds(ytFeeds);
 
-    console.log(`[FeedDiscovery] YouTube Live: ${ytFeeds.length}, Windy: ${windyFeeds.length}`);
-
-    // Merge discovered feeds with seed feeds
-    const allFeeds = [...seedFeeds, ...ytFeeds, ...windyFeeds];
-
-    console.log(`[FeedDiscovery] Total discovered feeds: ${allFeeds.length}`);
-    return allFeeds;
+    console.log(`[FeedDiscovery] YouTube Live: ${validatedFeeds.length}`);
+    return validatedFeeds;
 }

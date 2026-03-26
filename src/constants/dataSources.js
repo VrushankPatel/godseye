@@ -15,10 +15,13 @@ export const API_URLS = {
     ADSB_ONE_GLOBAL: 'https://api.adsb.one/v2/point/0/0/10000',
     ADSB_LOL_GLOBAL: 'https://api.adsb.lol/v2/point/0/0/10000',
     AISSTREAM_WS: 'wss://stream.aisstream.io/v0/stream',
+    TLE_API_BASE: 'https://tle.ivanstanojevic.me/api/tle/',
 
     // CelesTrak - TLE data for satellites
     // We proxy this as well to prevent "Feed Offline" errors from strict browser CORS
     CELESTRAK_ACTIVE: 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=tle'),
+    CELESTRAK_ACTIVE_TLE_FALLBACK:
+        'https://r.jina.ai/http://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=tle',
     CELESTRAK_STATIONS: 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://celestrak.org/NORAD/elements/gp.php?GROUP=stations&FORMAT=tle'),
     CELESTRAK_STARLINK: 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://celestrak.org/NORAD/elements/gp.php?GROUP=starlink&FORMAT=tle'),
     CELESTRAK_WEATHER: 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://celestrak.org/NORAD/elements/gp.php?GROUP=weather&FORMAT=tle'),
@@ -117,6 +120,14 @@ export const API_URLS = {
     // Served locally to keep CORS and Overpass rate limits out of the runtime path.
     MILITARY_BASES_OSM_SNAPSHOT: '/data/osmMilitarySites.json',
     OSM_OVERPASS: 'https://overpass-api.de/api/interpreter',
+    CAMERA_CALTRANS_CATALOG: 'https://cwwp2.dot.ca.gov/vm/js/cctv08.js',
+    CAMERA_ONTARIO_511: 'https://511on.ca/api/v2/get/cameras',
+    CAMERA_ONTARIO_511_PROXY:
+        'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://511on.ca/api/v2/get/cameras'),
+    CAMERA_ALBERTA_511: 'https://511.alberta.ca/api/v2/get/cameras',
+    CAMERA_ALBERTA_511_PROXY:
+        'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://511.alberta.ca/api/v2/get/cameras'),
+    CAMERA_TFL_JAMCAMS: 'https://api.tfl.gov.uk/Place/Type/JamCam',
 
     // GPSJam - GPS interference data
     GPSJAM: 'https://gpsjam.org',

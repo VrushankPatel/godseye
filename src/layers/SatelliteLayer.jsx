@@ -2,13 +2,16 @@ import React, { useEffect, useRef, useCallback } from 'react';
 import * as Cesium from 'cesium';
 import * as satellite from 'satellite.js';
 import useStore from '../store/useStore';
-import { POLL_INTERVALS } from '../constants/dataSources';
+import { API_URLS, POLL_INTERVALS } from '../constants/dataSources';
+import { getSatelliteLiveView, getSatellitePriorityScore } from '../constants/satelliteLiveViews';
+import { readLayerCache, writeLayerCache } from '../utils/layerCache';
 
-const TLE_API_BASE = 'https://tle.ivanstanojevic.me/api/tle/';
 const PAGE_SIZE = 100;
 const MAX_FETCH_PAGES = 120; // up to ~12,000 records from fallback API
 const PAGE_FETCH_CONCURRENCY = 6;
 const MAX_RENDERED_SATELLITES = 12000;
+const SATELLITE_CACHE_KEY = 'satellite-tle-records-v2';
+const SATELLITE_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
 
 const FALLBACK_TLE = `ISS (ZARYA)
 1 25544U 98067A   24068.31846065  .00017169  00000+0  31416-3 0  9997
@@ -23,46 +26,75 @@ STARLINK-1007
 1 44713U 19074A   24068.41666667  .00000000  00000+0  00000+0 0  9990
 2 44713  53.0500  10.0000 0001000   0.0000   0.0000 15.06000000000000`;
 
-function parseFallbackTle(text) {
+function normalizeRawTleRecord(item = {}) {
+    const line1 = String(item.line1 || '').trim();
+    const line2 = String(item.line2 || '').trim();
+    if (!line1.startsWith('1 ') || !line2.startsWith('2 ')) return null;
+
+    const id = String(item.satelliteId || item.NORAD_CAT_ID || line1.slice(2, 7).trim() || 'UNKNOWN');
+    return {
+        id,
+        name: String(item.name || item.OBJECT_NAME || `SAT-${id}`).trim(),
+        line1,
+        line2,
+    };
+}
+
+function hydrateTleRecords(rawRecords = []) {
     const records = [];
-    const lines = text.split('\n').filter((l) => l.trim().length > 0);
-    for (let i = 0; i < lines.length; i += 3) {
-        if (i + 2 >= lines.length) break;
-        const name = lines[i].trim();
-        const line1 = lines[i + 1].trim();
-        const line2 = lines[i + 2].trim();
-        if (!line1.startsWith('1 ') || !line2.startsWith('2 ')) continue;
+    for (const rawRecord of rawRecords) {
+        if (!rawRecord?.line1 || !rawRecord?.line2) continue;
         try {
-            const satrec = satellite.twoline2satrec(line1, line2);
+            const satrec = satellite.twoline2satrec(rawRecord.line1, rawRecord.line2);
+            if (!satrec || !satrec.satnum) continue;
             records.push({
-                id: String(satrec.satnum),
-                name,
+                id: String(rawRecord.id || satrec.satnum),
+                name: rawRecord.name || `SAT-${satrec.satnum}`,
                 satrec,
+                liveView: getSatelliteLiveView(rawRecord.name),
             });
         } catch (err) {
             // Skip invalid rows.
         }
     }
-    return records;
+
+    return records.sort((a, b) => {
+        const scoreDiff = getSatellitePriorityScore(b.name) - getSatellitePriorityScore(a.name);
+        if (scoreDiff !== 0) return scoreDiff;
+        return String(a.name || '').localeCompare(String(b.name || ''));
+    });
 }
 
-function parseTleApiMember(member = []) {
-    const records = [];
-    for (const item of member) {
-        if (!item || !item.line1 || !item.line2) continue;
-        try {
-            const satrec = satellite.twoline2satrec(item.line1.trim(), item.line2.trim());
-            if (!satrec || !satrec.satnum) continue;
-            records.push({
-                id: String(item.satelliteId || satrec.satnum),
-                name: item.name || `SAT-${item.satelliteId || satrec.satnum}`,
-                satrec,
+function parseTleTextLoose(text) {
+    const rawRecords = [];
+    const lines = String(text || '')
+        .split('\n')
+        .map((line) => line.trim())
+        .filter(Boolean);
+
+    let pendingName = '';
+
+    for (let i = 0; i < lines.length; i += 1) {
+        const line = lines[i];
+        const nextLine = lines[i + 1]?.trim();
+        if (line.startsWith('1 ') && nextLine?.startsWith('2 ')) {
+            const rawRecord = normalizeRawTleRecord({
+                name: pendingName || `SAT-${rawRecords.length + 1}`,
+                line1: line,
+                line2: nextLine,
             });
-        } catch (err) {
-            // Skip malformed TLE pairs.
+            if (rawRecord) rawRecords.push(rawRecord);
+            pendingName = '';
+            i += 1;
+            continue;
+        }
+
+        if (!/^Title:|^URL Source:|^Markdown Content:?$/i.test(line)) {
+            pendingName = line;
         }
     }
-    return records;
+
+    return rawRecords;
 }
 
 function getTotalPages(view) {
@@ -73,12 +105,21 @@ function getTotalPages(view) {
 }
 
 async function fetchTlePage(page, signal) {
-    const response = await fetch(`${TLE_API_BASE}?page=${page}&page-size=${PAGE_SIZE}`, {
+    const response = await fetch(`${API_URLS.TLE_API_BASE}?page=${page}&page-size=${PAGE_SIZE}`, {
         signal,
         cache: 'no-store',
     });
     if (!response.ok) throw new Error(`TLE API HTTP ${response.status}`);
     return response.json();
+}
+
+async function fetchOfficialFallbackTle(signal) {
+    const response = await fetch(API_URLS.CELESTRAK_ACTIVE_TLE_FALLBACK, {
+        signal,
+        cache: 'no-store',
+    });
+    if (!response.ok) throw new Error(`CelesTrak fallback HTTP ${response.status}`);
+    return response.text();
 }
 
 function createSatelliteIconDataUri() {
@@ -154,7 +195,7 @@ export default function SatelliteLayer({ viewer }) {
         const renderBudget = getSatelliteRenderBudget(activeShader, cameraHeightM);
         const activeRecords = satRecordsRef.current.slice(0, renderBudget);
 
-        activeRecords.forEach(({ id, name, satrec }) => {
+        activeRecords.forEach(({ id, name, satrec, liveView }) => {
             const satId = `satellite-${id}`;
             currentIds.add(satId);
 
@@ -186,6 +227,13 @@ export default function SatelliteLayer({ viewer }) {
                 entity.properties.longitude = longitude.toFixed(4);
                 entity.properties.altitude = `${Math.round(heightKm)} km`;
                 if (velocityKmh !== null) entity.properties.velocity = `${velocityKmh} km/h`;
+                entity.properties.mediaEnabled = Boolean(liveView?.mediaEnabled);
+                entity.properties.url = liveView?.url || null;
+                entity.properties.videoUrl = liveView?.videoUrl || null;
+                entity.properties.fallbackUrl = liveView?.fallbackUrl || liveView?.url || null;
+                entity.properties.detailsUrl = liveView?.detailsUrl || null;
+                entity.properties.mediaType = liveView?.mediaType || null;
+                entity.properties.refreshSeconds = liveView?.refreshSeconds || 600;
             } else {
                 const entity = viewer.entities.add({
                     id: satId,
@@ -206,6 +254,15 @@ export default function SatelliteLayer({ viewer }) {
                         inclination: `${((satrec.inclo || 0) * 180 / Math.PI).toFixed(2)}°`,
                         latitude: latitude.toFixed(4),
                         longitude: longitude.toFixed(4),
+                        mediaEnabled: Boolean(liveView?.mediaEnabled),
+                        url: liveView?.url || null,
+                        videoUrl: liveView?.videoUrl || null,
+                        fallbackUrl: liveView?.fallbackUrl || liveView?.url || null,
+                        detailsUrl: liveView?.detailsUrl || null,
+                        mediaType: liveView?.mediaType || null,
+                        refreshSeconds: liveView?.refreshSeconds || 600,
+                        liveView: liveView?.liveView || 'UNAVAILABLE',
+                        liveSource: liveView?.liveSource || 'N/A',
                         status: 'ORBIT TRACKING',
                     },
                 });
@@ -231,14 +288,19 @@ export default function SatelliteLayer({ viewer }) {
     }, [updateSatellitePositions]);
 
     const loadFromPaginatedApi = useCallback(async (signal) => {
-        const aggregate = [];
+        const rawAggregate = [];
 
         const firstPage = await fetchTlePage(1, signal);
-        aggregate.push(...parseTleApiMember(firstPage.member));
-        updateData('satellites', aggregate);
+        rawAggregate.push(
+            ...((firstPage.member || []).map(normalizeRawTleRecord).filter(Boolean))
+        );
+
+        const initialRecords = hydrateTleRecords(rawAggregate);
+        updateData('satellites', initialRecords);
+        writeLayerCache(SATELLITE_CACHE_KEY, rawAggregate);
 
         // Render immediately after first page
-        satRecordsRef.current = [...aggregate];
+        satRecordsRef.current = [...initialRecords];
         setStatus('satellites', 'active');
         startPropagation();
 
@@ -257,17 +319,21 @@ export default function SatelliteLayer({ viewer }) {
 
             for (const result of results) {
                 if (result.status !== 'fulfilled') continue;
-                aggregate.push(...parseTleApiMember(result.value.member));
+                rawAggregate.push(
+                    ...((result.value.member || []).map(normalizeRawTleRecord).filter(Boolean))
+                );
             }
 
             if (signal.aborted || !isEnabled) return [];
 
             // Progressive update — propagation timer will render new ones
-            satRecordsRef.current = [...aggregate];
-            updateData('satellites', aggregate);
+            const hydratedRecords = hydrateTleRecords(rawAggregate);
+            satRecordsRef.current = [...hydratedRecords];
+            updateData('satellites', hydratedRecords);
         }
 
-        return aggregate;
+        writeLayerCache(SATELLITE_CACHE_KEY, rawAggregate);
+        return hydrateTleRecords(rawAggregate);
     }, [isEnabled, updateData, setStatus, startPropagation]);
 
     const loadSatellites = useCallback(async () => {
@@ -277,6 +343,17 @@ export default function SatelliteLayer({ viewer }) {
         }
         const controller = new AbortController();
         abortRef.current = controller;
+
+        const cachedRawRecords = readLayerCache(SATELLITE_CACHE_KEY, SATELLITE_CACHE_TTL_MS);
+        if (Array.isArray(cachedRawRecords) && cachedRawRecords.length) {
+            const cachedRecords = hydrateTleRecords(cachedRawRecords);
+            if (cachedRecords.length) {
+                satRecordsRef.current = cachedRecords;
+                updateData('satellites', cachedRecords);
+                setStatus('satellites', 'active');
+                startPropagation();
+            }
+        }
 
         try {
             const records = await loadFromPaginatedApi(controller.signal);
@@ -294,7 +371,22 @@ export default function SatelliteLayer({ viewer }) {
         } catch (err) {
             if (controller.signal.aborted) return;
 
-            const fallbackRecords = parseFallbackTle(FALLBACK_TLE);
+            let fallbackRecords = [];
+            try {
+                const officialTleText = await fetchOfficialFallbackTle(controller.signal);
+                const officialRawRecords = parseTleTextLoose(officialTleText);
+                if (officialRawRecords.length) {
+                    writeLayerCache(SATELLITE_CACHE_KEY, officialRawRecords);
+                    fallbackRecords = hydrateTleRecords(officialRawRecords);
+                }
+            } catch (fallbackErr) {
+                // Fall through to bundled emergency TLE sample.
+            }
+
+            if (!fallbackRecords.length) {
+                fallbackRecords = hydrateTleRecords(parseTleTextLoose(FALLBACK_TLE));
+            }
+
             satRecordsRef.current = fallbackRecords;
             updateData('satellites', fallbackRecords);
             setStatus('satellites', fallbackRecords.length ? 'active' : 'error');

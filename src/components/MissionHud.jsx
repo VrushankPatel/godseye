@@ -382,14 +382,21 @@ export default function MissionHud() {
     const AIRCRAFT_VIEWS = [{ id: 'CHASE', label: 'Chase' }, { id: 'COCKPIT', label: 'Cockpit' }, { id: 'TOP', label: 'Top' }, { id: 'SIDE', label: 'Side' }];
     const SATELLITE_VIEWS = [{ id: 'ORBIT', label: 'Orbit' }, { id: 'NADIR', label: 'Nadir' }, { id: 'WIDE', label: 'Wide' }];
 
-    const SKIP_KEYS = new Set(['type', 'name', 'callsign', 'id', 'url', 'fallbackUrl', 'videoUrl', 'mediaType', 'refreshSeconds', 'detailsUrl']);
+    const SKIP_KEYS = new Set(['type', 'name', 'callsign', 'id', 'url', 'fallbackUrl', 'videoUrl', 'mediaType', 'refreshSeconds', 'detailsUrl', 'mediaEnabled']);
 
     // Entity info helpers
     const inspectorDef = inspector ? (LAYER_DEFS[inspector.type] || { color: '#fff', icon: '❓', label: 'UNKNOWN' }) : null;
     const isTrackable = inspector && TRACKABLE_TYPES.has(inspector.type) && Boolean(inspector._entityId);
     const isTracked = isTrackable && trackedTarget?.entityId === inspector._entityId;
     const trackViews = inspector?.type === 'satellites' ? SATELLITE_VIEWS : AIRCRAFT_VIEWS;
-    const hasMedia = inspector && (inspector.type === 'cctv' || inspector.type === 'traffic');
+    const hasMedia = Boolean(
+        inspector &&
+        (
+            inspector.mediaEnabled ||
+            inspector.type === 'cctv' ||
+            inspector.type === 'traffic'
+        )
+    );
 
     const handleTrackToggle = useCallback(() => {
         if (!inspector || !isTrackable) return;
