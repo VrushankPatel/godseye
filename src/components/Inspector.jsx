@@ -245,7 +245,6 @@ export default function Inspector() {
     if (!hasMediaPanel) return null;
 
     const def = LAYER_DEFS[inspector.type] || { color: '#ffffff', icon: '❓', label: 'UNKNOWN' };
-    const isCctv = inspector.type === 'cctv';
     const isTrackable = TRACKABLE_LAYER_TYPES.has(inspector.type) && Boolean(inspector._entityId);
     const isTracked =
         isTrackable &&

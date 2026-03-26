@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import useStore from '../store/useStore';
 import { getRuntimeKey } from '../utils/runtimeEnv';
+import { fetchJsonWithPolicy, fetchTextWithPolicy } from '../utils/network';
 import {
     INTEL_REGIONS,
     buildIntelRegionCounts,
@@ -69,40 +70,14 @@ function buildCodeTabsProxyUrl(url) {
     return `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`;
 }
 
-async function fetchJsonWithTimeout(url, timeoutMs = FETCH_TIMEOUT_MS) {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), timeoutMs);
-    try {
-        const response = await fetch(url, {
-            signal: controller.signal,
-            cache: 'no-store',
-        });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        return response.json();
-    } finally {
-        clearTimeout(timeout);
-    }
-}
-
-async function fetchTextWithTimeout(url, timeoutMs = FETCH_TIMEOUT_MS) {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), timeoutMs);
-    try {
-        const response = await fetch(url, {
-            signal: controller.signal,
-            cache: 'no-store',
-        });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        return response.text();
-    } finally {
-        clearTimeout(timeout);
-    }
-}
-
 async function fetchRssText(sourceUrl) {
     // Try direct first for feeds that already expose CORS.
     try {
-        const direct = await fetchTextWithTimeout(sourceUrl);
+        const direct = await fetchTextWithPolicy(sourceUrl, {
+            timeoutMs: FETCH_TIMEOUT_MS,
+            retries: 1,
+            circuitKey: `intel:rss:direct:${sourceUrl}`,
+        });
         if (direct && direct.trim()) {
             return direct;
         }
@@ -115,7 +90,11 @@ async function fetchRssText(sourceUrl) {
     const codeTabsProxy = buildCodeTabsProxyUrl(sourceUrl);
 
     try {
-        const raw = await fetchTextWithTimeout(rawProxy);
+        const raw = await fetchTextWithPolicy(rawProxy, {
+            timeoutMs: FETCH_TIMEOUT_MS,
+            retries: 0,
+            circuitKey: `intel:rss:proxy:allorigins-raw:${sourceUrl}`,
+        });
         if (raw && raw.trim() && !/^\s*error code:\s*\d+/i.test(raw)) {
             return raw;
         }
@@ -124,7 +103,11 @@ async function fetchRssText(sourceUrl) {
     }
 
     try {
-        const wrapped = await fetchTextWithTimeout(getProxy);
+        const wrapped = await fetchTextWithPolicy(getProxy, {
+            timeoutMs: FETCH_TIMEOUT_MS,
+            retries: 0,
+            circuitKey: `intel:rss:proxy:allorigins-get:${sourceUrl}`,
+        });
         const parsed = JSON.parse(wrapped);
         if (parsed?.contents) {
             return String(parsed.contents);
@@ -133,7 +116,11 @@ async function fetchRssText(sourceUrl) {
         // fall through to CodeTabs path
     }
 
-    const codeTabsBody = await fetchTextWithTimeout(codeTabsProxy);
+    const codeTabsBody = await fetchTextWithPolicy(codeTabsProxy, {
+        timeoutMs: FETCH_TIMEOUT_MS,
+        retries: 0,
+        circuitKey: `intel:rss:proxy:codetabs:${sourceUrl}`,
+    });
     if (codeTabsBody && codeTabsBody.trim()) {
         return codeTabsBody;
     }
@@ -145,7 +132,11 @@ async function fetchGuardianIntel() {
 
     const requests = GUARDIAN_QUERIES.map((query) => {
         const url = `${GUARDIAN_API_BASE}?q=${encodeURIComponent(query)}&api-key=${GUARDIAN_API_KEY}&page-size=12&show-fields=headline`;
-        return fetchJsonWithTimeout(url).catch(() => null);
+        return fetchJsonWithPolicy(url, {
+            timeoutMs: FETCH_TIMEOUT_MS,
+            retries: 1,
+            circuitKey: `intel:guardian:${query}`,
+        }).catch(() => null);
     });
     const responses = await Promise.all(requests);
     const items = [];
@@ -173,7 +164,11 @@ async function fetchGuardianIntel() {
 async function fetchHackerNewsIntel() {
     const requests = HN_QUERIES.map((query) => {
         const url = `${HN_API_BASE}?query=${encodeURIComponent(query)}&tags=story`;
-        return fetchJsonWithTimeout(url).catch(() => null);
+        return fetchJsonWithPolicy(url, {
+            timeoutMs: FETCH_TIMEOUT_MS,
+            retries: 1,
+            circuitKey: `intel:hackernews:${query}`,
+        }).catch(() => null);
     });
     const responses = await Promise.all(requests);
     const items = [];
@@ -264,6 +259,7 @@ function isIntelCacheFresh(cache, now = Date.now()) {
 }
 
 export default function IntelWire({ embedded = false, hidden = false, onHide = null }) {
+    const appIsActive = useStore((s) => s.appIsActive);
     const sharedItems = useStore((s) => s.intelFeedItems);
     const sharedStatus = useStore((s) => s.intelFeedStatus);
     const sharedLastUpdatedAt = useStore((s) => s.intelFeedLastUpdatedAt);
@@ -307,6 +303,7 @@ export default function IntelWire({ embedded = false, hidden = false, onHide = n
     }, [setIntelFeedSnapshot]);
 
     useEffect(() => {
+        if (!appIsActive) return undefined;
         let cancelled = false;
 
         const loadIntel = async () => {
@@ -420,7 +417,7 @@ export default function IntelWire({ embedded = false, hidden = false, onHide = n
             cancelled = true;
             clearInterval(timer);
         };
-    }, [reloadTick, setIntelFeedSnapshot]);
+    }, [appIsActive, lastUpdatedAt, reloadTick, setIntelFeedSnapshot]);
 
     const updatedLabel = useMemo(() => {
         if (status === 'loading' && !lastUpdatedAt) return 'syncing';

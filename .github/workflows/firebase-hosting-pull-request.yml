@@ -9,8 +9,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - run: npm ci && npm run build
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
         env:
+          VITE_GOOGLE_MAPS_3D_KEY: '${{ secrets.VITE_GOOGLE_MAPS_3D_KEY }}'
+          VITE_GOOGLE_MAPS_API_KEY: '${{ secrets.VITE_GOOGLE_MAPS_3D_KEY }}'
+          VITE_MAPBOX_ACCESS_TOKEN: '${{ secrets.VITE_MAPBOX_ACCESS_TOKEN }}'
+          VITE_YOUTUBE_API_KEY: '${{ secrets.VITE_YOUTUBE_API_KEY }}'
+          VITE_GUARDIAN_API_KEY: '${{ secrets.VITE_GUARDIAN_API_KEY }}'
+          VITE_AISSTREAM_API_KEY: '${{ secrets.VITE_AISSTREAM_API_KEY }}'
+      - run: npx playwright install --with-deps chromium
+      - run: npm run ci
+        env:
+          CI: 'true'
           VITE_GOOGLE_MAPS_3D_KEY: '${{ secrets.VITE_GOOGLE_MAPS_3D_KEY }}'
           VITE_GOOGLE_MAPS_API_KEY: '${{ secrets.VITE_GOOGLE_MAPS_3D_KEY }}'
           VITE_MAPBOX_ACCESS_TOKEN: '${{ secrets.VITE_MAPBOX_ACCESS_TOKEN }}'

@@ -5,6 +5,7 @@ import useStore from '../store/useStore';
 import { API_URLS, POLL_INTERVALS } from '../constants/dataSources';
 import { getSatelliteLiveView, getSatellitePriorityScore } from '../constants/satelliteLiveViews';
 import { readLayerCache, writeLayerCache } from '../utils/layerCache';
+import { fetchJsonWithPolicy, fetchTextWithPolicy } from '../utils/network';
 
 const PAGE_SIZE = 100;
 const MAX_FETCH_PAGES = 120; // up to ~12,000 records from fallback API
@@ -105,21 +106,21 @@ function getTotalPages(view) {
 }
 
 async function fetchTlePage(page, signal) {
-    const response = await fetch(`${API_URLS.TLE_API_BASE}?page=${page}&page-size=${PAGE_SIZE}`, {
+    return fetchJsonWithPolicy(`${API_URLS.TLE_API_BASE}?page=${page}&page-size=${PAGE_SIZE}`, {
         signal,
-        cache: 'no-store',
+        timeoutMs: 15000,
+        retries: 1,
+        circuitKey: `satellites:tle-api:page:${page}`,
     });
-    if (!response.ok) throw new Error(`TLE API HTTP ${response.status}`);
-    return response.json();
 }
 
 async function fetchOfficialFallbackTle(signal) {
-    const response = await fetch(API_URLS.CELESTRAK_ACTIVE_TLE_FALLBACK, {
+    return fetchTextWithPolicy(API_URLS.CELESTRAK_ACTIVE_TLE_FALLBACK, {
         signal,
-        cache: 'no-store',
+        timeoutMs: 15000,
+        retries: 1,
+        circuitKey: 'satellites:celestrak-active-fallback',
     });
-    if (!response.ok) throw new Error(`CelesTrak fallback HTTP ${response.status}`);
-    return response.text();
 }
 
 function createSatelliteIconDataUri() {
@@ -163,6 +164,7 @@ function getSatelliteRenderBudget(activeShader, cameraHeightM) {
 
 export default function SatelliteLayer({ viewer }) {
     const isEnabled = useStore((s) => s.layers.satellites.enabled);
+    const appIsActive = useStore((s) => s.appIsActive);
     const activeShader = useStore((s) => s.activeShader);
     const satelliteRefreshToken = useStore((s) => s.layerRefreshTokens.satellites);
     const updateData = useStore((s) => s.updateLayerData);
@@ -283,9 +285,10 @@ export default function SatelliteLayer({ viewer }) {
 
     const startPropagation = useCallback(() => {
         clearInterval(updateTimerRef.current);
+        if (!appIsActive) return;
         updateSatellitePositions();
         updateTimerRef.current = setInterval(updateSatellitePositions, POLL_INTERVALS.SATELLITES);
-    }, [updateSatellitePositions]);
+    }, [appIsActive, updateSatellitePositions]);
 
     const loadFromPaginatedApi = useCallback(async (signal) => {
         const rawAggregate = [];
@@ -337,6 +340,7 @@ export default function SatelliteLayer({ viewer }) {
     }, [isEnabled, updateData, setStatus, startPropagation]);
 
     const loadSatellites = useCallback(async () => {
+        if (!appIsActive) return;
         setStatus('satellites', 'loading');
         if (abortRef.current) {
             abortRef.current.abort();
@@ -396,7 +400,7 @@ export default function SatelliteLayer({ viewer }) {
                 abortRef.current = null;
             }
         }
-    }, [isEnabled, loadFromPaginatedApi, setStatus, updateData, startPropagation]);
+    }, [appIsActive, isEnabled, loadFromPaginatedApi, setStatus, updateData, startPropagation]);
 
     useEffect(() => {
         if (!satelliteIconRef.current) {
@@ -412,21 +416,41 @@ export default function SatelliteLayer({ viewer }) {
             return;
         }
 
+        if (!appIsActive) {
+            clearInterval(updateTimerRef.current);
+            if (abortRef.current) {
+                abortRef.current.abort();
+                abortRef.current = null;
+            }
+            return;
+        }
+
         clearSatellites();
         loadSatellites();
 
         return () => {
-            clearSatellites();
+            clearInterval(updateTimerRef.current);
+            if (abortRef.current) {
+                abortRef.current.abort();
+                abortRef.current = null;
+            }
         };
-    }, [isEnabled, clearSatellites, setStatus, updateData, loadSatellites]);
+    }, [appIsActive, isEnabled, clearSatellites, setStatus, updateData, loadSatellites]);
 
     useEffect(() => {
-        if (!isEnabled || !satelliteRefreshToken) return;
+        if (!appIsActive || !isEnabled || !satelliteRefreshToken) return;
         if (lastRefreshTokenRef.current === satelliteRefreshToken) return;
 
         lastRefreshTokenRef.current = satelliteRefreshToken;
         loadSatellites();
-    }, [isEnabled, loadSatellites, satelliteRefreshToken]);
+    }, [appIsActive, isEnabled, loadSatellites, satelliteRefreshToken]);
+
+    useEffect(
+        () => () => {
+            clearSatellites();
+        },
+        [clearSatellites]
+    );
 
     return null;
 }

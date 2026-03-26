@@ -28,7 +28,6 @@ export default function SysTerminal() {
     const layers = useStore((s) => s.layers);
     const sysTerminalVisible = useStore((s) => s.sysTerminalVisible);
     const toggleSysTerminal = useStore((s) => s.toggleSysTerminal);
-    const layerPanelOpen = useStore((s) => s.layerPanelOpen);
     const [lines, setLines] = useState([]);
     const scrollRef = useRef(null);
     const seenRef = useRef(new Set());

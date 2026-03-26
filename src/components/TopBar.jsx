@@ -32,21 +32,24 @@ const SLOGANS = [
 export default function TopBar() {
     const [time, setTime] = useState(new Date());
     const [sloganIndex, setSloganIndex] = useState(0);
+    const appIsActive = useStore((s) => s.appIsActive);
     const activeFeedCount = useStore((s) => s.getActiveFeedCount());
     const totalEntityCount = useStore((s) => s.getTotalEntityCount());
     const toggleLayerPanel = useStore((s) => s.toggleLayerPanel);
 
     useEffect(() => {
+        if (!appIsActive) return undefined;
         const timer = setInterval(() => setTime(new Date()), 1000);
         return () => clearInterval(timer);
-    }, []);
+    }, [appIsActive]);
 
     useEffect(() => {
+        if (!appIsActive) return undefined;
         const sloganTimer = setInterval(() => {
             setSloganIndex((prev) => (prev + 1) % SLOGANS.length);
         }, 15000);
         return () => clearInterval(sloganTimer);
-    }, []);
+    }, [appIsActive]);
 
     const formatUTC = (date) => {
         return date.toISOString().replace('T', ' ').substring(0, 19) + 'Z';

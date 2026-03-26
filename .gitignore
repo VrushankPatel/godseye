@@ -33,6 +33,8 @@ scripts/local-secrets.sh
 coverage
 .nyc_output
 *.tsbuildinfo
+test-results/
+playwright-report/
 
 # Caches
 .cache

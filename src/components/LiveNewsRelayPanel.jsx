@@ -99,6 +99,7 @@ function RelayPlayer({ channel, onError, className = '' }) {
 }
 
 export default function LiveNewsRelayPanel({ onHide = null }) {
+    const appIsActive = useStore((s) => s.appIsActive);
     const intelRegion = useStore((s) => s.intelRegion);
     const items = useStore((s) => s.intelFeedItems);
     const lastUpdatedAt = useStore((s) => s.intelFeedLastUpdatedAt);
@@ -208,6 +209,17 @@ export default function LiveNewsRelayPanel({ onHide = null }) {
                     <div className="news-relay-fallback-title">NO RELAY CHANNELS</div>
                     <div className="news-relay-fallback-copy">
                         No verified channels are currently assigned to this theater group.
+                    </div>
+                </div>
+            );
+        }
+
+        if (!appIsActive) {
+            return (
+                <div className="news-relay-fallback">
+                    <div className="news-relay-fallback-title">RELAY PAUSED</div>
+                    <div className="news-relay-fallback-copy">
+                        Stream playback is suspended while the window is inactive. Focus the app to resume the relay.
                     </div>
                 </div>
             );

@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useCallback } from 'react';
 import * as Cesium from 'cesium';
 import useStore from '../store/useStore';
 import { API_URLS, POLL_INTERVALS } from '../constants/dataSources';
+import { fetchJsonWithPolicy } from '../utils/network';
 
 const FEET_TO_METERS = 0.3048;
 const KNOTS_TO_MPS = 0.514444;
@@ -112,52 +113,6 @@ function projectFlightPosition(longitude, latitude, headingDeg, speedMps, dtSeco
     };
 }
 
-function parseOpenSkyPayload(payload) {
-    try {
-        let parsed = payload;
-        if (typeof parsed === 'string') parsed = JSON.parse(parsed);
-        if (parsed && typeof parsed.contents === 'string') parsed = JSON.parse(parsed.contents);
-        if (!parsed || !Array.isArray(parsed.states)) return [];
-
-        return parsed.states
-            .map((state) => {
-                const [
-                    icao24, callsign, origin_country, , ,
-                    longitude, latitude, baro_altitude,
-                    on_ground, velocity, true_track,
-                ] = state;
-
-                if (!Number.isFinite(longitude) || !Number.isFinite(latitude) || on_ground === true) return null;
-
-                const normalizedCallsign = callsign ? String(callsign).trim() : String(icao24 || 'UNKNOWN').toUpperCase();
-                const operator = origin_country || 'Unknown';
-
-                return {
-                    id: String(icao24 || `${longitude}:${latitude}`).toLowerCase(),
-                    callsign: normalizedCallsign,
-                    operator,
-                    origin: operator,
-                    registration: 'N/A',
-                    aircraftType: 'N/A',
-                    categoryCode: 'N/A',
-                    provider: 'OpenSky',
-                    longitude,
-                    latitude,
-                    altitudeM: Number.isFinite(baro_altitude) ? baro_altitude : 10000,
-                    velocityMps: Number.isFinite(velocity) ? velocity : 0,
-                    headingDeg: Number.isFinite(true_track) ? true_track : 0,
-                };
-            })
-            .filter(Boolean)
-            .map((flight) => ({
-                ...flight,
-                flightClass: classifyFlight(flight),
-            }));
-    } catch (err) {
-        return [];
-    }
-}
-
 function parseAdsbPayload(payload, provider) {
     if (!payload || !Array.isArray(payload.ac)) return [];
 
@@ -205,21 +160,6 @@ function parseAdsbPayload(payload, provider) {
             };
         })
         .filter(Boolean);
-}
-
-async function fetchJsonWithTimeout(url, timeoutMs) {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-    try {
-        const response = await fetch(url, {
-            signal: controller.signal,
-            cache: 'no-store',
-        });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        return await response.json();
-    } finally {
-        clearTimeout(timeoutId);
-    }
 }
 
 function createPlaneIconDataUri() {
@@ -329,6 +269,7 @@ function downsampleFlightsForRender(flights, maxCount) {
 export default function AircraftLayer({ viewer }) {
     const aircraftEnabled = useStore((s) => s.layers.aircraft.enabled);
     const militaryActivityEnabled = useStore((s) => s.layers.militaryActivity.enabled);
+    const appIsActive = useStore((s) => s.appIsActive);
     const activeShader = useStore((s) => s.activeShader);
     const flightFilters = useStore((s) => s.flightFilters);
     const trackedTarget = useStore((s) => s.trackedTarget);
@@ -576,13 +517,14 @@ export default function AircraftLayer({ viewer }) {
             }
         };
 
-        let sourcesResolved = 0;
-        const totalSources = aircraftSources.length;
-
         // Fire all sources in parallel, but render as each one completes
         const sourcePromises = aircraftSources.map(async (source) => {
             try {
-                const payload = await fetchJsonWithTimeout(source.url, REQUEST_TIMEOUT_MS);
+                const payload = await fetchJsonWithPolicy(source.url, {
+                    timeoutMs: REQUEST_TIMEOUT_MS,
+                    retries: 1,
+                    circuitKey: `aircraft:${source.url}`,
+                });
                 const flights = source.parser(payload);
                 mergeFlights(flights);
 
@@ -595,8 +537,6 @@ export default function AircraftLayer({ viewer }) {
                 }
             } catch {
                 // Individual source failure — silently continue
-            } finally {
-                sourcesResolved += 1;
             }
         });
 
@@ -661,7 +601,7 @@ export default function AircraftLayer({ viewer }) {
     }, [trackedTarget, applyTrackedVisibility, aircraftEnabled]);
 
     useEffect(() => {
-        if (!shouldIngest || !aircraftRefreshToken) return;
+        if (!appIsActive || !shouldIngest || !aircraftRefreshToken) return;
         if (lastRefreshTokenRef.current === aircraftRefreshToken) return;
 
         lastRefreshTokenRef.current = aircraftRefreshToken;
@@ -669,7 +609,7 @@ export default function AircraftLayer({ viewer }) {
             setStatus('aircraft', 'loading');
         }
         pollAircraft();
-    }, [aircraftEnabled, aircraftRefreshToken, pollAircraft, setStatus, shouldIngest]);
+    }, [appIsActive, aircraftEnabled, aircraftRefreshToken, pollAircraft, setStatus, shouldIngest]);
 
     useEffect(() => {
         mountedRef.current = true;
@@ -683,6 +623,16 @@ export default function AircraftLayer({ viewer }) {
             setStatus('aircraft', 'idle');
             setAircraftFeedData([]);
             return;
+        }
+
+        if (!appIsActive) {
+            clearInterval(pollTimerRef.current);
+            clearInterval(animationTimerRef.current);
+            return () => {
+                mountedRef.current = false;
+                clearInterval(pollTimerRef.current);
+                clearInterval(animationTimerRef.current);
+            };
         }
 
         if (aircraftEnabled) {
@@ -699,14 +649,11 @@ export default function AircraftLayer({ viewer }) {
         }
 
         return () => {
-            mountedRef.current = false;
             clearInterval(pollTimerRef.current);
             clearInterval(animationTimerRef.current);
-            if (viewer && !viewer.isDestroyed()) {
-                clearEntities();
-            }
         };
     }, [
+        appIsActive,
         aircraftEnabled,
         animateFlights,
         clearEntities,
@@ -717,6 +664,18 @@ export default function AircraftLayer({ viewer }) {
         updateData,
         viewer,
     ]);
+
+    useEffect(
+        () => () => {
+            mountedRef.current = false;
+            clearInterval(pollTimerRef.current);
+            clearInterval(animationTimerRef.current);
+            if (viewer && !viewer.isDestroyed()) {
+                clearEntities();
+            }
+        },
+        [clearEntities, viewer]
+    );
 
     return null;
 }

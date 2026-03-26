@@ -215,6 +215,7 @@ export default function Globe() {
     const clearTrackedTarget = useStore((s) => s.clearTrackedTarget);
     const requestLayerRefresh = useStore((s) => s.requestLayerRefresh);
     const focusHideEntities = useStore((s) => s.focusHideEntities);
+    const appIsActive = useStore((s) => s.appIsActive);
 
     const restoreTrackedAircraftVisual = useCallback(() => {
         const viewer = viewerRef.current;
@@ -669,7 +670,7 @@ export default function Globe() {
 
     // Auto-rotation
     useEffect(() => {
-        if (!viewerRef.current) return;
+        if (!viewerRef.current || !appIsActive) return;
         const viewer = viewerRef.current;
 
         let animationFrameId;
@@ -687,11 +688,27 @@ export default function Globe() {
         return () => {
             if (animationFrameId) cancelAnimationFrame(animationFrameId);
         };
-    }, [isAutoRotating]);
+    }, [appIsActive, isAutoRotating]);
 
     useEffect(() => {
         const viewer = viewerRef.current;
         if (!viewer || viewer.isDestroyed()) return;
+
+        viewer.clock.shouldAnimate = appIsActive;
+        viewer.scene.requestRenderMode = !appIsActive;
+        viewer.scene.maximumRenderTimeChange = appIsActive ? 0 : Number.POSITIVE_INFINITY;
+        viewer.scene.requestRender();
+    }, [appIsActive]);
+
+    useEffect(() => {
+        const viewer = viewerRef.current;
+        if (!viewer || viewer.isDestroyed()) return;
+        if (!appIsActive) {
+            clearInterval(trailTimerRef.current);
+            trailTimerRef.current = null;
+            removeTrail();
+            return;
+        }
 
         if (!trackedTarget?.entityId) {
             viewer.trackedEntity = undefined;
@@ -773,7 +790,9 @@ export default function Globe() {
             trailTimerRef.current = null;
         };
     }, [
+        appIsActive,
         trackedTarget,
+        trackingView,
         applyTrackedAircraftVisual,
         clearTrackedTarget,
         removeTrail,
@@ -817,6 +836,7 @@ export default function Globe() {
     useEffect(() => {
         const viewer = viewerRef.current;
         if (!viewer || viewer.isDestroyed()) return;
+        if (!appIsActive) return;
 
         const visibilitySnapshot = focusHiddenSnapshotRef.current;
         const trackedEntityId = trackedTarget?.entityId || null;
@@ -881,11 +901,12 @@ export default function Globe() {
                 restoreEntityVisibility();
             }
         };
-    }, [focusHideEntities, trackedTarget]);
+    }, [appIsActive, focusHideEntities, trackedTarget]);
 
     useEffect(() => {
         const viewer = viewerRef.current;
         if (!viewer || viewer.isDestroyed()) return;
+        if (!appIsActive) return;
 
         // Tracked mode has its own visibility logic; don't interfere.
         if (trackedTarget?.entityId) return;
@@ -961,7 +982,7 @@ export default function Globe() {
                 restoreGodModeHiddenEntities();
             }
         };
-    }, [activeShader, focusHideEntities, trackedTarget]);
+    }, [activeShader, appIsActive, focusHideEntities, trackedTarget]);
 
     return (
         <>

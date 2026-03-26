@@ -6,6 +6,7 @@ import { CAMERA_FEEDS } from '../constants/staticData';
 import { WORLDCAMS_FEEDS } from '../constants/worldcamsFeeds';
 import { discoverAllFeeds } from '../services/feedDiscovery';
 import { readLayerCache, writeLayerCache } from '../utils/layerCache';
+import { fetchTextWithPolicy } from '../utils/network';
 
 const MAX_CALTRANS_CAMERAS = 2400;
 const MAX_ONTARIO_CAMERAS = 850;
@@ -35,36 +36,6 @@ function inferMediaTypeFromUrls({ url, videoUrl }) {
     if (combined.includes('.m3u8') || combined.includes('.mp4') || combined.includes('.webm')) return 'video';
     if (combined.includes('.htm') || combined.includes('.html') || combined.includes('youtube.com/embed') || combined.includes('player?url=')) return 'embed';
     return 'image';
-}
-
-function isStillImageUrl(url) {
-    if (!url) return false;
-    return /\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i.test(String(url).toLowerCase());
-}
-
-function isCaltransLocationPageUrl(url) {
-    if (!url) return false;
-    return /cwwp2\.dot\.ca\.gov\/vm\/loc\/.+\.htm$/i.test(String(url));
-}
-
-function isLiveCapableFeed(feed) {
-    if (!feed) return false;
-    if (feed.provider === 'Caltrans' && feed.streamCapable === false) return false;
-    if (feed.streamCapable) return true;
-    if (feed.videoUrl) return true;
-    if (feed.mediaType === 'video' || feed.mediaType === 'embed') return true;
-    if (feed.url && !isStillImageUrl(feed.url)) return true;
-    return false;
-}
-
-async function fetchWithTimeout(url, timeoutMs = REQUEST_TIMEOUT_MS) {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-    try {
-        const response = await fetch(url, { signal: controller.signal, cache: 'no-store' });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        return response.text();
-    } finally { clearTimeout(timeoutId); }
 }
 
 function normalizeCaltransFeed(text) {
@@ -324,10 +295,26 @@ export default function CameraLayer({ viewer }) {
 
             // Phase 1: Government / traffic APIs (fast, reliable)
             const [caltransRes, ontarioRes, albertaRes, tflRes] = await Promise.allSettled([
-                fetchWithTimeout(API_URLS.CAMERA_CALTRANS_CATALOG),
-                fetchWithTimeout(API_URLS.CAMERA_ONTARIO_511_PROXY),
-                fetchWithTimeout(API_URLS.CAMERA_ALBERTA_511_PROXY),
-                fetchWithTimeout(API_URLS.CAMERA_TFL_JAMCAMS),
+                fetchTextWithPolicy(API_URLS.CAMERA_CALTRANS_CATALOG, {
+                    timeoutMs: REQUEST_TIMEOUT_MS,
+                    retries: 1,
+                    circuitKey: 'cctv:caltrans-catalog',
+                }),
+                fetchTextWithPolicy(API_URLS.CAMERA_ONTARIO_511_PROXY, {
+                    timeoutMs: REQUEST_TIMEOUT_MS,
+                    retries: 1,
+                    circuitKey: 'cctv:ontario-511',
+                }),
+                fetchTextWithPolicy(API_URLS.CAMERA_ALBERTA_511_PROXY, {
+                    timeoutMs: REQUEST_TIMEOUT_MS,
+                    retries: 1,
+                    circuitKey: 'cctv:alberta-511',
+                }),
+                fetchTextWithPolicy(API_URLS.CAMERA_TFL_JAMCAMS, {
+                    timeoutMs: REQUEST_TIMEOUT_MS,
+                    retries: 1,
+                    circuitKey: 'cctv:tfl-jamcams',
+                }),
             ]);
 
             const caltransFeeds = caltransRes.status === 'fulfilled' ? normalizeCaltransFeed(caltransRes.value) : [];

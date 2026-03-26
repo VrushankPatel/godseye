@@ -10,13 +10,12 @@
  */
 
 import { getRuntimeKey } from '../utils/runtimeEnv';
+import { fetchJsonWithPolicy } from '../utils/network';
 
 const YOUTUBE_API_KEY = getRuntimeKey('VITE_YOUTUBE_API_KEY', ' YouTube live CCTV discovery');
 const YOUTUBE_SEARCH_URL = 'https://www.googleapis.com/youtube/v3/search';
 const YOUTUBE_OEMBED = 'https://www.youtube.com/oembed';
 const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
-const REQUEST_TIMEOUT = 10000;
-
 // ── Built-in geocoder for location extraction from video titles ──
 
 const LOCATION_DB = {
@@ -166,18 +165,6 @@ const YOUTUBE_SEARCH_QUERIES = [
 
 // ── Utility ─────────────────────────────────────────────────────
 
-async function fetchWithTimeout(url, options = {}, timeout = REQUEST_TIMEOUT) {
-    const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), timeout);
-    try {
-        const res = await fetch(url, { ...options, signal: controller.signal });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res;
-    } finally {
-        clearTimeout(id);
-    }
-}
-
 function extractYouTubeId(url) {
     if (!url) return null;
     const m = url.match(/(?:youtube\.com\/embed\/|youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
@@ -238,8 +225,11 @@ export async function discoverYouTubeLiveFeeds(maxPerQuery = 15) {
                 key: YOUTUBE_API_KEY,
             });
             const url = `${YOUTUBE_SEARCH_URL}?${params}`;
-            const res = await fetchWithTimeout(url, {}, 8000);
-            return res.json();
+            return fetchJsonWithPolicy(url, {
+                timeoutMs: 8000,
+                retries: 1,
+                circuitKey: `feed-discovery:youtube-search:${query}`,
+            });
         })
     );
 
@@ -304,8 +294,11 @@ export async function validateYouTubeIds(videoIds, concurrency = 15) {
             batch.map(async (videoId) => {
                 try {
                     const url = `${CORS_PROXY}${encodeURIComponent(`${YOUTUBE_OEMBED}?url=https://www.youtube.com/watch?v=${videoId}&format=json`)}`;
-                    const res = await fetchWithTimeout(url, {}, 5000);
-                    const data = await res.json();
+                    const data = await fetchJsonWithPolicy(url, {
+                        timeoutMs: 5000,
+                        retries: 0,
+                        circuitKey: `feed-discovery:youtube-oembed:${videoId}`,
+                    });
                     if (data && data.title) {
                         valid.add(videoId);
                     }

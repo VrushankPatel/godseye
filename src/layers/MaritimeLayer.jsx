@@ -3,6 +3,7 @@ import * as Cesium from 'cesium';
 import useStore from '../store/useStore';
 import { API_URLS, POLL_INTERVALS } from '../constants/dataSources';
 import { getRuntimeKey } from '../utils/runtimeEnv';
+import { fetchJsonWithPolicy } from '../utils/network';
 
 const REQUEST_TIMEOUT_MS = 16000;
 const PORT_PAGE_SIZE = 2000;
@@ -111,33 +112,17 @@ function buildPortsQueryUrl(offset = 0, direct = true) {
     return `${API_URLS.GLOBAL_PORTS_ARCGIS_QUERY_PROXY}${encodeURIComponent(base)}`;
 }
 
-async function fetchJsonWithTimeout(url, timeoutMs = REQUEST_TIMEOUT_MS) {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-    try {
-        const response = await fetch(url, {
-            signal: controller.signal,
-            cache: 'no-store',
-        });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const text = await response.text();
-        const parsed = JSON.parse(text);
-        if (parsed && typeof parsed === 'object' && typeof parsed.contents === 'string') {
-            return JSON.parse(parsed.contents);
-        }
-        return parsed;
-    } finally {
-        clearTimeout(timeoutId);
-    }
-}
-
 async function fetchPortsAllPages() {
     const merged = [];
 
     const fetchPaged = async (direct) => {
         const rows = [];
         for (let offset = 0; offset < MAX_PORTS + PORT_PAGE_SIZE; offset += PORT_PAGE_SIZE) {
-            const payload = await fetchJsonWithTimeout(buildPortsQueryUrl(offset, direct));
+            const payload = await fetchJsonWithPolicy(buildPortsQueryUrl(offset, direct), {
+                timeoutMs: REQUEST_TIMEOUT_MS,
+                retries: direct ? 1 : 0,
+                circuitKey: `maritime:ports:${direct ? 'direct' : 'proxy'}:${offset}`,
+            });
             const features = Array.isArray(payload?.features) ? payload.features : [];
             if (!features.length) break;
             rows.push(...features);
@@ -246,6 +231,7 @@ function toAisMessageList(eventPayload) {
 
 export default function MaritimeLayer({ viewer }) {
     const isEnabled = useStore((s) => s.layers.maritime.enabled);
+    const appIsActive = useStore((s) => s.appIsActive);
     const cachedData = useStore((s) => s.layers.maritime.data);
     const updateData = useStore((s) => s.updateLayerData);
     const setStatus = useStore((s) => s.setLayerStatus);
@@ -487,7 +473,7 @@ export default function MaritimeLayer({ viewer }) {
     }, []);
 
     const openAisSocket = useCallback(() => {
-        if (!AIS_API_KEY || wsRef.current) return;
+        if (!appIsActive || !AIS_API_KEY || wsRef.current) return;
 
         const ws = new WebSocket(API_URLS.AISSTREAM_WS);
         wsRef.current = ws;
@@ -523,10 +509,10 @@ export default function MaritimeLayer({ viewer }) {
                 wsRef.current = null;
             }
         };
-    }, [ingestAisMessage]);
+    }, [appIsActive, ingestAisMessage]);
 
     const pollPorts = useCallback(async () => {
-        if (!isEnabled) return;
+        if (!appIsActive || !isEnabled) return;
         try {
             if (!portsDataRef.current.size) {
                 setStatus('maritime', 'loading');
@@ -546,7 +532,7 @@ export default function MaritimeLayer({ viewer }) {
                 updateData('maritime', []);
             }
         }
-    }, [isEnabled, setStatus, setEntitiesVisible, syncStoreData, updateData, upsertPortEntities, viewer]);
+    }, [appIsActive, isEnabled, setStatus, setEntitiesVisible, syncStoreData, updateData, upsertPortEntities, viewer]);
 
     const hydrateFromCache = useCallback(() => {
         if (!Array.isArray(cachedData) || !cachedData.length) return;
@@ -585,6 +571,15 @@ export default function MaritimeLayer({ viewer }) {
             return undefined;
         }
 
+        if (!appIsActive) {
+            clearInterval(portsPollTimerRef.current);
+            clearInterval(aisSyncTimerRef.current);
+            portsPollTimerRef.current = null;
+            aisSyncTimerRef.current = null;
+            closeAisSocket();
+            return undefined;
+        }
+
         hydrateFromCache();
 
         pollPorts();
@@ -609,6 +604,7 @@ export default function MaritimeLayer({ viewer }) {
             closeAisSocket();
         };
     }, [
+        appIsActive,
         closeAisSocket,
         hydrateFromCache,
         isEnabled,

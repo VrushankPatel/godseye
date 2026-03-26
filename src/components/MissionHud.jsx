@@ -377,6 +377,7 @@ export default function MissionHud() {
     const toggleCities = useStore((s) => s.toggleCities);
     const setAutoRotating = useStore((s) => s.setAutoRotating);
     const setFocusMode = useStore((s) => s.setFocusMode);
+    const appIsActive = useStore((s) => s.appIsActive);
 
     const TRACKABLE_TYPES = new Set(['aircraft', 'satellites', 'militaryActivity']);
     const AIRCRAFT_VIEWS = [{ id: 'CHASE', label: 'Chase' }, { id: 'COCKPIT', label: 'Cockpit' }, { id: 'TOP', label: 'Top' }, { id: 'SIDE', label: 'Side' }];
@@ -464,18 +465,18 @@ export default function MissionHud() {
     }, [inspector]);
 
     useEffect(() => {
-        if (!hasMedia || panelMediaKind !== 'image' || !inspector?.url) return undefined;
+        if (!appIsActive || !hasMedia || panelMediaKind !== 'image' || !inspector?.url) return undefined;
         const refreshSeconds = Math.max(3, Number(inspector.refreshSeconds) || 6);
         const timer = setInterval(() => {
             setPanelMediaSrc(appendCacheBuster(inspector.url));
             setPanelMediaFailed(false);
         }, refreshSeconds * 1000);
         return () => clearInterval(timer);
-    }, [hasMedia, inspector, panelMediaKind]);
+    }, [appIsActive, hasMedia, inspector, panelMediaKind]);
 
     useEffect(() => {
         const videoEl = mediaVideoRef.current;
-        if (!videoEl || panelMediaKind !== 'video' || !effectiveVideoUrl || !isHlsUrl(effectiveVideoUrl)) {
+        if (!appIsActive || !videoEl || panelMediaKind !== 'video' || !effectiveVideoUrl || !isHlsUrl(effectiveVideoUrl)) {
             return undefined;
         }
 
@@ -512,7 +513,7 @@ export default function MissionHud() {
             cancelled = true;
             if (hlsInstance) hlsInstance.destroy();
         };
-    }, [effectiveVideoUrl, panelMediaKind, inspector?.id]);
+    }, [appIsActive, effectiveVideoUrl, panelMediaKind, inspector?.id]);
 
     const snapshotRows = SURVEILLANCE_PRIMARY_LAYERS
         .map((key) => {
@@ -635,7 +636,9 @@ export default function MissionHud() {
                             </div>
                             {hasMedia && (
                                 <div style={{ padding: '8px 10px 6px' }}>
-                                    {panelMediaKind === 'embed' && effectiveVideoUrl ? (
+                                    {!appIsActive ? (
+                                        <div className="rcp-media-fallback">FEED PAUSED WHILE WINDOW IS INACTIVE</div>
+                                    ) : panelMediaKind === 'embed' && effectiveVideoUrl ? (
                                         <iframe
                                             src={effectiveVideoUrl}
                                             title="Live Feed"

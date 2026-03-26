@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useCallback } from 'react';
 import * as Cesium from 'cesium';
 import useStore from '../store/useStore';
 import { API_URLS, POLL_INTERVALS } from '../constants/dataSources';
+import { fetchJsonWithPolicy } from '../utils/network';
 
 const REQUEST_TIMEOUT_MS = 12000;
 const BATCH_SIZE = 48;
@@ -252,26 +253,15 @@ function createWeatherIconDataUri(colorHex) {
     return canvas.toDataURL('image/png');
 }
 
-async function fetchJsonWithTimeout(url, timeoutMs = REQUEST_TIMEOUT_MS) {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-    try {
-        const response = await fetch(url, {
-            signal: controller.signal,
-            cache: 'no-store',
-        });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        return await response.json();
-    } finally {
-        clearTimeout(timeoutId);
-    }
-}
-
 async function fetchWeatherBatch(batchNodes) {
     const latitudes = batchNodes.map((node) => node.lat).join(',');
     const longitudes = batchNodes.map((node) => node.lng).join(',');
     const url = `${API_URLS.OPEN_METEO_CURRENT}&latitude=${encodeURIComponent(latitudes)}&longitude=${encodeURIComponent(longitudes)}`;
-    const payload = await fetchJsonWithTimeout(url);
+    const payload = await fetchJsonWithPolicy(url, {
+        timeoutMs: REQUEST_TIMEOUT_MS,
+        retries: 1,
+        circuitKey: `weather:meteo:${batchNodes[0]?.id || 'batch'}:${batchNodes.length}`,
+    });
     return Array.isArray(payload) ? payload : [payload];
 }
 
@@ -309,6 +299,7 @@ function normalizeWeatherResponse(batchNodes, responseList) {
 
 export default function WeatherLayer({ viewer }) {
     const isEnabled = useStore((s) => s.layers.weather.enabled);
+    const appIsActive = useStore((s) => s.appIsActive);
     const updateData = useStore((s) => s.updateLayerData);
     const setStatus = useStore((s) => s.setLayerStatus);
 
@@ -400,7 +391,7 @@ export default function WeatherLayer({ viewer }) {
     }, [getIcon, viewer]);
 
     const pollWeather = useCallback(async () => {
-        if (!isEnabled) return;
+        if (!isEnabled || !appIsActive) return;
         try {
             if (!entitiesRef.current.size) {
                 setStatus('weather', 'loading');
@@ -413,7 +404,11 @@ export default function WeatherLayer({ viewer }) {
             );
             let alertEntries = [];
             try {
-                const alertPayload = await fetchJsonWithTimeout(API_URLS.NWS_ALERTS_ACTIVE);
+                const alertPayload = await fetchJsonWithPolicy(API_URLS.NWS_ALERTS_ACTIVE, {
+                    timeoutMs: REQUEST_TIMEOUT_MS,
+                    retries: 1,
+                    circuitKey: 'weather:nws-alerts',
+                });
                 alertEntries = normalizeAlertOverlays(alertPayload);
             } catch (err) {
                 // Alerts are optional and US-specific; weather grid still remains global.
@@ -434,7 +429,7 @@ export default function WeatherLayer({ viewer }) {
                 updateData('weather', []);
             }
         }
-    }, [isEnabled, setStatus, upsertWeather, updateData, viewer]);
+    }, [appIsActive, isEnabled, setStatus, upsertWeather, updateData, viewer]);
 
     useEffect(() => {
         if (!isEnabled) {
@@ -446,6 +441,12 @@ export default function WeatherLayer({ viewer }) {
             return;
         }
 
+        if (!appIsActive) {
+            clearInterval(pollTimerRef.current);
+            pollTimerRef.current = null;
+            return;
+        }
+
         pollWeather();
         pollTimerRef.current = setInterval(pollWeather, POLL_INTERVALS.WEATHER);
 
@@ -454,7 +455,7 @@ export default function WeatherLayer({ viewer }) {
             pollTimerRef.current = null;
             clearEntities();
         };
-    }, [isEnabled, pollWeather, clearEntities, updateData, setStatus]);
+    }, [appIsActive, isEnabled, pollWeather, clearEntities, updateData, setStatus]);
 
     return null;
 }

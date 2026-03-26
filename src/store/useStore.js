@@ -187,6 +187,8 @@ const useStore = create((set, get) => ({
     setViewerRef: (ref) => set({ viewerRef: ref }),
     city3DActive: false,
     setCity3DActive: (value) => set({ city3DActive: Boolean(value) }),
+    appIsActive: true,
+    setAppIsActive: (value) => set({ appIsActive: Boolean(value) }),
 
     // Layer panel collapsed state
     layerPanelOpen: true,

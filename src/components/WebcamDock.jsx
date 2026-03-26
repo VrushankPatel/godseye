@@ -68,6 +68,7 @@ function pickFeaturedFeeds(feeds, limit = MAX_DOCK_FEEDS) {
 }
 
 export default function WebcamDock() {
+    const appIsActive = useStore((s) => s.appIsActive);
     const cctvEnabled = useStore((s) => s.layers.cctv.enabled);
     const cctvFeeds = useStore((s) => s.layers.cctv.data);
     const setInspector = useStore((s) => s.setInspector);
@@ -82,10 +83,10 @@ export default function WebcamDock() {
     }, [cctvEnabled]);
 
     useEffect(() => {
-        if (!cctvEnabled) return undefined;
+        if (!cctvEnabled || !appIsActive) return undefined;
         const timer = setInterval(() => setPreviewNonce(Date.now()), PREVIEW_REFRESH_MS);
         return () => clearInterval(timer);
-    }, [cctvEnabled]);
+    }, [appIsActive, cctvEnabled]);
 
     const regionCounts = useMemo(() => {
         const counts = Object.fromEntries(WEBCAM_REGIONS.map((region) => [region.id, 0]));
