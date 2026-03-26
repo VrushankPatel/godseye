@@ -48,8 +48,21 @@ function stableStringify(value) {
     return `{${entries.join(',')}}`;
 }
 
+function normalizeDbUrl(rawValue) {
+    const trimmed = String(rawValue || '').trim().replace(/^['"]+|['"]+$/g, '');
+    if (!trimmed) return '';
+
+    const candidate = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+    try {
+        const url = new URL(candidate);
+        return url.toString().replace(/\/$/, '');
+    } catch {
+        return '';
+    }
+}
+
 function getDbUrl() {
-    return readEnvValue('VITE_FIREBASE_RTDB_URL').replace(/\/$/, '');
+    return normalizeDbUrl(readEnvValue('VITE_FIREBASE_RTDB_URL'));
 }
 
 function getCacheSecret() {

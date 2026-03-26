@@ -25,6 +25,19 @@ function readEnvValue(keys) {
   return '';
 }
 
+function normalizeDbUrl(rawValue) {
+  const trimmed = String(rawValue || '').trim().replace(/^['"]+|['"]+$/g, '');
+  if (!trimmed) return '';
+
+  const candidate = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  try {
+    const url = new URL(candidate);
+    return url.toString().replace(/\/$/, '');
+  } catch {
+    return '';
+  }
+}
+
 function stableStringify(value) {
   if (value === null || typeof value !== 'object') {
     return JSON.stringify(value);
@@ -118,7 +131,7 @@ async function buildPayload(rootDir) {
 }
 
 async function main() {
-  const dbUrl = readEnvValue('VITE_FIREBASE_RTDB_URL').replace(/\/$/, '');
+  const dbUrl = normalizeDbUrl(readEnvValue('VITE_FIREBASE_RTDB_URL'));
   const secret = readEnvValue('VITE_GODSEYE_CACHE_SECRET');
   if (!dbUrl || !secret) {
     console.log(`${DEBUG_PREFIX} Missing RTDB cache config, skipping publish`);
