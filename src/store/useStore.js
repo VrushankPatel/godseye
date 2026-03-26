@@ -296,6 +296,32 @@ const useStore = create((set, get) => ({
         }),
     setIntelRegion: (value) => set({ intelRegion: String(value || 'all') }),
 
+    // Shared encrypted RTDB cache
+    sharedRuntimeCache: {
+        status: 'idle',
+        source: 'none',
+        timestamp: 0,
+        loadedAt: 0,
+        integrity: 'unknown',
+        data: null,
+        error: null,
+        forceRefreshToken: 0,
+    },
+    setSharedRuntimeCacheSnapshot: (snapshot = {}) =>
+        set((state) => ({
+            sharedRuntimeCache: {
+                ...state.sharedRuntimeCache,
+                ...snapshot,
+            },
+        })),
+    requestSharedRuntimeCacheRefresh: () =>
+        set((state) => ({
+            sharedRuntimeCache: {
+                ...state.sharedRuntimeCache,
+                forceRefreshToken: Date.now(),
+            },
+        })),
+
     // Get total active feed count
     getActiveFeedCount: () => {
         const { layers } = get();

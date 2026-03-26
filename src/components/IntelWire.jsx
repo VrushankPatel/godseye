@@ -3,6 +3,7 @@ import useStore from '../store/useStore';
 import { API_URLS } from '../constants/dataSources';
 import { getRuntimeKey } from '../utils/runtimeEnv';
 import { fetchJsonWithPolicy } from '../utils/network';
+import { isSharedCacheFresh } from '../services/sharedRuntimeCache';
 import {
     INTEL_REGIONS,
     buildIntelRegionCounts,
@@ -149,6 +150,7 @@ export default function IntelWire({ embedded = false, hidden = false, onHide = n
     const intelRegion = useStore((s) => s.intelRegion);
     const setIntelRegion = useStore((s) => s.setIntelRegion);
     const setIntelFeedSnapshot = useStore((s) => s.setIntelFeedSnapshot);
+    const sharedRuntimeCache = useStore((s) => s.sharedRuntimeCache);
     const [items, setItems] = useState([]);
     const [lastUpdatedAt, setLastUpdatedAt] = useState(0);
     const [isCollapsed, setIsCollapsed] = useState(false);
@@ -166,6 +168,15 @@ export default function IntelWire({ embedded = false, hidden = false, onHide = n
         setLastUpdatedAt(sharedLastUpdatedAt);
         setStatus(sharedStatus);
     }, [sharedItems, sharedLastUpdatedAt, sharedStatus]);
+
+    useEffect(() => {
+        const sharedIntelItems = sharedRuntimeCache?.data?.intelWire?.items;
+        if (!Array.isArray(sharedIntelItems) || !sharedIntelItems.length) return;
+        if (!isSharedCacheFresh(sharedRuntimeCache?.timestamp)) return;
+        setItems(sharedIntelItems);
+        setLastUpdatedAt(sharedRuntimeCache.timestamp);
+        setStatus('active');
+    }, [sharedRuntimeCache]);
 
     useEffect(() => {
         try {
@@ -190,6 +201,18 @@ export default function IntelWire({ embedded = false, hidden = false, onHide = n
         let cancelled = false;
 
         const loadIntel = async () => {
+            if (isSharedCacheFresh(sharedRuntimeCache?.timestamp) && Array.isArray(sharedRuntimeCache?.data?.intelWire?.items) && sharedRuntimeCache.data.intelWire.items.length) {
+                setItems(sharedRuntimeCache.data.intelWire.items);
+                setLastUpdatedAt(sharedRuntimeCache.timestamp);
+                setStatus('active');
+                setIntelFeedSnapshot({
+                    items: sharedRuntimeCache.data.intelWire.items,
+                    status: 'active',
+                    lastUpdatedAt: sharedRuntimeCache.timestamp,
+                });
+                return;
+            }
+
             const cache = readIntelCache();
             if (reloadTick === 0 && isIntelCacheFresh(cache)) {
                 setItems(cache.items);
@@ -288,7 +311,7 @@ export default function IntelWire({ embedded = false, hidden = false, onHide = n
             cancelled = true;
             clearInterval(timer);
         };
-    }, [appIsActive, lastUpdatedAt, reloadTick, setIntelFeedSnapshot]);
+    }, [appIsActive, lastUpdatedAt, reloadTick, setIntelFeedSnapshot, sharedRuntimeCache]);
 
     const updatedLabel = useMemo(() => {
         if (status === 'loading' && !lastUpdatedAt) return 'syncing';

@@ -10,6 +10,7 @@ import {
     normalizeTflFeeds,
     prioritizeFeeds,
 } from '../services/cctvFeeds';
+import { isSharedCacheFresh } from '../services/sharedRuntimeCache';
 import { readLayerCache, writeLayerCache } from '../utils/layerCache';
 import { fetchJsonWithPolicy, fetchTextWithPolicy } from '../utils/network';
 
@@ -118,6 +119,7 @@ export default function CameraLayer({ viewer }) {
     const updateData = useStore((s) => s.updateLayerData);
     const setStatus = useStore((s) => s.setLayerStatus);
     const markLayerFetchStart = useStore((s) => s.markLayerFetchStart);
+    const sharedRuntimeCache = useStore((s) => s.sharedRuntimeCache);
     const entitiesRef = useRef([]);
 
     const clearEntities = useCallback(() => {
@@ -142,6 +144,10 @@ export default function CameraLayer({ viewer }) {
             }
             const renderBudget = getCameraRenderBudget(activeShader);
             const cachedFeeds = readLayerCache(CAMERA_CACHE_KEY, CAMERA_CACHE_TTL_MS);
+            const sharedManifestFeeds = Array.isArray(sharedRuntimeCache?.data?.cctvManifest?.feeds)
+                ? sharedRuntimeCache.data.cctvManifest.feeds
+                : [];
+            const hasFreshSharedManifest = isSharedCacheFresh(sharedRuntimeCache?.timestamp) && sharedManifestFeeds.length > 0;
             if (Array.isArray(cachedFeeds) && cachedFeeds.length && !cancelled && isEnabled && !viewer.isDestroyed()) {
                 const prioritizedCachedFeeds = prioritizeFeeds(
                     cachedFeeds.filter((f) => Boolean(f.videoUrl || f.url || f.fallbackUrl))
@@ -158,6 +164,26 @@ export default function CameraLayer({ viewer }) {
                     isCached: true,
                     health: 'cached',
                 });
+            }
+
+            if (hasFreshSharedManifest && !cancelled && isEnabled && !viewer.isDestroyed()) {
+                const prioritizedSharedFeeds = prioritizeFeeds(
+                    sharedManifestFeeds.filter((f) => Boolean(f.videoUrl || f.url || f.fallbackUrl))
+                );
+                const sharedRenderFeeds = downsampleFeeds(prioritizedSharedFeeds, renderBudget);
+                clearEntities();
+                entitiesRef.current = addEntitiesToViewer(viewer, sharedRenderFeeds, imageUrl);
+                updateData('cctv', prioritizedSharedFeeds, {
+                    sourceName: 'Shared RTDB CCTV cache',
+                    isCached: true,
+                    health: 'cached',
+                });
+                setStatus('cctv', 'active', {
+                    sourceName: 'Shared RTDB CCTV cache',
+                    isCached: true,
+                    health: 'cached',
+                });
+                return;
             }
 
             const [manifestRes, caltransRes, ontarioRes, albertaRes, tflRes] = await Promise.allSettled([
@@ -274,7 +300,7 @@ export default function CameraLayer({ viewer }) {
             cancelled = true;
             clearEntities();
         };
-    }, [activeShader, isEnabled, viewer, updateData, setStatus, markLayerFetchStart, clearEntities]);
+    }, [activeShader, isEnabled, viewer, updateData, setStatus, markLayerFetchStart, clearEntities, sharedRuntimeCache]);
 
     return null;
 }

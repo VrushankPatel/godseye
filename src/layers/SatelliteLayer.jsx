@@ -4,6 +4,7 @@ import * as satellite from 'satellite.js';
 import useStore from '../store/useStore';
 import { API_URLS, POLL_INTERVALS } from '../constants/dataSources';
 import { getSatelliteLiveView, getSatellitePriorityScore } from '../constants/satelliteLiveViews';
+import { isSharedCacheFresh } from '../services/sharedRuntimeCache';
 import { readLayerCache, writeLayerCache } from '../utils/layerCache';
 import { fetchJsonWithPolicy } from '../utils/network';
 
@@ -170,6 +171,7 @@ export default function SatelliteLayer({ viewer }) {
     const updateData = useStore((s) => s.updateLayerData);
     const setStatus = useStore((s) => s.setLayerStatus);
     const markLayerFetchStart = useStore((s) => s.markLayerFetchStart);
+    const sharedRuntimeCache = useStore((s) => s.sharedRuntimeCache);
 
     const entitiesRef = useRef(new Map());
     const satRecordsRef = useRef([]);
@@ -363,6 +365,25 @@ export default function SatelliteLayer({ viewer }) {
         abortRef.current = controller;
 
         const cachedRawRecords = readLayerCache(SATELLITE_CACHE_KEY, SATELLITE_CACHE_TTL_MS);
+        const sharedManifestRecords = Array.isArray(sharedRuntimeCache?.data?.satelliteManifest?.records)
+            ? sharedRuntimeCache.data.satelliteManifest.records
+            : [];
+        if (isSharedCacheFresh(sharedRuntimeCache?.timestamp) && sharedManifestRecords.length) {
+            const sharedRecords = hydrateTleRecords(sharedManifestRecords);
+            satRecordsRef.current = sharedRecords;
+            updateData('satellites', sharedRecords, {
+                sourceName: 'Shared RTDB satellite cache',
+                isCached: true,
+                health: 'cached',
+            });
+            setStatus('satellites', 'active', {
+                sourceName: 'Shared RTDB satellite cache',
+                isCached: true,
+                health: 'cached',
+            });
+            startPropagation();
+            return;
+        }
         if (Array.isArray(cachedRawRecords) && cachedRawRecords.length) {
             const cachedRecords = hydrateTleRecords(cachedRawRecords);
             if (cachedRecords.length) {
@@ -442,7 +463,7 @@ export default function SatelliteLayer({ viewer }) {
                 abortRef.current = null;
             }
         }
-    }, [appIsActive, isEnabled, loadFromPaginatedApi, setStatus, updateData, startPropagation, markLayerFetchStart]);
+    }, [appIsActive, isEnabled, loadFromPaginatedApi, setStatus, updateData, startPropagation, markLayerFetchStart, sharedRuntimeCache]);
 
     useEffect(() => {
         if (!satelliteIconRef.current) {

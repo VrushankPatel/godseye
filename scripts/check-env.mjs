@@ -4,30 +4,42 @@ const CAPABILITIES = [
     label: 'Google Photorealistic 3D tiles',
     keys: ['VITE_GOOGLE_MAPS_3D_KEY', 'VITE_GOOGLE_MAPS_API_KEY'],
     required: false,
+    mode: 'any',
   },
   {
     id: 'mapbox_tokens',
     label: 'Mapbox tiles / tokenized overlays',
     keys: ['VITE_MAPBOX_ACCESS_TOKEN'],
     required: false,
+    mode: 'any',
   },
   {
     id: 'youtube_discovery',
     label: 'YouTube live CCTV discovery',
     keys: ['VITE_YOUTUBE_API_KEY'],
     required: false,
+    mode: 'any',
   },
   {
     id: 'guardian_intel',
     label: 'Guardian intel enrichment',
     keys: ['VITE_GUARDIAN_API_KEY'],
     required: false,
+    mode: 'any',
   },
   {
     id: 'aisstream_live',
     label: 'AIS live maritime tracking',
     keys: ['VITE_AISSTREAM_API_KEY'],
     required: false,
+    mode: 'any',
+  },
+  {
+    id: 'shared_rtdb_cache',
+    label: 'Shared Firebase RTDB cache',
+    keys: ['VITE_FIREBASE_RTDB_URL', 'VITE_GODSEYE_CACHE_SECRET'],
+    required: false,
+    mode: 'all',
   },
 ];
 
@@ -39,8 +51,14 @@ function normalizeValue(value) {
 }
 
 function resolveCapability(env, capability) {
-  const providedKey = capability.keys.find((key) => normalizeValue(env[key]));
-  const value = providedKey ? normalizeValue(env[providedKey]) : '';
+  const mode = capability.mode || 'any';
+  const providedKeys = capability.keys.filter((key) => normalizeValue(env[key]));
+  const providedKey = mode === 'all'
+    ? (providedKeys.length === capability.keys.length ? providedKeys.join(', ') : '—')
+    : (providedKeys[0] || '—');
+  const value = mode === 'all'
+    ? (providedKeys.length === capability.keys.length ? 'configured' : '')
+    : (providedKeys[0] ? normalizeValue(env[providedKeys[0]]) : '');
   return {
     ...capability,
     providedKey: providedKey || '—',

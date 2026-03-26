@@ -4,7 +4,7 @@ function normalizeEnvKeys(keys) {
     return Array.isArray(keys) ? keys.filter(Boolean) : [keys].filter(Boolean);
 }
 
-function readEnvValue(keys) {
+export function readEnvValue(keys) {
     const env = import.meta.env || {};
     for (const key of normalizeEnvKeys(keys)) {
         const value = String(env[key] || '').trim();
@@ -44,4 +44,6 @@ export function reportMissingOptionalRuntimeConfig() {
     getRuntimeKey('VITE_YOUTUBE_API_KEY', ' YouTube live CCTV discovery');
     getRuntimeKey('VITE_GUARDIAN_API_KEY', ' Guardian intelligence enrichment');
     getRuntimeKey('VITE_AISSTREAM_API_KEY', ' AIS live vessel tracking');
+    getRuntimeKey('VITE_FIREBASE_RTDB_URL', ' Shared Firebase RTDB cache');
+    getRuntimeKey('VITE_GODSEYE_CACHE_SECRET', ' Shared cache encryption');
 }

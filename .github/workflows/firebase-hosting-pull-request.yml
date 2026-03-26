@@ -21,6 +21,8 @@ jobs:
           VITE_YOUTUBE_API_KEY: '${{ secrets.VITE_YOUTUBE_API_KEY }}'
           VITE_GUARDIAN_API_KEY: '${{ secrets.VITE_GUARDIAN_API_KEY }}'
           VITE_AISSTREAM_API_KEY: '${{ secrets.VITE_AISSTREAM_API_KEY }}'
+          VITE_FIREBASE_RTDB_URL: '${{ secrets.VITE_FIREBASE_RTDB_URL }}'
+          VITE_GODSEYE_CACHE_SECRET: '${{ secrets.VITE_GODSEYE_CACHE_SECRET }}'
       - run: npx playwright install --with-deps chromium
       - run: npm run ci
         env:
@@ -31,6 +33,8 @@ jobs:
           VITE_YOUTUBE_API_KEY: '${{ secrets.VITE_YOUTUBE_API_KEY }}'
           VITE_GUARDIAN_API_KEY: '${{ secrets.VITE_GUARDIAN_API_KEY }}'
           VITE_AISSTREAM_API_KEY: '${{ secrets.VITE_AISSTREAM_API_KEY }}'
+          VITE_FIREBASE_RTDB_URL: '${{ secrets.VITE_FIREBASE_RTDB_URL }}'
+          VITE_GODSEYE_CACHE_SECRET: '${{ secrets.VITE_GODSEYE_CACHE_SECRET }}'
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'

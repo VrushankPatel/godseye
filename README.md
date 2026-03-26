@@ -71,6 +71,10 @@ If you want the full local/self-hosted experience, provide these keys in `script
   Guardian news enrichment for the intelligence wire
 - `VITE_AISSTREAM_API_KEY`
   AISstream realtime vessel tracking for the Maritime layer
+- `VITE_FIREBASE_RTDB_URL`
+  Shared encrypted runtime cache endpoint for slow-changing Godseye data
+- `VITE_GODSEYE_CACHE_SECRET`
+  Client-side cache envelope secret used to encrypt/decrypt the shared RTDB cache payload
 
 If a key is missing, Godseye does not crash.
 It logs a browser console error stating that the key is missing and that the related data may or may not be available.
@@ -97,6 +101,7 @@ Open `http://localhost:5173/`.
 
 ```bash
 ./scripts/with-local-secrets.sh npm run build
+./scripts/with-local-secrets.sh npm run shared-cache:publish
 ./scripts/with-local-secrets.sh npm run preview
 ```
 
@@ -109,6 +114,30 @@ Open `http://localhost:5173/`.
 This runs direct API checks and prints live record counts by feed/region to help validate real-world coverage.
 
 Detailed research notes are in [`docs/FEED_RESEARCH.md`](./docs/FEED_RESEARCH.md).
+
+## Shared Runtime Cache
+
+Godseye can optionally use a shared encrypted runtime cache backed by Firebase Realtime Database.
+
+This cache is intended for slower-changing shared surfaces such as:
+
+- Live Intel Wire / relay source payloads
+- Verified CCTV manifest data
+- Satellite catalog / TLE manifest payloads
+
+It is not used for highly volatile live-position layers such as aircraft or live vessel movement, where direct source refresh still makes more sense.
+
+When configured, the app:
+
+- attempts to read the shared RTDB cache first
+- verifies a custom integrity hash
+- checks the cache timestamp against a 90 minute freshness window
+- hydrates Godseye from that cache if it is still fresh
+- rebuilds and republishes the cache when it is missing, stale, or invalid
+- can prewarm the encrypted cache during CI or local ops with `npm run shared-cache:publish`
+
+The payload stored in RTDB is encrypted on the client before upload and decrypted on the client at runtime.
+For development/debugging, the browser console emits detailed shared-cache logs during the bootstrap flow.
 
 ## Project Structure
 

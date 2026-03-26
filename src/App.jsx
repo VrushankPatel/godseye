@@ -11,6 +11,7 @@ import FocusMask from './components/FocusMask';
 import SysTerminal from './components/SysTerminal';
 import WebcamDock from './components/WebcamDock';
 import RenderBoundary from './components/RenderBoundary';
+import SharedRuntimeCacheBootstrap from './components/SharedRuntimeCacheBootstrap';
 import { reportMissingOptionalRuntimeConfig } from './utils/runtimeEnv';
 import useStore from './store/useStore';
 import { SHADER_MODES } from './constants/dataSources';
@@ -98,6 +99,7 @@ export default function App() {
 
     return (
         <div style={{ width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden', background: '#0a0a0f' }}>
+            <SharedRuntimeCacheBootstrap />
             {/* 3D Globe */}
             <div className={`globe-container ${getGlobeModeClass()}`}>
                 <RenderBoundary name="globe">

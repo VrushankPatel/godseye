@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "manifests:refresh": "node ./scripts/refresh-runtime-manifests.mjs",
+    "shared-cache:publish": "node ./scripts/publish-shared-runtime-cache.mjs",
     "build": "npm run manifests:refresh && vite build",
     "preview": "vite preview",
     "lint": "eslint . --max-warnings=0",

@@ -36,6 +36,8 @@ export default function TopBar() {
     const activeFeedCount = useStore((s) => s.getActiveFeedCount());
     const totalEntityCount = useStore((s) => s.getTotalEntityCount());
     const toggleLayerPanel = useStore((s) => s.toggleLayerPanel);
+    const requestSharedRuntimeCacheRefresh = useStore((s) => s.requestSharedRuntimeCacheRefresh);
+    const sharedRuntimeCache = useStore((s) => s.sharedRuntimeCache);
 
     useEffect(() => {
         if (!appIsActive) return undefined;
@@ -106,6 +108,17 @@ export default function TopBar() {
                         ENTITIES <span className="text-white ml-1">{totalEntityCount.toLocaleString()}</span>
                     </div>
                 </div>
+
+                <button
+                    className="glass-panel px-3 py-1.5 mt-1 text-[10px] tracking-[0.18em] text-cyan-200 hover:text-white hover:border-cyan-400/50 transition-all"
+                    onClick={requestSharedRuntimeCacheRefresh}
+                    title="Force refresh shared cache and rebuild RTDB payload"
+                >
+                    CACHE REFRESH
+                    <span className="ml-2 text-text-dim">
+                        {sharedRuntimeCache.status === 'loading' ? 'SYNCING' : 'FORCE'}
+                    </span>
+                </button>
             </div>
 
         </div>
