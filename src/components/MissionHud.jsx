@@ -438,7 +438,9 @@ export default function MissionHud() {
     const [snapshotVisible, setSnapshotVisible] = useState(true);
     const [panelMediaSrc, setPanelMediaSrc] = useState('');
     const [panelMediaFailed, setPanelMediaFailed] = useState(false);
+    const [isMediaExpanded, setIsMediaExpanded] = useState(false);
     const mediaVideoRef = useRef(null);
+    const mediaTheaterRef = useRef(null);
     const rafRef = useRef(null);
 
     const effectiveVideoUrl = (() => {
@@ -462,6 +464,7 @@ export default function MissionHud() {
     useEffect(() => {
         setPanelMediaFailed(false);
         setPanelMediaSrc(appendCacheBuster(inspector?.url || inspector?.fallbackUrl || ''));
+        setIsMediaExpanded(false);
     }, [inspector]);
 
     useEffect(() => {
@@ -514,6 +517,78 @@ export default function MissionHud() {
             if (hlsInstance) hlsInstance.destroy();
         };
     }, [appIsActive, effectiveVideoUrl, panelMediaKind, inspector?.id]);
+
+    useEffect(() => {
+        if (!isMediaExpanded) return undefined;
+        const onKeyDown = (event) => {
+            if (event.key === 'Escape') {
+                setIsMediaExpanded(false);
+            }
+        };
+        window.addEventListener('keydown', onKeyDown);
+        return () => window.removeEventListener('keydown', onKeyDown);
+    }, [isMediaExpanded]);
+
+    const panelMediaOpenUrl = inspector?.detailsUrl || effectiveVideoUrl || inspector?.url || inspector?.fallbackUrl || panelMediaSrc;
+
+    const requestMediaFullscreen = useCallback(async () => {
+        const node = mediaTheaterRef.current;
+        if (!node?.requestFullscreen) return;
+        try {
+            await node.requestFullscreen();
+        } catch (err) {
+            // Ignore browser fullscreen denials.
+        }
+    }, []);
+
+    const renderInspectorMedia = (expanded = false) => {
+        if (!appIsActive) {
+            return <div className="rcp-media-fallback">FEED PAUSED WHILE WINDOW IS INACTIVE</div>;
+        }
+
+        const mediaClassName = `rcp-media-frame ${expanded ? 'rcp-media-frame--theater' : ''}`.trim();
+
+        if (panelMediaKind === 'embed' && effectiveVideoUrl) {
+            return (
+                <iframe
+                    src={effectiveVideoUrl}
+                    title="Live Feed"
+                    className={mediaClassName}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+                    allowFullScreen
+                    referrerPolicy="strict-origin-when-cross-origin"
+                />
+            );
+        }
+
+        if (panelMediaKind === 'video' && effectiveVideoUrl && !panelMediaFailed) {
+            return (
+                <video
+                    ref={isHlsUrl(effectiveVideoUrl) ? mediaVideoRef : null}
+                    src={isHlsUrl(effectiveVideoUrl) ? undefined : effectiveVideoUrl}
+                    className={mediaClassName}
+                    autoPlay
+                    muted
+                    controls
+                    playsInline
+                    onError={() => setPanelMediaFailed(true)}
+                />
+            );
+        }
+
+        if (panelMediaSrc && !panelMediaFailed) {
+            return (
+                <img
+                    src={panelMediaSrc}
+                    alt={inspector?.name || 'Camera Feed'}
+                    className={mediaClassName}
+                    onError={() => setPanelMediaFailed(true)}
+                />
+            );
+        }
+
+        return <div className="rcp-media-fallback">FEED METADATA ONLY</div>;
+    };
 
     const snapshotRows = SURVEILLANCE_PRIMARY_LAYERS
         .map((key) => {
@@ -636,36 +711,41 @@ export default function MissionHud() {
                             </div>
                             {hasMedia && (
                                 <div style={{ padding: '8px 10px 6px' }}>
-                                    {!appIsActive ? (
-                                        <div className="rcp-media-fallback">FEED PAUSED WHILE WINDOW IS INACTIVE</div>
-                                    ) : panelMediaKind === 'embed' && effectiveVideoUrl ? (
-                                        <iframe
-                                            src={effectiveVideoUrl}
-                                            title="Live Feed"
-                                            className="rcp-media-frame"
-                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                            allowFullScreen
-                                        />
-                                    ) : panelMediaKind === 'video' && effectiveVideoUrl && !panelMediaFailed ? (
-                                        <video
-                                            ref={isHlsUrl(effectiveVideoUrl) ? mediaVideoRef : null}
-                                            src={isHlsUrl(effectiveVideoUrl) ? undefined : effectiveVideoUrl}
-                                            className="rcp-media-frame"
-                                            autoPlay
-                                            muted
-                                            controls
-                                            playsInline
-                                            onError={() => setPanelMediaFailed(true)}
-                                        />
-                                    ) : panelMediaSrc && !panelMediaFailed ? (
-                                        <img
-                                            src={panelMediaSrc}
-                                            alt={inspector.name || 'Camera Feed'}
-                                            className="rcp-media-frame"
-                                            onError={() => setPanelMediaFailed(true)}
-                                        />
+                                    <div className="rcp-media-toolbar">
+                                        <span className="rcp-media-status">LIVE FEED</span>
+                                        <div className="rcp-media-actions">
+                                            {(effectiveVideoUrl || panelMediaSrc) && (
+                                                <button
+                                                    onClick={() => setIsMediaExpanded(true)}
+                                                    className="rcp-action"
+                                                    title="Expand media feed"
+                                                >
+                                                    MAX
+                                                </button>
+                                            )}
+                                            {panelMediaOpenUrl && (
+                                                <a
+                                                    href={panelMediaOpenUrl}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="rcp-action"
+                                                >
+                                                    OPEN
+                                                </a>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {isMediaExpanded ? (
+                                        <button
+                                            onClick={() => setIsMediaExpanded(true)}
+                                            className="rcp-media-minimized-state"
+                                            title="Feed opened in theater mode"
+                                        >
+                                            FEED IN THEATER MODE
+                                        </button>
                                     ) : (
-                                        <div className="rcp-media-fallback">FEED METADATA ONLY</div>
+                                        renderInspectorMedia(false)
                                     )}
                                 </div>
                             )}
@@ -787,6 +867,52 @@ export default function MissionHud() {
                 <button onClick={toggleCities} className="pointer-events-auto z-10 sys-terminal-toggle"
                     style={{ position: 'absolute', bottom: '24px', right: rightPanelRight }}
                     title="Show right panel">▸ PANEL</button>
+            )}
+
+            {isMediaExpanded && hasMedia && (effectiveVideoUrl || panelMediaSrc) && (
+                <div className="rcp-media-theater-backdrop" onClick={() => setIsMediaExpanded(false)}>
+                    <div
+                        ref={mediaTheaterRef}
+                        className="rcp-media-theater"
+                        onClick={(event) => event.stopPropagation()}
+                    >
+                        <div className="rcp-media-theater-header">
+                            <div>
+                                <div className="news-relay-title">{inspector?.name || inspector?.callsign || inspector?.id || 'LIVE FEED'}</div>
+                                <div className="news-relay-note">{inspectorDef?.label || 'SURVEILLANCE FEED'}</div>
+                            </div>
+                            <div className="rcp-media-theater-actions">
+                                <button
+                                    onClick={requestMediaFullscreen}
+                                    className="rcp-action"
+                                    title="Enter browser fullscreen"
+                                >
+                                    FULL
+                                </button>
+                                {panelMediaOpenUrl && (
+                                    <a
+                                        href={panelMediaOpenUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="rcp-action"
+                                    >
+                                        OPEN
+                                    </a>
+                                )}
+                                <button
+                                    onClick={() => setIsMediaExpanded(false)}
+                                    className="rcp-action"
+                                    title="Close theater mode"
+                                >
+                                    ✕
+                                </button>
+                            </div>
+                        </div>
+                        <div className="rcp-media-theater-body">
+                            {renderInspectorMedia(true)}
+                        </div>
+                    </div>
+                </div>
             )}
         </>
     );
