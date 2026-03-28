@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import useStore from '../store/useStore';
 import { isWithinIntelRegion } from '../services/intelMonitor';
 
@@ -34,6 +34,18 @@ function extractYoutubeId(url) {
     const watchMatch = value.match(/[?&]v=([^?&/]+)/i);
     if (watchMatch?.[1]) return watchMatch[1];
     return '';
+}
+
+function isHlsUrl(url) {
+    return /\.m3u8(\?|$)/i.test(String(url || ''));
+}
+
+function resolveDockMediaKind(feed) {
+    if (!feed) return 'none';
+    if (feed.mediaType) return feed.mediaType;
+    if (feed.videoUrl) return isHlsUrl(feed.videoUrl) ? 'video' : 'embed';
+    if (feed.url || feed.fallbackUrl) return 'image';
+    return 'none';
 }
 
 function pickFeaturedFeeds(feeds, limit = MAX_DOCK_FEEDS) {
@@ -75,10 +87,15 @@ export default function WebcamDock() {
     const [previewNonce, setPreviewNonce] = useState(Date.now());
     const [activeRegion, setActiveRegion] = useState('all');
     const [dockVisible, setDockVisible] = useState(true);
+    const [expandedFeed, setExpandedFeed] = useState(null);
+    const [expandedMediaFailed, setExpandedMediaFailed] = useState(false);
+    const theaterRef = useRef(null);
+    const videoRef = useRef(null);
 
     useEffect(() => {
         if (!cctvEnabled) {
             setDockVisible(true);
+            setExpandedFeed(null);
         }
     }, [cctvEnabled]);
 
@@ -87,6 +104,127 @@ export default function WebcamDock() {
         const timer = setInterval(() => setPreviewNonce(Date.now()), PREVIEW_REFRESH_MS);
         return () => clearInterval(timer);
     }, [appIsActive, cctvEnabled]);
+
+    useEffect(() => {
+        if (!expandedFeed) return undefined;
+        const onKeyDown = (event) => {
+            if (event.key === 'Escape') {
+                setExpandedFeed(null);
+            }
+        };
+        window.addEventListener('keydown', onKeyDown);
+        return () => window.removeEventListener('keydown', onKeyDown);
+    }, [expandedFeed]);
+
+    const expandedVideoUrl = expandedFeed?.videoUrl || '';
+    const expandedMediaKind = resolveDockMediaKind(expandedFeed);
+    const expandedOpenUrl = expandedFeed?.detailsUrl || expandedFeed?.videoUrl || expandedFeed?.url || expandedFeed?.fallbackUrl || '';
+
+    useEffect(() => {
+        setExpandedMediaFailed(false);
+    }, [expandedFeed]);
+
+    useEffect(() => {
+        const videoEl = videoRef.current;
+        if (!appIsActive || !videoEl || expandedMediaKind !== 'video' || !expandedVideoUrl || !isHlsUrl(expandedVideoUrl)) {
+            return undefined;
+        }
+
+        let cancelled = false;
+        let hlsInstance = null;
+
+        const setup = async () => {
+            if (videoEl.canPlayType('application/vnd.apple.mpegurl')) {
+                videoEl.src = expandedVideoUrl;
+                return;
+            }
+            try {
+                const module = await import('hls.js');
+                if (cancelled) return;
+                const Hls = module.default;
+                if (Hls?.isSupported?.()) {
+                    hlsInstance = new Hls({ enableWorker: true, lowLatencyMode: true });
+                    hlsInstance.loadSource(expandedVideoUrl);
+                    hlsInstance.attachMedia(videoEl);
+                    hlsInstance.on(Hls.Events.ERROR, (_, data) => {
+                        if (data?.fatal) setExpandedMediaFailed(true);
+                    });
+                } else {
+                    videoEl.src = expandedVideoUrl;
+                }
+            } catch (err) {
+                if (!cancelled) setExpandedMediaFailed(true);
+            }
+        };
+
+        setup();
+
+        return () => {
+            cancelled = true;
+            if (hlsInstance) hlsInstance.destroy();
+        };
+    }, [appIsActive, expandedMediaKind, expandedVideoUrl]);
+
+    const requestNativeFullscreen = useCallback(async () => {
+        const node = theaterRef.current;
+        if (!node?.requestFullscreen) return;
+        try {
+            await node.requestFullscreen();
+        } catch (err) {
+            // Ignore browser fullscreen denials.
+        }
+    }, []);
+
+    const renderExpandedFeed = () => {
+        if (!expandedFeed) return null;
+        if (!appIsActive) {
+            return <div className="rcp-media-fallback">FEED PAUSED WHILE WINDOW IS INACTIVE</div>;
+        }
+
+        const className = 'rcp-media-frame rcp-media-frame--theater';
+
+        if (expandedMediaKind === 'embed' && expandedVideoUrl) {
+            return (
+                <iframe
+                    src={expandedVideoUrl}
+                    title={`${expandedFeed.name || 'Webcam'} live feed`}
+                    className={className}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+                    allowFullScreen
+                    referrerPolicy="strict-origin-when-cross-origin"
+                />
+            );
+        }
+
+        if (expandedMediaKind === 'video' && expandedVideoUrl && !expandedMediaFailed) {
+            return (
+                <video
+                    ref={isHlsUrl(expandedVideoUrl) ? videoRef : null}
+                    src={isHlsUrl(expandedVideoUrl) ? undefined : expandedVideoUrl}
+                    className={className}
+                    autoPlay
+                    muted
+                    controls
+                    playsInline
+                    onError={() => setExpandedMediaFailed(true)}
+                />
+            );
+        }
+
+        const imageUrl = expandedFeed.fallbackUrl || expandedFeed.url;
+        if (imageUrl && !expandedMediaFailed) {
+            return (
+                <img
+                    src={imageUrl}
+                    alt={expandedFeed.name || 'Webcam preview'}
+                    className={className}
+                    onError={() => setExpandedMediaFailed(true)}
+                />
+            );
+        }
+
+        return <div className="rcp-media-fallback">FEED METADATA ONLY</div>;
+    };
 
     const regionCounts = useMemo(() => {
         const counts = Object.fromEntries(WEBCAM_REGIONS.map((region) => [region.id, 0]));
@@ -243,11 +381,19 @@ export default function WebcamDock() {
                             })();
 
                     return (
-                        <button
+                        <div
                             key={`${feed.id || index}`}
                             onClick={() => openFeed(feed, index)}
-                            className="relative text-left border border-cyan-500/25 rounded overflow-hidden bg-black/50 hover:border-cyan-300/60 transition-colors"
+                            onKeyDown={(event) => {
+                                if (event.key === 'Enter' || event.key === ' ') {
+                                    event.preventDefault();
+                                    openFeed(feed, index);
+                                }
+                            }}
+                            className="relative text-left border border-cyan-500/25 rounded overflow-hidden bg-black/50 hover:border-cyan-300/60 transition-colors cursor-pointer focus:outline-none focus:ring-1 focus:ring-cyan-300/70"
                             title={feed.name || 'Open feed'}
+                            role="button"
+                            tabIndex={0}
                         >
                             {previewUrl ? (
                                 <img
@@ -263,11 +409,21 @@ export default function WebcamDock() {
                             <div className="absolute top-1 left-1 bg-black/75 text-[9px] px-1.5 py-0.5 tracking-[0.2em] uppercase text-green-300 border border-green-500/35">
                                 Live
                             </div>
+                            <button
+                                onClick={(event) => {
+                                    event.stopPropagation();
+                                    setExpandedFeed(feed);
+                                }}
+                                className="absolute top-1 right-1 bg-black/75 text-[8px] px-1.5 py-0.5 tracking-[0.18em] uppercase text-cyan-100 border border-cyan-400/35 hover:border-cyan-300/70 hover:text-white transition-colors"
+                                title={`Maximize ${feed.name || 'feed'}`}
+                            >
+                                Max
+                            </button>
                             <div className="absolute inset-x-0 bottom-0 bg-black/78 px-1.5 py-1">
                                 <div className="text-[10px] tracking-[0.12em] text-cyan-100 truncate">{feed.name || 'Camera'}</div>
                                 <div className="text-[9px] tracking-[0.16em] uppercase text-text-dim truncate">{feed.city || feed.provider || 'Feed'}</div>
                             </div>
-                        </button>
+                        </div>
                     );
                 })}
                 {featuredFeeds.length === 0 && (
@@ -276,6 +432,61 @@ export default function WebcamDock() {
                     </div>
                 )}
             </div>
+
+            {expandedFeed && (
+                <div className="rcp-media-theater-backdrop" onClick={() => setExpandedFeed(null)}>
+                    <div
+                        ref={theaterRef}
+                        className="rcp-media-theater"
+                        onClick={(event) => event.stopPropagation()}
+                    >
+                        <div className="rcp-media-theater-header">
+                            <div>
+                                <div className="news-relay-title">{expandedFeed.name || 'Live Webcam Feed'}</div>
+                                <div className="news-relay-note">
+                                    {expandedFeed.city || expandedFeed.provider || 'PUBLIC FEED'}
+                                </div>
+                            </div>
+                            <div className="rcp-media-theater-actions">
+                                <button
+                                    onClick={() => openFeed(expandedFeed, 0)}
+                                    className="rcp-action"
+                                    title="Open feed in inspector"
+                                >
+                                    INFO
+                                </button>
+                                <button
+                                    onClick={requestNativeFullscreen}
+                                    className="rcp-action"
+                                    title="Enter browser fullscreen"
+                                >
+                                    FULL
+                                </button>
+                                {expandedOpenUrl && (
+                                    <a
+                                        href={expandedOpenUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="rcp-action"
+                                    >
+                                        OPEN
+                                    </a>
+                                )}
+                                <button
+                                    onClick={() => setExpandedFeed(null)}
+                                    className="rcp-action"
+                                    title="Close theater mode"
+                                >
+                                    ✕
+                                </button>
+                            </div>
+                        </div>
+                        <div className="rcp-media-theater-body">
+                            {renderExpandedFeed()}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
