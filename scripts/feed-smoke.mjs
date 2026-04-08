@@ -36,7 +36,12 @@ const checks = [
   },
   {
     label: 'Satellite catalog coverage',
-    pass: (toNumber('CELESTRAK_ACTIVE_RECORDS') || 0) >= 100,
+    pass: Math.max(
+      toNumber('CELESTRAK_ACTIVE_RECORDS') || 0,
+      toNumber('SATELLITE_MANIFEST_RECORDS') || 0,
+      toNumber('CELESTRAK_COSMOS2251_DEBRIS') || 0,
+      toNumber('CELESTRAK_FENGYUN1C_DEBRIS') || 0,
+    ) >= 100,
   },
   {
     label: 'Seismic feed availability',

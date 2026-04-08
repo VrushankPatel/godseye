@@ -51,6 +51,13 @@ jq -s '
 echo
 echo "== Other Feed Coverage =="
 
+if [ -f "public/manifests/satellite-active.json" ]; then
+  manifest_satellites="$(jq -r '.recordCount // (.records | length) // 0' public/manifests/satellite-active.json 2>/dev/null || echo 0)"
+  echo "SATELLITE_MANIFEST_RECORDS ${manifest_satellites:-0}"
+else
+  echo "SATELLITE_MANIFEST_RECORDS ERR"
+fi
+
 if celestrak=$(curl -s --max-time 45 "https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=tle" \
   | awk 'NF{c++} END{printf "%d", int(c/3)}'); then
   echo "CELESTRAK_ACTIVE_RECORDS ${celestrak:-0}"
