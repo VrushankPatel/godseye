@@ -1,7 +1,20 @@
 # Godseye 1.0
 
-Godseye 1.0 is a frontend-only geospatial intelligence dashboard inspired by WorldView-style OSINT interfaces.
-It renders a live 3D globe with real-time overlays for aircraft, satellites, seismic events, CCTV feeds, traffic simulation, and airspace zones.
+<p align="center">
+  <a href="https://godseye-x.web.app/"><strong>Launch Godseye</strong></a>
+</p>
+
+<p align="center">
+  <a href="https://godseye-x.web.app/">
+    <img src="./imgs/Godseye-1.0.png" alt="Godseye 1.0 interface preview" width="100%" />
+  </a>
+</p>
+
+<p align="center">
+  Frontend-only geospatial intelligence dashboard inspired by WorldView-style OSINT interfaces.
+  <br />
+  Live 3D globe, tactical HUD, surveillance overlays, CCTV feeds, satellites, seismic activity, airspace, and more.
+</p>
 
 ## Vibe Coding Alert
 
