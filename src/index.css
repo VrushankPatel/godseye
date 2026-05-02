@@ -33,6 +33,8 @@ body {
   --ops-right: max(16px, env(safe-area-inset-right));
   --ops-gap: 18px;
   --ops-top: calc(max(20px, env(safe-area-inset-top)) + 72px);
+  --immersive-left-top-clearance: calc(max(20px, env(safe-area-inset-top)) + 92px);
+  --immersive-right-top-clearance: calc(max(20px, env(safe-area-inset-top)) + 176px);
   --ops-globe-width: min(42vw, 680px);
   --ops-globe-height: min(46vh, 500px);
   --ops-focus-x: calc(var(--ops-left) + (var(--ops-globe-width) / 2));
@@ -406,7 +408,7 @@ body {
 }
 
 .layer-panel-shell {
-  top: 24px;
+  top: var(--immersive-left-top-clearance);
   bottom: 220px;
 }
 
@@ -620,7 +622,7 @@ body {
 /* ── Mission HUD ─────────────────────────────────── */
 .mission-hud-left {
   position: absolute;
-  top: 92px;
+  top: var(--immersive-left-top-clearance);
   left: 16px;
   transition: left 0.2s ease;
   max-width: 260px;
@@ -979,6 +981,7 @@ body {
 /* ── Unified Right Column Panel ──────────────────── */
 .right-column-panel {
   position: absolute;
+  top: var(--immersive-right-top-clearance);
   bottom: 24px;
   right: max(18px, env(safe-area-inset-right));
   width: 260px;
@@ -990,7 +993,7 @@ body {
   backdrop-filter: blur(8px);
   box-shadow: 0 0 20px rgba(14, 165, 233, 0.05);
   transition: right 0.2s ease;
-  max-height: calc(100vh - 140px);
+  max-height: none;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
