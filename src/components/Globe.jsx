@@ -199,6 +199,7 @@ export default function Globe() {
     const previousTrackedTargetRef = useRef(null);
     const [viewerReady, setViewerReady] = useState(false);
     const activeShader = useStore((s) => s.activeShader);
+    const globeViewMode = useStore((s) => s.globeViewMode);
     const setViewerRefStore = useStore((s) => s.setViewerRef);
     const setCity3DActive = useStore((s) => s.setCity3DActive);
     const isAutoRotating = useStore((s) => s.isAutoRotating);
@@ -307,7 +308,7 @@ export default function Globe() {
             navigationHelpButton: false,
             creditContainer: document.createElement('div'), // hide credits
             skyAtmosphere: false,
-            scene3DOnly: true,
+            scene3DOnly: false,
             shadows: false,
             requestRenderMode: false,
         });
@@ -355,6 +356,13 @@ export default function Globe() {
         }
 
         const update3DCityVisibility = () => {
+            if (useStore.getState().globeViewMode !== 'planet') {
+                if (city3DTilesRef.current.tileset) {
+                    city3DTilesRef.current.tileset.show = false;
+                }
+                setCity3DActive(false);
+                return;
+            }
             const tileset = city3DTilesRef.current.tileset;
             if (!tileset) {
                 setCity3DActive(false);
@@ -506,6 +514,7 @@ export default function Globe() {
 
             const carto = viewer.camera.positionCartographic;
             if (!carto) return;
+            if (useStore.getState().globeViewMode !== 'planet') return;
             const height = carto.height || 0;
             if (height < AUTO_RECENTER_HEIGHT_M) return;
             if (viewer.camera.pitch <= ZOOM_SNAP_PITCH_THRESHOLD_RAD) return;
@@ -664,6 +673,34 @@ export default function Globe() {
         setCity3DActive,
         setViewerRefStore,
     ]);
+
+    useEffect(() => {
+        const viewer = viewerRef.current;
+        if (!viewer || viewer.isDestroyed()) return;
+
+        setAutoRotating(false);
+
+        if (globeViewMode === 'map') {
+            viewer.scene.screenSpaceCameraController.enableTilt = false;
+            if (city3DTilesRef.current.tileset) {
+                city3DTilesRef.current.tileset.show = false;
+            }
+            setCity3DActive(false);
+            if (viewer.scene.mode !== Cesium.SceneMode.SCENE2D) {
+                viewer.scene.morphTo2D(0.8);
+            } else {
+                viewer.scene.requestRender();
+            }
+            return;
+        }
+
+        viewer.scene.screenSpaceCameraController.enableTilt = true;
+        if (viewer.scene.mode !== Cesium.SceneMode.SCENE3D) {
+            viewer.scene.morphTo3D(0.8);
+        } else {
+            viewer.scene.requestRender();
+        }
+    }, [globeViewMode, setAutoRotating, setCity3DActive]);
 
     // Auto-rotation
     useEffect(() => {

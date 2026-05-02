@@ -3,6 +3,7 @@ import useStore from '../store/useStore';
 
 export default function Reticle() {
     const activeShader = useStore((s) => s.activeShader);
+    const uiLayoutMode = useStore((s) => s.uiLayoutMode);
 
     const getReticleColor = () => {
         switch (activeShader) {
@@ -15,7 +16,9 @@ export default function Reticle() {
     };
 
     return (
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-10 w-96 h-96 flex items-center justify-center mix-blend-screen opacity-70 transition-colors duration-500">
+        <div
+            className={`reticle-shell absolute pointer-events-none z-10 flex items-center justify-center mix-blend-screen opacity-70 transition-colors duration-500 ${uiLayoutMode === 'partitioned' ? 'reticle-shell--partitioned' : ''}`}
+        >
             <svg
                 width="100%"
                 height="100%"

@@ -28,6 +28,7 @@ export default function SysTerminal() {
     const layers = useStore((s) => s.layers);
     const sysTerminalVisible = useStore((s) => s.sysTerminalVisible);
     const toggleSysTerminal = useStore((s) => s.toggleSysTerminal);
+    const uiLayoutMode = useStore((s) => s.uiLayoutMode);
     const [lines, setLines] = useState([]);
     const scrollRef = useRef(null);
     const seenRef = useRef(new Set());
@@ -83,7 +84,7 @@ export default function SysTerminal() {
         return (
             <button
                 onClick={toggleSysTerminal}
-                className="pointer-events-auto sys-terminal-toggle"
+                className={`pointer-events-auto sys-terminal-toggle ${uiLayoutMode === 'partitioned' ? 'sys-terminal-toggle--partitioned' : ''}`}
                 style={{ position: 'absolute', bottom: '24px', left: leftPos }}
                 title="Show terminal"
             >
@@ -94,7 +95,7 @@ export default function SysTerminal() {
 
     return (
         <div
-            className="sys-terminal pointer-events-auto"
+            className={`sys-terminal pointer-events-auto ${uiLayoutMode === 'partitioned' ? 'sys-terminal--partitioned' : ''}`}
             style={{ position: 'absolute', bottom: '24px', left: leftPos, width: panelWidth }}
         >
             <div className="sys-terminal-header">

@@ -15,6 +15,7 @@ export default function LayerPanel() {
         layerPanelOpen,
         toggleLayerPanel
     } = useStore();
+    const uiLayoutMode = useStore((s) => s.uiLayoutMode);
     const [othersOpen, setOthersOpen] = useState(false);
 
     const { primaryEntries, otherEntries } = useMemo(() => {
@@ -119,7 +120,7 @@ export default function LayerPanel() {
         return (
             <button
                 onClick={toggleLayerPanel}
-                className="absolute top-1/2 -translate-y-1/2 glass-panel p-2.5 rounded-r-lg rounded-l-none text-text-dim hover:text-white pointer-events-auto z-10 border-l-0"
+                className={`layer-panel-toggle absolute glass-panel p-2.5 rounded-r-lg rounded-l-none text-text-dim hover:text-white pointer-events-auto z-10 border-l-0 ${uiLayoutMode === 'partitioned' ? 'layer-panel-toggle--partitioned' : ''}`}
                 style={{ left: 'max(10px, env(safe-area-inset-left))' }}
             >
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-5 h-5">
@@ -131,7 +132,7 @@ export default function LayerPanel() {
 
         return (
         <div
-            className="absolute top-24 bottom-[220px] w-[16rem] flex flex-col gap-2 pointer-events-none z-10 animate-slide-left"
+            className={`layer-panel-shell absolute w-[16rem] flex flex-col gap-2 pointer-events-none z-10 animate-slide-left ${uiLayoutMode === 'partitioned' ? 'layer-panel-shell--partitioned' : ''}`}
             style={{ left: 'max(16px, env(safe-area-inset-left))' }}
         >
             {/* Data Layers Panel */}

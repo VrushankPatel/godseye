@@ -390,6 +390,7 @@ export default function MissionHud() {
     const toggleMissionHud = useStore((s) => s.toggleMissionHud);
     const citiesVisible = useStore((s) => s.citiesVisible);
     const toggleCities = useStore((s) => s.toggleCities);
+    const uiLayoutMode = useStore((s) => s.uiLayoutMode);
     const setAutoRotating = useStore((s) => s.setAutoRotating);
     const setFocusMode = useStore((s) => s.setFocusMode);
     const appIsActive = useStore((s) => s.appIsActive);
@@ -723,7 +724,7 @@ export default function MissionHud() {
         <>
             {/* Mode wizard chip */}
             {missionHudVisible ? (
-                <div className={`mission-hud-left glass-panel pointer-events-auto z-10 ${layerPanelOpen ? 'mission-hud-left--offset' : ''}`}>
+                <div className={`mission-hud-left glass-panel pointer-events-auto z-10 ${layerPanelOpen ? 'mission-hud-left--offset' : ''} ${uiLayoutMode === 'partitioned' ? 'mission-hud-left--partitioned' : ''}`}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                         <div className="mission-label">CLASSIFIED // EYES ONLY // GODSEYE</div>
                         <button onClick={toggleMissionHud} className="text-text-dim hover:text-white transition-colors"
@@ -735,19 +736,19 @@ export default function MissionHud() {
                 </div>
             ) : (
                 <button onClick={toggleMissionHud} className="pointer-events-auto z-10"
-                    style={{ ...toggleBtnStyle, position: 'absolute', left: layerPanelOpen ? '282px' : '16px', top: '92px' }}
+                    style={{ ...toggleBtnStyle, position: 'absolute', left: uiLayoutMode === 'partitioned' ? 'calc(var(--ops-globe-left) + var(--ops-globe-width) + 16px)' : (layerPanelOpen ? '282px' : '16px'), top: uiLayoutMode === 'partitioned' ? 'var(--ops-top)' : '92px' }}
                     title="Show mode wizard">◎ MODE</button>
             )}
 
             {!layerPanelOpen && (
                 <button onClick={toggleLayerPanel} className="pointer-events-auto z-10"
-                    style={{ ...toggleBtnStyle, position: 'absolute', left: '16px', top: missionHudVisible ? '200px' : '118px' }}
+                    style={{ ...toggleBtnStyle, position: 'absolute', left: '16px', top: uiLayoutMode === 'partitioned' ? 'calc(var(--ops-top) + var(--ops-globe-height) + 16px)' : (missionHudVisible ? '200px' : '118px') }}
                     title="Show data layers">◎ LAYERS</button>
             )}
 
             {/* ── Unified right column ── */}
             {citiesVisible ? (
-                <div className="right-column-panel pointer-events-auto z-10" style={{ right: rightPanelRight }}>
+                <div className={`right-column-panel pointer-events-auto z-10 ${uiLayoutMode === 'partitioned' ? 'right-column-panel--partitioned' : ''}`} style={{ right: rightPanelRight }}>
                     <IntelWire
                         embedded
                         hidden={Boolean(inspector) || !intelWireVisible}
@@ -1004,7 +1005,9 @@ export default function MissionHud() {
                 </div>
             ) : (
                 <button onClick={toggleCities} className="pointer-events-auto z-10 sys-terminal-toggle"
-                    style={{ position: 'absolute', bottom: '24px', right: rightPanelRight }}
+                    style={uiLayoutMode === 'partitioned'
+                        ? { position: 'absolute', top: 'var(--ops-top)', right: rightPanelRight }
+                        : { position: 'absolute', bottom: '24px', right: rightPanelRight }}
                     title="Show right panel">▸ PANEL</button>
             )}
 

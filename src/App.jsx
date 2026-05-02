@@ -17,6 +17,8 @@ import { SHADER_MODES } from './constants/dataSources';
 
 export default function App() {
     const activeShader = useStore((s) => s.activeShader);
+    const uiLayoutMode = useStore((s) => s.uiLayoutMode);
+    const globeViewMode = useStore((s) => s.globeViewMode);
     const setShader = useStore((s) => s.setShader);
     const setAppIsActive = useStore((s) => s.setAppIsActive);
     const enableAllLayers = useStore((s) => s.enableAllLayers);
@@ -93,13 +95,18 @@ export default function App() {
     };
 
     return (
-        <div style={{ width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden', background: '#0a0a0f' }}>
+        <div
+            className={`godseye-app godseye-app--${uiLayoutMode} godseye-app--${globeViewMode}`}
+            style={{ width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden', background: '#0a0a0f' }}
+        >
             <SharedRuntimeCacheBootstrap />
             {/* 3D Globe */}
-            <div className={`globe-container ${getGlobeModeClass()}`}>
-                <RenderBoundary name="globe">
-                    <Globe />
-                </RenderBoundary>
+            <div className="globe-shell">
+                <div className={`globe-container ${getGlobeModeClass()}`}>
+                    <RenderBoundary name="globe">
+                        <Globe />
+                    </RenderBoundary>
+                </div>
             </div>
 
             {/* Shader Overlay Effects */}

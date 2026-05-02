@@ -48,6 +48,22 @@ const useStore = create((set, get) => ({
     activeShader: 'DEFAULT',
     setShader: (mode) => set({ activeShader: mode }),
 
+    // Shell/view modes
+    uiLayoutMode: 'immersive',
+    setUILayoutMode: (mode) =>
+        set({ uiLayoutMode: mode === 'partitioned' ? 'partitioned' : 'immersive' }),
+    toggleUILayoutMode: () =>
+        set((state) => ({
+            uiLayoutMode: state.uiLayoutMode === 'partitioned' ? 'immersive' : 'partitioned',
+        })),
+    globeViewMode: 'planet',
+    setGlobeViewMode: (mode) =>
+        set({ globeViewMode: mode === 'map' ? 'map' : 'planet' }),
+    toggleGlobeViewMode: () =>
+        set((state) => ({
+            globeViewMode: state.globeViewMode === 'map' ? 'planet' : 'map',
+        })),
+
     // Layers
     layers: createLayersState(),
 

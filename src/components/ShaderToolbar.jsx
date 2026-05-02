@@ -7,6 +7,7 @@ const DOCKED_TOOLBAR_HEIGHT_PX = 124;
 
 export default function ShaderToolbar() {
     const activeShader = useStore((s) => s.activeShader);
+    const uiLayoutMode = useStore((s) => s.uiLayoutMode);
     const setShader = useStore((s) => s.setShader);
     const enableAllLayers = useStore((s) => s.enableAllLayers);
     const enableSurveillanceLayers = useStore((s) => s.enableSurveillanceLayers);
@@ -29,7 +30,7 @@ export default function ShaderToolbar() {
     const row2 = SHADER_MODES.slice(4);
 
     return (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 pointer-events-none z-10 animate-slide-up">
+        <div className={`shader-toolbar-shell absolute pointer-events-none z-10 animate-slide-up ${uiLayoutMode === 'partitioned' ? 'shader-toolbar-shell--partitioned' : ''}`}>
             <div className="flex items-start gap-3">
                 <div
                     className="glass-panel px-10 pt-3 pb-4 flex flex-col items-center gap-3 pointer-events-auto rounded-full"

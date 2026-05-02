@@ -28,6 +28,39 @@ body {
   overflow: hidden;
 }
 
+.godseye-app {
+  --ops-left: max(16px, env(safe-area-inset-left));
+  --ops-right: max(16px, env(safe-area-inset-right));
+  --ops-top: calc(max(20px, env(safe-area-inset-top)) + 72px);
+  --ops-globe-width: min(44vw, 720px);
+  --ops-globe-height: min(46vh, 500px);
+  --ops-focus-x: calc(var(--ops-left) + (var(--ops-globe-width) / 2));
+  --ops-focus-y: calc(var(--ops-top) + (var(--ops-globe-height) / 2));
+}
+
+.globe-shell {
+  position: absolute;
+  inset: 0;
+}
+
+.godseye-app--partitioned .globe-shell {
+  left: var(--ops-left);
+  top: var(--ops-top);
+  width: var(--ops-globe-width);
+  height: var(--ops-globe-height);
+  inset: unset;
+  border: 1px solid rgba(14, 165, 233, 0.2);
+  border-radius: 14px;
+  overflow: hidden;
+  backdrop-filter: blur(6px);
+  background:
+    radial-gradient(circle at top, rgba(0, 180, 255, 0.06), transparent 62%),
+    rgba(2, 8, 20, 0.54);
+  box-shadow:
+    0 20px 50px rgba(0, 0, 0, 0.38),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+}
+
 /* ── Cesium Overrides ─────────────────────────────── */
 .cesium-viewer,
 .cesium-viewer-cesiumWidgetContainer,
@@ -371,6 +404,65 @@ body {
   filter: saturate(1.8) contrast(1.5) brightness(1.1);
 }
 
+.layer-panel-shell {
+  top: 24px;
+  bottom: 220px;
+}
+
+.layer-panel-shell--partitioned {
+  top: calc(var(--ops-top) + var(--ops-globe-height) + 16px);
+  bottom: 220px;
+}
+
+.layer-panel-toggle {
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.layer-panel-toggle--partitioned {
+  top: calc(var(--ops-top) + var(--ops-globe-height) + 28px);
+  transform: none;
+}
+
+.shader-toolbar-shell {
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.shader-toolbar-shell--partitioned {
+  top: calc(var(--ops-top) + var(--ops-globe-height) - 144px);
+  bottom: auto;
+  left: calc(var(--ops-left) + (var(--ops-globe-width) / 2));
+  transform: translateX(-50%);
+}
+
+.reticle-shell {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 24rem;
+  height: 24rem;
+}
+
+.reticle-shell--partitioned {
+  top: var(--ops-focus-y);
+  left: var(--ops-focus-x);
+  width: min(26vw, 340px);
+  height: min(26vw, 340px);
+}
+
+.focus-mask-banner {
+  top: max(78px, env(safe-area-inset-top) + 58px);
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.focus-mask-banner--partitioned {
+  top: calc(var(--ops-top) + 12px);
+  left: var(--ops-focus-x);
+}
+
 /* ── Animations ───────────────────────────────────── */
 @keyframes pulse-glow {
 
@@ -541,6 +633,12 @@ body {
 
 .mission-hud-left--offset {
   left: calc(max(16px, env(safe-area-inset-left)) + 16rem + 10px);
+}
+
+.mission-hud-left--partitioned {
+  top: var(--ops-top);
+  left: calc(var(--ops-left) + var(--ops-globe-width) + 16px);
+  max-width: min(24vw, 320px);
 }
 
 .mission-label {
@@ -894,6 +992,12 @@ body {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+}
+
+.right-column-panel--partitioned {
+  top: var(--ops-top);
+  bottom: 24px;
+  width: min(29vw, 360px);
 }
 
 .right-column-panel::-webkit-scrollbar {
@@ -1586,6 +1690,10 @@ body {
   transition: left 0.3s ease;
 }
 
+.sys-terminal--partitioned {
+  width: 18rem;
+}
+
 .sys-terminal-toggle {
   padding: 4px 10px;
   font-size: 9px;
@@ -1600,6 +1708,10 @@ body {
   backdrop-filter: blur(4px);
   z-index: 9;
   transition: left 0.3s ease;
+}
+
+.sys-terminal-toggle--partitioned {
+  bottom: 24px;
 }
 
 .sys-terminal-header {
@@ -1652,4 +1764,59 @@ body {
   font-size: 10px;
   color: #38bdf8;
   animation: blink 1s step-end infinite;
+}
+
+.godseye-view-controls {
+  min-width: 210px;
+}
+
+.godseye-view-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 180, 255, 0.16);
+  background: rgba(2, 8, 20, 0.64);
+  cursor: pointer;
+  font-family: var(--font-mono);
+}
+
+.godseye-view-toggle__pill {
+  min-width: 58px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  color: rgba(148, 163, 184, 0.9);
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  font-size: 8px;
+  letter-spacing: 0.16em;
+}
+
+.godseye-view-toggle__pill.is-active {
+  color: #dff6ff;
+  background: rgba(0, 180, 255, 0.16);
+  box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.24), 0 0 12px rgba(0, 180, 255, 0.08);
+}
+
+.webcam-dock-shell--partitioned {
+  left: calc(var(--ops-left) + (var(--ops-globe-width) / 2)) !important;
+  transform: translateX(-50%) !important;
+  bottom: 18px !important;
+  width: min(31vw, 440px) !important;
+}
+
+@media (max-width: 1220px) {
+  .godseye-app--partitioned {
+    --ops-globe-width: min(48vw, 600px);
+    --ops-globe-height: min(38vh, 420px);
+  }
+
+  .godseye-app--partitioned .mission-hud-left--partitioned {
+    max-width: min(28vw, 280px);
+  }
+
+  .godseye-app--partitioned .right-column-panel--partitioned {
+    width: min(32vw, 320px);
+  }
 }
