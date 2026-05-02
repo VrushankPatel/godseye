@@ -29,6 +29,10 @@ function readEnvValue(keys) {
   return '';
 }
 
+function isIpv4Address(value) {
+  return /^\d{1,3}(?:\.\d{1,3}){3}$/.test(String(value || '').trim());
+}
+
 function normalizeDbUrl(rawValue) {
   const trimmed = String(rawValue || '').trim().replace(/^['"]+|['"]+$/g, '');
   if (!trimmed) return '';
@@ -134,12 +138,35 @@ async function buildPayload(rootDir) {
   };
 }
 
+async function resolveHostViaGoogleDns(hostname) {
+  try {
+    const { stdout } = await execFileAsync('curl', [
+      '--retry', '2',
+      '--retry-delay', '1',
+      '-sS',
+      'https://dns.google/resolve?name=' + encodeURIComponent(hostname) + '&type=A',
+    ], {
+      maxBuffer: 1024 * 1024,
+    });
+    const payload = JSON.parse(stdout);
+    const answer = Array.isArray(payload?.Answer)
+      ? payload.Answer.find((entry) => entry?.type === 1 && entry?.data)
+      : null;
+    return String(answer?.data || '').trim();
+  } catch {
+    return '';
+  }
+}
+
 async function putJsonWithCurl(url, body) {
   const payload = JSON.stringify(body);
   const tempFile = resolve(tmpdir(), `godseye-cache-publish-${Date.now()}.json`);
   await writeFile(tempFile, payload, 'utf8');
   try {
-    const { stdout } = await execFileAsync('curl', [
+    const parsedUrl = new URL(url);
+    const forcedIp = readEnvValue(['FIREBASE_RTDB_RESOLVE_IP', 'VITE_FIREBASE_RTDB_RESOLVE_IP']);
+    const resolvedIp = isIpv4Address(forcedIp) ? forcedIp : await resolveHostViaGoogleDns(parsedUrl.hostname);
+    const curlArgs = [
       '--retry', '3',
       '--retry-delay', '1',
       '-sS',
@@ -147,8 +174,12 @@ async function putJsonWithCurl(url, body) {
       '-X', 'PUT',
       '-H', 'content-type: application/json',
       '--data-binary', `@${tempFile}`,
-      url,
-    ], {
+    ];
+    if (resolvedIp) {
+      curlArgs.push('--resolve', `${parsedUrl.hostname}:443:${resolvedIp}`);
+    }
+    curlArgs.push(url);
+    const { stdout } = await execFileAsync('curl', curlArgs, {
       maxBuffer: 10 * 1024 * 1024,
     });
     return stdout;
