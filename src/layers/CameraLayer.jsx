@@ -94,6 +94,7 @@ function addEntitiesToViewer(viewer, feeds, imageUrl) {
                 cameraType: 'TRAFFIC',
                 url: cam.url || null,
                 videoUrl: cam.resolvedVideoUrl || cam.videoUrl || null,
+                resolvedVideoUrl: cam.resolvedVideoUrl || null,
                 fallbackUrl: cam.fallbackUrl || cam.url || null,
                 detailsUrl: cam.detailsUrl || null,
                 mediaType: cam.mediaType || 'image',

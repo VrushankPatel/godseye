@@ -6,6 +6,7 @@ import IntelWire from './IntelWire';
 import IntelBriefPanel from './IntelBriefPanel';
 import LiveNewsRelayPanel from './LiveNewsRelayPanel';
 import StrategicIntelPanel from './StrategicIntelPanel';
+import { discoverEntityVisuals } from '../services/visualDiscovery';
 
 // ── Massive city database (250+ cities, ranked by global significance) ──
 const ALL_CITIES = [
@@ -359,6 +360,20 @@ function resolvePanelMediaKind(inspector, effectiveVideoUrl) {
     return 'embed';
 }
 
+function supportsVisualRecon(inspector) {
+    if (!inspector) return false;
+
+    if (inspector.type === 'powerGrid') {
+        return String(inspector.assetType || '').toUpperCase() === 'POWER_PLANT';
+    }
+
+    if (inspector.type === 'maritime') {
+        return ['PORT', 'VESSEL'].includes(String(inspector.assetType || '').toUpperCase());
+    }
+
+    return ['airports', 'militaryBases'].includes(inspector.type);
+}
+
 export default function MissionHud() {
     const layers = useStore((s) => s.layers);
     const viewerRef = useStore((s) => s.viewerRef);
@@ -383,7 +398,7 @@ export default function MissionHud() {
     const AIRCRAFT_VIEWS = [{ id: 'CHASE', label: 'Chase' }, { id: 'COCKPIT', label: 'Cockpit' }, { id: 'TOP', label: 'Top' }, { id: 'SIDE', label: 'Side' }];
     const SATELLITE_VIEWS = [{ id: 'ORBIT', label: 'Orbit' }, { id: 'NADIR', label: 'Nadir' }, { id: 'WIDE', label: 'Wide' }];
 
-    const SKIP_KEYS = new Set(['type', 'name', 'callsign', 'id', 'url', 'fallbackUrl', 'videoUrl', 'mediaType', 'refreshSeconds', 'detailsUrl', 'mediaEnabled']);
+    const SKIP_KEYS = new Set(['type', 'name', 'callsign', 'id', 'url', 'fallbackUrl', 'videoUrl', 'resolvedVideoUrl', 'mediaType', 'refreshSeconds', 'detailsUrl', 'mediaEnabled']);
 
     // Entity info helpers
     const inspectorDef = inspector ? (LAYER_DEFS[inspector.type] || { color: '#fff', icon: '❓', label: 'UNKNOWN' }) : null;
@@ -439,16 +454,25 @@ export default function MissionHud() {
     const [panelMediaSrc, setPanelMediaSrc] = useState('');
     const [panelMediaFailed, setPanelMediaFailed] = useState(false);
     const [isMediaExpanded, setIsMediaExpanded] = useState(false);
+    const [inspectorVisuals, setInspectorVisuals] = useState([]);
+    const [inspectorVisualsLoading, setInspectorVisualsLoading] = useState(false);
+    const [selectedVisualIndex, setSelectedVisualIndex] = useState(0);
+    const [isVisualExpanded, setIsVisualExpanded] = useState(false);
     const mediaVideoRef = useRef(null);
     const mediaTheaterRef = useRef(null);
+    const visualTheaterRef = useRef(null);
     const rafRef = useRef(null);
 
     const effectiveVideoUrl = (() => {
-        if (!inspector?.videoUrl) return '';
-        const nested = unwrapWorldcamsPlayer(inspector.videoUrl);
-        return nested || inspector.videoUrl;
+        const rawVideoUrl = inspector?.resolvedVideoUrl || inspector?.videoUrl;
+        if (!rawVideoUrl) return '';
+        const nested = unwrapWorldcamsPlayer(rawVideoUrl);
+        return nested || rawVideoUrl;
     })();
     const panelMediaKind = resolvePanelMediaKind(inspector, effectiveVideoUrl);
+    const shouldShowVisualRecon = inspector && !hasMedia && supportsVisualRecon(inspector);
+    const selectedVisual = inspectorVisuals[selectedVisualIndex] || null;
+    const selectedVisualOpenUrl = selectedVisual?.sourceUrl || selectedVisual?.url || '';
 
     useEffect(() => {
         if (!viewerRef || viewerRef.isDestroyed()) return;
@@ -465,7 +489,41 @@ export default function MissionHud() {
         setPanelMediaFailed(false);
         setPanelMediaSrc(appendCacheBuster(inspector?.url || inspector?.fallbackUrl || ''));
         setIsMediaExpanded(false);
+        setIsVisualExpanded(false);
+        setInspectorVisuals([]);
+        setInspectorVisualsLoading(false);
+        setSelectedVisualIndex(0);
     }, [inspector]);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        if (!shouldShowVisualRecon) {
+            setInspectorVisuals([]);
+            setInspectorVisualsLoading(false);
+            setSelectedVisualIndex(0);
+            return undefined;
+        }
+
+        setInspectorVisualsLoading(true);
+        discoverEntityVisuals(inspector, { limit: 4 })
+            .then((items) => {
+                if (cancelled) return;
+                setInspectorVisuals(items);
+                setSelectedVisualIndex(0);
+            })
+            .catch(() => {
+                if (cancelled) return;
+                setInspectorVisuals([]);
+            })
+            .finally(() => {
+                if (!cancelled) setInspectorVisualsLoading(false);
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [inspector, shouldShowVisualRecon]);
 
     useEffect(() => {
         if (!appIsActive || !hasMedia || panelMediaKind !== 'image' || !inspector?.url) return undefined;
@@ -529,10 +587,31 @@ export default function MissionHud() {
         return () => window.removeEventListener('keydown', onKeyDown);
     }, [isMediaExpanded]);
 
+    useEffect(() => {
+        if (!isVisualExpanded) return undefined;
+        const onKeyDown = (event) => {
+            if (event.key === 'Escape') {
+                setIsVisualExpanded(false);
+            }
+        };
+        window.addEventListener('keydown', onKeyDown);
+        return () => window.removeEventListener('keydown', onKeyDown);
+    }, [isVisualExpanded]);
+
     const panelMediaOpenUrl = inspector?.detailsUrl || effectiveVideoUrl || inspector?.url || inspector?.fallbackUrl || panelMediaSrc;
 
     const requestMediaFullscreen = useCallback(async () => {
         const node = mediaTheaterRef.current;
+        if (!node?.requestFullscreen) return;
+        try {
+            await node.requestFullscreen();
+        } catch (err) {
+            // Ignore browser fullscreen denials.
+        }
+    }, []);
+
+    const requestVisualFullscreen = useCallback(async () => {
+        const node = visualTheaterRef.current;
         if (!node?.requestFullscreen) return;
         try {
             await node.requestFullscreen();
@@ -749,6 +828,66 @@ export default function MissionHud() {
                                     )}
                                 </div>
                             )}
+                            {shouldShowVisualRecon && (
+                                <div style={{ padding: '8px 10px 6px' }}>
+                                    <div className="rcp-media-toolbar">
+                                        <span className="rcp-media-status">VISUAL RECON</span>
+                                        <div className="rcp-media-actions">
+                                            {selectedVisual && (
+                                                <button
+                                                    onClick={() => setIsVisualExpanded(true)}
+                                                    className="rcp-action"
+                                                    title="Expand visual reference"
+                                                >
+                                                    MAX
+                                                </button>
+                                            )}
+                                            {selectedVisualOpenUrl && (
+                                                <a
+                                                    href={selectedVisualOpenUrl}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="rcp-action"
+                                                >
+                                                    OPEN
+                                                </a>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {inspectorVisualsLoading ? (
+                                        <div className="rcp-media-fallback">SCANNING REFERENCE IMAGERY</div>
+                                    ) : selectedVisual ? (
+                                        <>
+                                            <img
+                                                src={selectedVisual.url}
+                                                alt={selectedVisual.title || `${inspector?.name || 'Entity'} visual reference`}
+                                                className="rcp-media-frame"
+                                            />
+                                            {inspectorVisuals.length > 1 && (
+                                                <div className="rcp-visual-strip">
+                                                    {inspectorVisuals.map((visual, index) => (
+                                                        <button
+                                                            key={`${visual.url}-${index}`}
+                                                            onClick={() => setSelectedVisualIndex(index)}
+                                                            className={`rcp-visual-thumb ${index === selectedVisualIndex ? 'is-active' : ''}`}
+                                                            title={visual.title || 'Reference image'}
+                                                        >
+                                                            <img src={visual.url} alt={visual.title || 'Reference image'} />
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            )}
+                                            <div className="rcp-visual-meta">
+                                                {selectedVisual.title || 'Reference image'}
+                                                {selectedVisual.sourceLabel ? ` · ${selectedVisual.sourceLabel}` : ''}
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <div className="rcp-media-fallback">NO REFERENCE IMAGERY FOUND</div>
+                                    )}
+                                </div>
+                            )}
                             <div className="rcp-entity-name" style={{ textShadow: `0 0 8px ${inspectorDef.color}30` }}>
                                 {inspector.name || inspector.callsign || inspector.id || 'UNIDENTIFIED'}
                             </div>
@@ -910,6 +1049,56 @@ export default function MissionHud() {
                         </div>
                         <div className="rcp-media-theater-body">
                             {renderInspectorMedia(true)}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {isVisualExpanded && selectedVisual && (
+                <div className="rcp-media-theater-backdrop" onClick={() => setIsVisualExpanded(false)}>
+                    <div
+                        ref={visualTheaterRef}
+                        className="rcp-media-theater"
+                        onClick={(event) => event.stopPropagation()}
+                    >
+                        <div className="rcp-media-theater-header">
+                            <div>
+                                <div className="news-relay-title">{selectedVisual.title || inspector?.name || 'VISUAL RECON'}</div>
+                                <div className="news-relay-note">{inspectorDef?.label || 'REFERENCE IMAGERY'}</div>
+                            </div>
+                            <div className="rcp-media-theater-actions">
+                                <button
+                                    onClick={requestVisualFullscreen}
+                                    className="rcp-action"
+                                    title="Enter browser fullscreen"
+                                >
+                                    FULL
+                                </button>
+                                {selectedVisualOpenUrl && (
+                                    <a
+                                        href={selectedVisualOpenUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="rcp-action"
+                                    >
+                                        OPEN
+                                    </a>
+                                )}
+                                <button
+                                    onClick={() => setIsVisualExpanded(false)}
+                                    className="rcp-action"
+                                    title="Close visual reference"
+                                >
+                                    ✕
+                                </button>
+                            </div>
+                        </div>
+                        <div className="rcp-media-theater-body">
+                            <img
+                                src={selectedVisual.url}
+                                alt={selectedVisual.title || `${inspector?.name || 'Entity'} visual reference`}
+                                className="rcp-media-frame rcp-media-frame--theater"
+                            />
                         </div>
                     </div>
                 </div>

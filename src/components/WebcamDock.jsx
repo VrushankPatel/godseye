@@ -40,22 +40,57 @@ function isHlsUrl(url) {
     return /\.m3u8(\?|$)/i.test(String(url || ''));
 }
 
+function unwrapPlayerUrl(url) {
+    try {
+        const parsed = new URL(String(url || ''));
+        if (parsed.hostname.includes('worldcams.tv') && parsed.pathname.includes('/player')) {
+            return parsed.searchParams.get('url') || String(url || '');
+        }
+        return String(url || '');
+    } catch (err) {
+        return String(url || '');
+    }
+}
+
 function resolveDockMediaKind(feed) {
     if (!feed) return 'none';
+    const effectiveVideoUrl = feed.resolvedVideoUrl || unwrapPlayerUrl(feed.videoUrl);
+    if (effectiveVideoUrl) return isHlsUrl(effectiveVideoUrl) ? 'video' : 'embed';
     if (feed.mediaType) return feed.mediaType;
-    if (feed.videoUrl) return isHlsUrl(feed.videoUrl) ? 'video' : 'embed';
     if (feed.url || feed.fallbackUrl) return 'image';
     return 'none';
+}
+
+function isLiveReadyFeed(feed) {
+    if (!feed) return false;
+
+    const provider = String(feed.provider || '').toLowerCase();
+    const verificationStatus = String(feed.verificationStatus || '').toLowerCase();
+    const effectiveVideoUrl = feed.resolvedVideoUrl || unwrapPlayerUrl(feed.videoUrl);
+    const hasDirectHls = isHlsUrl(effectiveVideoUrl);
+    const hasOfficialStill = Boolean(feed.url || feed.fallbackUrl) && ['caltrans', 'tfl jamcams', 'ontario 511', 'alberta 511'].includes(provider);
+    const hasYoutubeLiveDiscovery = provider === 'youtube live';
+    const hasOfficialEmbed = ['nasa tv', 'earthcam', 'venice beach cam', 'fairmont', 'svbc official', 'hangang cam', 'sydney cam'].includes(provider);
+    const isVerified = verificationStatus === 'verified';
+
+    if (isVerified && (hasDirectHls || hasOfficialStill || Boolean(feed.streamCapable))) return true;
+    if (hasYoutubeLiveDiscovery || hasOfficialEmbed) return true;
+    if (provider === 'worldcams' && hasDirectHls) return true;
+    return false;
 }
 
 function pickFeaturedFeeds(feeds, limit = MAX_DOCK_FEEDS) {
     if (!Array.isArray(feeds) || feeds.length === 0) return [];
 
-    const filtered = feeds
+    const candidates = feeds
+        .filter(isLiveReadyFeed);
+    const workingSet = candidates.length ? candidates : feeds;
+
+    const filtered = workingSet
         .filter((feed) => feed && (feed.videoUrl || feed.url || feed.fallbackUrl))
         .sort((a, b) => {
-            const aScore = (a?.videoUrl ? 3 : 0) + (a?.mediaType === 'video' ? 2 : 0) + (a?.mediaType === 'embed' ? 1 : 0);
-            const bScore = (b?.videoUrl ? 3 : 0) + (b?.mediaType === 'video' ? 2 : 0) + (b?.mediaType === 'embed' ? 1 : 0);
+            const aScore = (isLiveReadyFeed(a) ? 20 : 0) + (a?.verificationStatus === 'verified' ? 14 : 0) + (a?.resolvedVideoUrl ? 8 : 0) + (a?.videoUrl ? 3 : 0) + (a?.mediaType === 'video' ? 2 : 0) + (a?.mediaType === 'embed' ? 1 : 0);
+            const bScore = (isLiveReadyFeed(b) ? 20 : 0) + (b?.verificationStatus === 'verified' ? 14 : 0) + (b?.resolvedVideoUrl ? 8 : 0) + (b?.videoUrl ? 3 : 0) + (b?.mediaType === 'video' ? 2 : 0) + (b?.mediaType === 'embed' ? 1 : 0);
             return bScore - aScore;
         });
     if (filtered.length <= limit) return filtered;
@@ -116,9 +151,9 @@ export default function WebcamDock() {
         return () => window.removeEventListener('keydown', onKeyDown);
     }, [expandedFeed]);
 
-    const expandedVideoUrl = expandedFeed?.videoUrl || '';
+    const expandedVideoUrl = expandedFeed?.resolvedVideoUrl || unwrapPlayerUrl(expandedFeed?.videoUrl) || '';
     const expandedMediaKind = resolveDockMediaKind(expandedFeed);
-    const expandedOpenUrl = expandedFeed?.detailsUrl || expandedFeed?.videoUrl || expandedFeed?.url || expandedFeed?.fallbackUrl || '';
+    const expandedOpenUrl = expandedFeed?.detailsUrl || expandedVideoUrl || expandedFeed?.url || expandedFeed?.fallbackUrl || '';
 
     useEffect(() => {
         setExpandedMediaFailed(false);
@@ -274,9 +309,10 @@ export default function WebcamDock() {
             longitude: Number(feed.lng || feed.longitude || 0).toFixed(4),
             url: feed.url || feed.fallbackUrl || '',
             videoUrl: feed.videoUrl || null,
+            resolvedVideoUrl: feed.resolvedVideoUrl || null,
             fallbackUrl: feed.fallbackUrl || feed.url || null,
             detailsUrl: feed.detailsUrl || null,
-            mediaType: feed.mediaType || (feed.videoUrl ? 'video' : 'image'),
+            mediaType: resolveDockMediaKind(feed),
             mediaEnabled: true,
             streamCapable: Boolean(feed.streamCapable || feed.videoUrl),
             refreshSeconds: feed.refreshSeconds || 5,
@@ -407,7 +443,7 @@ export default function WebcamDock() {
                             )}
 
                             <div className="absolute top-1 left-1 bg-black/75 text-[9px] px-1.5 py-0.5 tracking-[0.2em] uppercase text-green-300 border border-green-500/35">
-                                Live
+                                {isLiveReadyFeed(feed) ? 'Live' : 'Catalog'}
                             </div>
                             <button
                                 onClick={(event) => {
