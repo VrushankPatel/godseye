@@ -736,13 +736,13 @@ export default function MissionHud() {
                 </div>
             ) : (
                 <button onClick={toggleMissionHud} className="pointer-events-auto z-10"
-                    style={{ ...toggleBtnStyle, position: 'absolute', left: uiLayoutMode === 'partitioned' ? 'calc(var(--ops-globe-left) + var(--ops-globe-width) + 16px)' : (layerPanelOpen ? '282px' : '16px'), top: uiLayoutMode === 'partitioned' ? 'var(--ops-top)' : '92px' }}
+                    style={{ ...toggleBtnStyle, position: 'absolute', left: uiLayoutMode === 'partitioned' ? 'calc(var(--ops-left) + var(--ops-globe-width) + var(--ops-gap))' : (layerPanelOpen ? '288px' : '16px'), top: uiLayoutMode === 'partitioned' ? 'var(--ops-top)' : '92px' }}
                     title="Show mode wizard">◎ MODE</button>
             )}
 
             {!layerPanelOpen && (
                 <button onClick={toggleLayerPanel} className="pointer-events-auto z-10"
-                    style={{ ...toggleBtnStyle, position: 'absolute', left: '16px', top: uiLayoutMode === 'partitioned' ? 'calc(var(--ops-top) + var(--ops-globe-height) + 16px)' : (missionHudVisible ? '200px' : '118px') }}
+                    style={{ ...toggleBtnStyle, position: 'absolute', left: '16px', top: uiLayoutMode === 'partitioned' ? 'calc(var(--ops-top) + var(--ops-globe-height) + var(--ops-gap))' : (missionHudVisible ? '200px' : '118px') }}
                     title="Show data layers">◎ LAYERS</button>
             )}
 

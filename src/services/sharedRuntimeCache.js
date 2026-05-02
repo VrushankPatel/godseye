@@ -1,5 +1,5 @@
 import { API_URLS } from '../constants/dataSources';
-import { fetchJsonWithPolicy } from '../utils/network';
+import { fetchJsonWithPolicy, fetchWithPolicy } from '../utils/network';
 import { getRuntimeKey, readEnvValue } from '../utils/runtimeEnv';
 
 const SHARED_CACHE_MAX_AGE_MS = 90 * 60 * 1000;
@@ -184,17 +184,20 @@ export async function readSharedRuntimeCache() {
     if (!dbUrl || !secret) return null;
 
     log('Retrieving data from realtime db');
-    const response = await fetch(buildRtdbEndpoint(dbUrl), {
+    const response = await fetchWithPolicy(buildRtdbEndpoint(dbUrl), {
         method: 'GET',
-        cache: 'no-store',
+        timeoutMs: 10000,
+        retries: 2,
+        retryDelayMs: 700,
+        circuitKey: 'shared-cache:rtdb-read',
     });
-    if (!response.ok) {
-        throw new Error(`RTDB read failed with HTTP ${response.status}`);
-    }
 
     const raw = await response.json();
     log('Got this data', raw);
-    if (!raw?.data?.payload) return null;
+    if (!raw?.data?.payload) {
+        log('Realtime db does not currently contain a shared cache payload');
+        return null;
+    }
 
     const decrypted = await decryptEnvelope(raw.data, secret);
     log('Decrypted the data to real json which is', decrypted);
@@ -247,17 +250,17 @@ export async function writeSharedRuntimeCache(payload) {
     };
 
     log('Publishing refreshed encrypted data to realtime db');
-    const response = await fetch(buildRtdbEndpoint(dbUrl), {
+    await fetchWithPolicy(buildRtdbEndpoint(dbUrl), {
         method: 'PUT',
         headers: {
             'content-type': 'application/json',
         },
         body: JSON.stringify(body),
-        cache: 'no-store',
+        timeoutMs: 12000,
+        retries: 2,
+        retryDelayMs: 800,
+        circuitKey: 'shared-cache:rtdb-write',
     });
-    if (!response.ok) {
-        throw new Error(`RTDB write failed with HTTP ${response.status}`);
-    }
     return { hash, timestamp };
 }
 

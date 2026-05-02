@@ -1,12 +1,16 @@
-import { readFile } from 'node:fs/promises';
+import { readFile, writeFile, rm } from 'node:fs/promises';
 import { webcrypto as crypto } from 'node:crypto';
+import { execFile } from 'node:child_process';
 import { resolve } from 'node:path';
+import { promisify } from 'node:util';
+import { tmpdir } from 'node:os';
 
 const SHARED_CACHE_MAX_AGE_MS = 90 * 60 * 1000;
 const CACHE_PATH = 'godsEyeData.json';
 const CACHE_SCHEMA_VERSION = 'gdx-cache-v1';
 const HASH_NAMESPACE = 'godseye.integrity.v1';
 const DEBUG_PREFIX = '[GodseyeCachePublish]';
+const execFileAsync = promisify(execFile);
 
 function log(message, payload) {
   if (payload === undefined) {
@@ -130,6 +134,47 @@ async function buildPayload(rootDir) {
   };
 }
 
+async function putJsonWithCurl(url, body) {
+  const payload = JSON.stringify(body);
+  const tempFile = resolve(tmpdir(), `godseye-cache-publish-${Date.now()}.json`);
+  await writeFile(tempFile, payload, 'utf8');
+  try {
+    const { stdout } = await execFileAsync('curl', [
+      '--retry', '3',
+      '--retry-delay', '1',
+      '-sS',
+      '-f',
+      '-X', 'PUT',
+      '-H', 'content-type: application/json',
+      '--data-binary', `@${tempFile}`,
+      url,
+    ], {
+      maxBuffer: 10 * 1024 * 1024,
+    });
+    return stdout;
+  } finally {
+    await rm(tempFile, { force: true }).catch(() => {});
+  }
+}
+
+async function publishWithBestEffort(url, body) {
+  try {
+    const response = await fetch(url, {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      throw new Error(`RTDB publish failed with HTTP ${response.status}`);
+    }
+    return;
+  } catch (error) {
+    log(`Native fetch publish failed, retrying with curl: ${error.message}`);
+    await putJsonWithCurl(url, body);
+  }
+}
+
 async function main() {
   const dbUrl = normalizeDbUrl(readEnvValue('VITE_FIREBASE_RTDB_URL'));
   const secret = readEnvValue('VITE_GODSEYE_CACHE_SECRET');
@@ -158,15 +203,7 @@ async function main() {
     },
   });
 
-  const response = await fetch(`${dbUrl}/${CACHE_PATH}`, {
-    method: 'PUT',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-
-  if (!response.ok) {
-    throw new Error(`RTDB publish failed with HTTP ${response.status}`);
-  }
+  await publishWithBestEffort(`${dbUrl}/${CACHE_PATH}`, body);
 
   log('Shared runtime cache published');
 }
