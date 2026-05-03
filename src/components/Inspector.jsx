@@ -256,7 +256,6 @@ export default function Inspector() {
                     title="CCTV Live Feed"
                     className={`w-full border-0 ${maxView ? 'aspect-video max-h-[85vh]' : 'aspect-video'}`}
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
                 />
             );
         }

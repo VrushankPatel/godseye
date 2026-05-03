@@ -77,7 +77,6 @@ function RelayPlayer({ channel, onError, className = '' }) {
                 title={`${channel.name} live stream`}
                 className={className}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
-                allowFullScreen
                 referrerPolicy="strict-origin-when-cross-origin"
             />
         );

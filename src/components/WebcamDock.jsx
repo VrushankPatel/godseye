@@ -226,7 +226,6 @@ export default function WebcamDock() {
                     title={`${expandedFeed.name || 'Webcam'} live feed`}
                     className={className}
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
-                    allowFullScreen
                     referrerPolicy="strict-origin-when-cross-origin"
                 />
             );

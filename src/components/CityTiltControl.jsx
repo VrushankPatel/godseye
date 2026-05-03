@@ -22,17 +22,26 @@ function sliderToPitchDeg(sliderValue) {
 export default function CityTiltControl({ panelHeight = 124 }) {
     const viewerRef = useStore((s) => s.viewerRef);
     const city3DActive = useStore((s) => s.city3DActive);
+    const globeViewMode = useStore((s) => s.globeViewMode);
     const setAutoRotating = useStore((s) => s.setAutoRotating);
 
     const [sliderValue, setSliderValue] = useState(0);
     const lastAppliedRef = useRef(0);
 
     useEffect(() => {
-        if (!viewerRef || viewerRef.isDestroyed()) return undefined;
+        if (!viewerRef || viewerRef.isDestroyed() || !city3DActive || globeViewMode !== 'planet') {
+            return undefined;
+        }
 
         const syncFromCamera = () => {
             if (viewerRef.isDestroyed()) return;
-            const pitchDeg = Cesium.Math.toDegrees(viewerRef.camera.pitch);
+            if (!viewerRef.scene || viewerRef.scene.mode !== Cesium.SceneMode.SCENE3D) return;
+
+            const pitchRad = viewerRef.camera?.pitch;
+            if (!Number.isFinite(pitchRad)) return;
+
+            const pitchDeg = Cesium.Math.toDegrees(pitchRad);
+            if (!Number.isFinite(pitchDeg)) return;
             const mapped = pitchDegToSlider(pitchDeg);
             if (Math.abs(mapped - lastAppliedRef.current) < 0.45) return;
             lastAppliedRef.current = mapped;
@@ -44,7 +53,7 @@ export default function CityTiltControl({ panelHeight = 124 }) {
         return () => {
             viewerRef.camera.changed.removeEventListener(syncFromCamera);
         };
-    }, [viewerRef]);
+    }, [viewerRef, city3DActive, globeViewMode]);
 
     const angleLabel = useMemo(() => {
         const pitchDeg = sliderToPitchDeg(sliderValue);
@@ -56,7 +65,12 @@ export default function CityTiltControl({ panelHeight = 124 }) {
         setSliderValue(nextValue);
         lastAppliedRef.current = nextValue;
 
-        if (!viewerRef || viewerRef.isDestroyed()) return;
+        if (
+            !viewerRef ||
+            viewerRef.isDestroyed() ||
+            !viewerRef.scene ||
+            viewerRef.scene.mode !== Cesium.SceneMode.SCENE3D
+        ) return;
 
         setAutoRotating(false);
         const nextPitchDeg = sliderToPitchDeg(nextValue);
@@ -71,7 +85,7 @@ export default function CityTiltControl({ panelHeight = 124 }) {
         viewerRef.scene.requestRender();
     };
 
-    if (!city3DActive) return null;
+    if (!city3DActive || globeViewMode !== 'planet') return null;
 
     return (
         <div
