@@ -37,11 +37,18 @@ jobs:
           VITE_AISSTREAM_API_KEY: '${{ secrets.VITE_AISSTREAM_API_KEY }}'
           VITE_FIREBASE_RTDB_URL: '${{ secrets.VITE_FIREBASE_RTDB_URL }}'
           VITE_GODSEYE_CACHE_SECRET: '${{ secrets.VITE_GODSEYE_CACHE_SECRET }}'
+      - run: |
+          echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT_GODSEYE_X }}" > service-account.json
+          gcloud auth activate-service-account --key-file=service-account.json
+          echo "RTDB_AUTH_TOKEN=$(gcloud auth print-access-token)" >> $GITHUB_ENV
+          rm service-account.json
+        name: Authenticate with GCP
       - run: npm run shared-cache:publish || echo "Shared RTDB cache prewarm skipped; deploy will continue."
         continue-on-error: true
         env:
           VITE_FIREBASE_RTDB_URL: '${{ secrets.VITE_FIREBASE_RTDB_URL }}'
           VITE_GODSEYE_CACHE_SECRET: '${{ secrets.VITE_GODSEYE_CACHE_SECRET }}'
+          RTDB_AUTH_TOKEN: '${{ env.RTDB_AUTH_TOKEN }}'
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'

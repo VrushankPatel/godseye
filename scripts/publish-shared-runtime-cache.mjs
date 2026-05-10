@@ -189,8 +189,10 @@ async function putJsonWithCurl(url, body) {
 }
 
 async function publishWithBestEffort(url, body) {
+  const token = readEnvValue('RTDB_AUTH_TOKEN');
+  const authUrl = token ? `${url}${url.includes('?') ? '&' : '?'}auth=${token}` : url;
   try {
-    const response = await fetch(url, {
+    const response = await fetch(authUrl, {
       method: 'PUT',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(body),
@@ -202,7 +204,7 @@ async function publishWithBestEffort(url, body) {
     return;
   } catch (error) {
     log(`Native fetch publish failed, retrying with curl: ${error.message}`);
-    await putJsonWithCurl(url, body);
+    await putJsonWithCurl(authUrl, body);
   }
 }
 
