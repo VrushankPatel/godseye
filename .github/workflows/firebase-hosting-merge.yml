@@ -37,11 +37,16 @@ jobs:
           VITE_AISSTREAM_API_KEY: '${{ secrets.VITE_AISSTREAM_API_KEY }}'
           VITE_FIREBASE_RTDB_URL: '${{ secrets.VITE_FIREBASE_RTDB_URL }}'
           VITE_GODSEYE_CACHE_SECRET: '${{ secrets.VITE_GODSEYE_CACHE_SECRET }}'
-      - run: npm run shared-cache:publish || echo "Shared RTDB cache prewarm skipped; deploy will continue."
-        continue-on-error: true
+      - run: npm run shared-cache:publish
         env:
           VITE_FIREBASE_RTDB_URL: '${{ secrets.VITE_FIREBASE_RTDB_URL }}'
           VITE_GODSEYE_CACHE_SECRET: '${{ secrets.VITE_GODSEYE_CACHE_SECRET }}'
+      - name: Verify shared RTDB cache payload
+        run: |
+          DB_URL="${VITE_FIREBASE_RTDB_URL%/}"
+          curl -fsS "${DB_URL}/godsEyeData.json" | jq -e '.data.payload and .hash and .timestamp' >/dev/null
+        env:
+          VITE_FIREBASE_RTDB_URL: '${{ secrets.VITE_FIREBASE_RTDB_URL }}'
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
