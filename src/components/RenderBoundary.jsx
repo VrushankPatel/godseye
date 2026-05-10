@@ -1,10 +1,14 @@
 import { Component } from 'react';
 
-export default class RenderBoundary extends Component {
-    constructor(props) {
-        super(props);
-        this.state = { hasError: false };
-    }
+/**
+ * Error boundary wrapper component for graceful error handling
+ * @param {Object} props - Component props
+ * @param {string} props.name - Identifier for this boundary
+ * @param {ReactNode} props.children - Child components to wrap
+ * @param {ReactNode} props.fallback - Fallback UI when error occurs
+ */
+class RenderBoundaryClass extends Component {
+    state = { hasError: false };
 
     static getDerivedStateFromError() {
         return { hasError: true };
@@ -22,3 +26,6 @@ export default class RenderBoundary extends Component {
         return this.props.children;
     }
 }
+
+const RenderBoundary = RenderBoundaryClass;
+export default RenderBoundary;

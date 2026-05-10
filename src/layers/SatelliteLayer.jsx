@@ -217,9 +217,9 @@ export default function SatelliteLayer({ viewer }) {
             const heightM = heightKm * 1000;
             if (!Number.isFinite(longitude) || !Number.isFinite(latitude) || !Number.isFinite(heightM)) return;
 
-            const velocity = positionAndVelocity.velocity;
-            const velocityKmh = velocity
-                ? Math.round(Math.sqrt(velocity.x ** 2 + velocity.y ** 2 + velocity.z ** 2) * 3600)
+            const velocityData = positionAndVelocity.velocity;
+            const velocityKmh = velocityData
+                ? Math.round(Math.sqrt(velocityData.x ** 2 + velocityData.y ** 2 + velocityData.z ** 2) * 3600)
                 : null;
             const orbitalPeriodMinutes = satrec.no ? (2 * Math.PI) / satrec.no : null;
 

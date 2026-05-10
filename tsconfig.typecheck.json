@@ -10,6 +10,8 @@
     "jsx": "react-jsx",
     "resolveJsonModule": true,
     "isolatedModules": true,
+    "strict": false,
+    "noImplicitAny": false,
     "types": ["node", "vite/client"]
   },
   "include": [

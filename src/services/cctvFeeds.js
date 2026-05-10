@@ -114,7 +114,7 @@ export function normalize511Feeds(payload, provider, region, maxFeeds = Infinity
             url: viewUrl,
             fallbackUrl: viewUrl,
             city: region,
-            mediaType: inferMediaTypeFromUrls({ url: viewUrl }),
+            mediaType: inferMediaTypeFromUrls({ url: viewUrl, videoUrl: '' }),
             refreshSeconds: 5,
             provider,
         });

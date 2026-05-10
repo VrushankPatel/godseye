@@ -427,6 +427,7 @@ export default function Globe() {
                 const osmBuildingsTileset = await Cesium.createOsmBuildingsAsync({
                     enableShowOutline: false,
                     showOutline: false,
+                    // @ts-ignore - dynamicScreenSpaceError not in types but valid in Cesium
                     dynamicScreenSpaceError: true,
                     maximumScreenSpaceError: 16,
                     style: new Cesium.Cesium3DTileStyle({
