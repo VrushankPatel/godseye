@@ -37,16 +37,31 @@ jobs:
           VITE_AISSTREAM_API_KEY: '${{ secrets.VITE_AISSTREAM_API_KEY }}'
           VITE_FIREBASE_RTDB_URL: '${{ secrets.VITE_FIREBASE_RTDB_URL }}'
           VITE_GODSEYE_CACHE_SECRET: '${{ secrets.VITE_GODSEYE_CACHE_SECRET }}'
+      - name: Resolve RTDB hostname
+        run: |
+          DB_HOST="$(node -e "console.log(new URL(process.argv[1]).hostname)" "${VITE_FIREBASE_RTDB_URL}")"
+          RTDB_RESOLVE_IP="$(curl -fsS "https://dns.google/resolve?name=${DB_HOST}&type=A" | jq -r '.Answer[]? | select(.type == 1) | .data' | head -n 1)"
+          if [ -z "$RTDB_RESOLVE_IP" ]; then
+            echo "Unable to resolve RTDB host via dns.google" >&2
+            exit 1
+          fi
+          echo "RTDB_HOST=${DB_HOST}" >> "$GITHUB_ENV"
+          echo "RTDB_RESOLVE_IP=${RTDB_RESOLVE_IP}" >> "$GITHUB_ENV"
+        env:
+          VITE_FIREBASE_RTDB_URL: '${{ secrets.VITE_FIREBASE_RTDB_URL }}'
       - run: npm run shared-cache:publish
         env:
           VITE_FIREBASE_RTDB_URL: '${{ secrets.VITE_FIREBASE_RTDB_URL }}'
           VITE_GODSEYE_CACHE_SECRET: '${{ secrets.VITE_GODSEYE_CACHE_SECRET }}'
+          FIREBASE_RTDB_RESOLVE_IP: '${{ env.RTDB_RESOLVE_IP }}'
       - name: Verify shared RTDB cache payload
         run: |
           DB_URL="${VITE_FIREBASE_RTDB_URL%/}"
-          curl -fsS "${DB_URL}/godsEyeData.json" | jq -e '.data.payload and .hash and .timestamp' >/dev/null
+          curl --resolve "${RTDB_HOST}:443:${RTDB_RESOLVE_IP}" -fsS "${DB_URL}/godsEyeData.json" | jq -e '.data.payload and .hash and .timestamp' >/dev/null
         env:
           VITE_FIREBASE_RTDB_URL: '${{ secrets.VITE_FIREBASE_RTDB_URL }}'
+          RTDB_HOST: '${{ env.RTDB_HOST }}'
+          RTDB_RESOLVE_IP: '${{ env.RTDB_RESOLVE_IP }}'
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
