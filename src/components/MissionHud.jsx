@@ -635,7 +635,6 @@ export default function MissionHud() {
                     title="Live Feed"
                     className={mediaClassName}
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
-                    allowFullScreen
                     referrerPolicy="strict-origin-when-cross-origin"
                 />
             );

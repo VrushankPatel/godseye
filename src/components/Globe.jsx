@@ -384,6 +384,11 @@ export default function Globe() {
             setCity3DActive(Boolean(tileset.show));
         };
 
+        const cesiumIonToken = readEnvValue('VITE_CESIUM_ION_TOKEN');
+        if (cesiumIonToken) {
+            Cesium.Ion.defaultAccessToken = cesiumIonToken;
+        }
+
         let disposed = false;
         const add3DCityTiles = async () => {
             const google3DKey = readEnvValue(['VITE_GOOGLE_MAPS_3D_KEY', 'VITE_GOOGLE_MAPS_API_KEY']);
@@ -412,6 +417,10 @@ export default function Globe() {
                 } catch (error) {
                     console.warn('Google Photorealistic 3D tiles failed, falling back to OSM buildings.', error);
                 }
+            }
+
+            if (!cesiumIonToken) {
+                return;
             }
 
             try {
