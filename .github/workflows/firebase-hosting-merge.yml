@@ -17,51 +17,54 @@ jobs:
           cache: npm
       - run: npm ci
         env:
-          VITE_GOOGLE_MAPS_3D_KEY: '${{ secrets.VITE_GOOGLE_MAPS_3D_KEY }}'
-          VITE_GOOGLE_MAPS_API_KEY: '${{ secrets.VITE_GOOGLE_MAPS_3D_KEY }}'
-          VITE_MAPBOX_ACCESS_TOKEN: '${{ secrets.VITE_MAPBOX_ACCESS_TOKEN }}'
-          VITE_YOUTUBE_API_KEY: '${{ secrets.VITE_YOUTUBE_API_KEY }}'
-          VITE_GUARDIAN_API_KEY: '${{ secrets.VITE_GUARDIAN_API_KEY }}'
-          VITE_AISSTREAM_API_KEY: '${{ secrets.VITE_AISSTREAM_API_KEY }}'
-          VITE_FIREBASE_RTDB_URL: '${{ secrets.VITE_FIREBASE_RTDB_URL }}'
-          VITE_GODSEYE_CACHE_SECRET: '${{ secrets.VITE_GODSEYE_CACHE_SECRET }}'
+          VITE_GOOGLE_MAPS_3D_KEY: ${{ secrets.VITE_GOOGLE_MAPS_3D_KEY }}
+          VITE_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_GOOGLE_MAPS_3D_KEY }}
+          VITE_MAPBOX_ACCESS_TOKEN: ${{ secrets.VITE_MAPBOX_ACCESS_TOKEN }}
+          VITE_YOUTUBE_API_KEY: ${{ secrets.VITE_YOUTUBE_API_KEY }}
+          VITE_GUARDIAN_API_KEY: ${{ secrets.VITE_GUARDIAN_API_KEY }}
+          VITE_AISSTREAM_API_KEY: ${{ secrets.VITE_AISSTREAM_API_KEY }}
+          VITE_FIREBASE_RTDB_URL: ${{ secrets.VITE_FIREBASE_RTDB_URL }}
+          VITE_GODSEYE_CACHE_SECRET: ${{ secrets.VITE_GODSEYE_CACHE_SECRET }}
       - run: npx playwright install --with-deps chromium
       - run: npm run ci
         env:
-          CI: 'true'
-          VITE_GOOGLE_MAPS_3D_KEY: '${{ secrets.VITE_GOOGLE_MAPS_3D_KEY }}'
-          VITE_GOOGLE_MAPS_API_KEY: '${{ secrets.VITE_GOOGLE_MAPS_3D_KEY }}'
-          VITE_MAPBOX_ACCESS_TOKEN: '${{ secrets.VITE_MAPBOX_ACCESS_TOKEN }}'
-          VITE_YOUTUBE_API_KEY: '${{ secrets.VITE_YOUTUBE_API_KEY }}'
-          VITE_GUARDIAN_API_KEY: '${{ secrets.VITE_GUARDIAN_API_KEY }}'
-          VITE_AISSTREAM_API_KEY: '${{ secrets.VITE_AISSTREAM_API_KEY }}'
-          VITE_FIREBASE_RTDB_URL: '${{ secrets.VITE_FIREBASE_RTDB_URL }}'
-          VITE_GODSEYE_CACHE_SECRET: '${{ secrets.VITE_GODSEYE_CACHE_SECRET }}'
+          CI: true
+          VITE_GOOGLE_MAPS_3D_KEY: ${{ secrets.VITE_GOOGLE_MAPS_3D_KEY }}
+          VITE_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_GOOGLE_MAPS_3D_KEY }}
+          VITE_MAPBOX_ACCESS_TOKEN: ${{ secrets.VITE_MAPBOX_ACCESS_TOKEN }}
+          VITE_YOUTUBE_API_KEY: ${{ secrets.VITE_YOUTUBE_API_KEY }}
+          VITE_GUARDIAN_API_KEY: ${{ secrets.VITE_GUARDIAN_API_KEY }}
+          VITE_AISSTREAM_API_KEY: ${{ secrets.VITE_AISSTREAM_API_KEY }}
+          VITE_FIREBASE_RTDB_URL: ${{ secrets.VITE_FIREBASE_RTDB_URL }}
+          VITE_GODSEYE_CACHE_SECRET: ${{ secrets.VITE_GODSEYE_CACHE_SECRET }}
       - name: Resolve RTDB hostname
         run: |
-          DB_HOST="$(node -e "console.log(new URL(process.argv[1]).hostname)" "${VITE_FIREBASE_RTDB_URL}")"
+          RTDB_META="$(node -e "const raw=String(process.argv[1]||'').trim().replace(/^['\"]+|['\"]+$/g,''); if(!raw){process.exit(1)} const candidate=/^https?:\/\//i.test(raw)?raw:'https://'+raw; const url=new URL(candidate); process.stdout.write(JSON.stringify({url:url.toString().replace(/\/$/,''),host:url.hostname}));" "${VITE_FIREBASE_RTDB_URL}")"
+          DB_URL="$(printf '%s' "$RTDB_META" | jq -r '.url')"
+          DB_HOST="$(printf '%s' "$RTDB_META" | jq -r '.host')"
           RTDB_RESOLVE_IP="$(curl -fsS "https://dns.google/resolve?name=${DB_HOST}&type=A" | jq -r '.Answer[]? | select(.type == 1) | .data' | head -n 1)"
           if [ -z "$RTDB_RESOLVE_IP" ]; then
             echo "Unable to resolve RTDB host via dns.google" >&2
             exit 1
           fi
+          echo "RTDB_URL=${DB_URL}" >> "$GITHUB_ENV"
           echo "RTDB_HOST=${DB_HOST}" >> "$GITHUB_ENV"
           echo "RTDB_RESOLVE_IP=${RTDB_RESOLVE_IP}" >> "$GITHUB_ENV"
         env:
-          VITE_FIREBASE_RTDB_URL: '${{ secrets.VITE_FIREBASE_RTDB_URL }}'
+          VITE_FIREBASE_RTDB_URL: ${{ secrets.VITE_FIREBASE_RTDB_URL }}
       - run: npm run shared-cache:publish
         env:
-          VITE_FIREBASE_RTDB_URL: '${{ secrets.VITE_FIREBASE_RTDB_URL }}'
-          VITE_GODSEYE_CACHE_SECRET: '${{ secrets.VITE_GODSEYE_CACHE_SECRET }}'
-          FIREBASE_RTDB_RESOLVE_IP: '${{ env.RTDB_RESOLVE_IP }}'
+          VITE_FIREBASE_RTDB_URL: ${{ env.RTDB_URL }}
+          VITE_GODSEYE_CACHE_SECRET: ${{ secrets.VITE_GODSEYE_CACHE_SECRET }}
+          FIREBASE_RTDB_RESOLVE_IP: ${{ env.RTDB_RESOLVE_IP }}
       - name: Verify shared RTDB cache payload
         run: |
-          DB_URL="${VITE_FIREBASE_RTDB_URL%/}"
+          DB_URL="${RTDB_URL}"
           curl --resolve "${RTDB_HOST}:443:${RTDB_RESOLVE_IP}" -fsS "${DB_URL}/godsEyeData.json" | jq -e '.data.payload and .hash and .timestamp' >/dev/null
         env:
-          VITE_FIREBASE_RTDB_URL: '${{ secrets.VITE_FIREBASE_RTDB_URL }}'
-          RTDB_HOST: '${{ env.RTDB_HOST }}'
-          RTDB_RESOLVE_IP: '${{ env.RTDB_RESOLVE_IP }}'
+          RTDB_URL: ${{ env.RTDB_URL }}
+          RTDB_HOST: ${{ env.RTDB_HOST }}
+          RTDB_RESOLVE_IP: ${{ env.RTDB_RESOLVE_IP }}
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'

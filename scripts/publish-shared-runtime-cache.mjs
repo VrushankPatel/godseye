@@ -23,7 +23,7 @@ function log(message, payload) {
 function readEnvValue(keys) {
   const normalized = Array.isArray(keys) ? keys : [keys];
   for (const key of normalized) {
-    const value = String(process.env[key] || '').trim();
+    const value = String(process.env[key] || '').trim().replace(/^['"]+|['"]+$/g, '');
     if (value) return value;
   }
   return '';

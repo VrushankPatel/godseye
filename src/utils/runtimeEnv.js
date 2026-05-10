@@ -19,8 +19,12 @@ function normalizeEnvKeys(keys) {
     return Array.isArray(keys) ? keys.filter(Boolean) : [keys].filter(Boolean);
 }
 
+function normalizeEnvValue(value) {
+    return String(value || '').trim().replace(/^['"]+|['"]+$/g, '');
+}
+
 function isUsableEnvValue(value) {
-    const normalized = String(value || '').trim();
+    const normalized = normalizeEnvValue(value);
     if (!normalized) return false;
     return !INVALID_ENV_SENTINELS.has(normalized.toLowerCase());
 }
@@ -28,7 +32,7 @@ function isUsableEnvValue(value) {
 export function readEnvValue(keys) {
     const env = import.meta.env || {};
     for (const key of normalizeEnvKeys(keys)) {
-        const value = String(env[key] || '').trim();
+        const value = normalizeEnvValue(env[key]);
         if (isUsableEnvValue(value)) return value;
     }
     return '';

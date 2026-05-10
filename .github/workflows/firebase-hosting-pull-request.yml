@@ -15,26 +15,26 @@ jobs:
           cache: npm
       - run: npm ci
         env:
-          VITE_GOOGLE_MAPS_3D_KEY: '${{ secrets.VITE_GOOGLE_MAPS_3D_KEY }}'
-          VITE_GOOGLE_MAPS_API_KEY: '${{ secrets.VITE_GOOGLE_MAPS_3D_KEY }}'
-          VITE_MAPBOX_ACCESS_TOKEN: '${{ secrets.VITE_MAPBOX_ACCESS_TOKEN }}'
-          VITE_YOUTUBE_API_KEY: '${{ secrets.VITE_YOUTUBE_API_KEY }}'
-          VITE_GUARDIAN_API_KEY: '${{ secrets.VITE_GUARDIAN_API_KEY }}'
-          VITE_AISSTREAM_API_KEY: '${{ secrets.VITE_AISSTREAM_API_KEY }}'
-          VITE_FIREBASE_RTDB_URL: '${{ secrets.VITE_FIREBASE_RTDB_URL }}'
-          VITE_GODSEYE_CACHE_SECRET: '${{ secrets.VITE_GODSEYE_CACHE_SECRET }}'
+          VITE_GOOGLE_MAPS_3D_KEY: ${{ secrets.VITE_GOOGLE_MAPS_3D_KEY }}
+          VITE_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_GOOGLE_MAPS_3D_KEY }}
+          VITE_MAPBOX_ACCESS_TOKEN: ${{ secrets.VITE_MAPBOX_ACCESS_TOKEN }}
+          VITE_YOUTUBE_API_KEY: ${{ secrets.VITE_YOUTUBE_API_KEY }}
+          VITE_GUARDIAN_API_KEY: ${{ secrets.VITE_GUARDIAN_API_KEY }}
+          VITE_AISSTREAM_API_KEY: ${{ secrets.VITE_AISSTREAM_API_KEY }}
+          VITE_FIREBASE_RTDB_URL: ${{ secrets.VITE_FIREBASE_RTDB_URL }}
+          VITE_GODSEYE_CACHE_SECRET: ${{ secrets.VITE_GODSEYE_CACHE_SECRET }}
       - run: npx playwright install --with-deps chromium
       - run: npm run ci
         env:
-          CI: 'true'
-          VITE_GOOGLE_MAPS_3D_KEY: '${{ secrets.VITE_GOOGLE_MAPS_3D_KEY }}'
-          VITE_GOOGLE_MAPS_API_KEY: '${{ secrets.VITE_GOOGLE_MAPS_3D_KEY }}'
-          VITE_MAPBOX_ACCESS_TOKEN: '${{ secrets.VITE_MAPBOX_ACCESS_TOKEN }}'
-          VITE_YOUTUBE_API_KEY: '${{ secrets.VITE_YOUTUBE_API_KEY }}'
-          VITE_GUARDIAN_API_KEY: '${{ secrets.VITE_GUARDIAN_API_KEY }}'
-          VITE_AISSTREAM_API_KEY: '${{ secrets.VITE_AISSTREAM_API_KEY }}'
-          VITE_FIREBASE_RTDB_URL: '${{ secrets.VITE_FIREBASE_RTDB_URL }}'
-          VITE_GODSEYE_CACHE_SECRET: '${{ secrets.VITE_GODSEYE_CACHE_SECRET }}'
+          CI: true
+          VITE_GOOGLE_MAPS_3D_KEY: ${{ secrets.VITE_GOOGLE_MAPS_3D_KEY }}
+          VITE_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_GOOGLE_MAPS_3D_KEY }}
+          VITE_MAPBOX_ACCESS_TOKEN: ${{ secrets.VITE_MAPBOX_ACCESS_TOKEN }}
+          VITE_YOUTUBE_API_KEY: ${{ secrets.VITE_YOUTUBE_API_KEY }}
+          VITE_GUARDIAN_API_KEY: ${{ secrets.VITE_GUARDIAN_API_KEY }}
+          VITE_AISSTREAM_API_KEY: ${{ secrets.VITE_AISSTREAM_API_KEY }}
+          VITE_FIREBASE_RTDB_URL: ${{ secrets.VITE_FIREBASE_RTDB_URL }}
+          VITE_GODSEYE_CACHE_SECRET: ${{ secrets.VITE_GODSEYE_CACHE_SECRET }}
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
