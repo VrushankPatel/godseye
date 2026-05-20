@@ -6,7 +6,7 @@
 
 <p align="center">
   <a href="https://godseye-x.web.app/">
-    <img src="./imgs/Godseye-1.0.png" alt="Godseye 1.0 interface preview" width="100%" />
+    <img src="./imgs/Godseye.png" alt="Godseye 1.0 interface preview" width="100%" />
   </a>
 </p>
 
