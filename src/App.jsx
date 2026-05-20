@@ -17,7 +17,6 @@ import { SHADER_MODES } from './constants/dataSources';
 
 export default function App() {
     const activeShader = useStore((s) => s.activeShader);
-    const uiLayoutMode = useStore((s) => s.uiLayoutMode);
     const globeViewMode = useStore((s) => s.globeViewMode);
     const setShader = useStore((s) => s.setShader);
     const setAppIsActive = useStore((s) => s.setAppIsActive);
@@ -96,7 +95,7 @@ export default function App() {
 
     return (
         <div
-            className={`godseye-app godseye-app--${uiLayoutMode} godseye-app--${globeViewMode}`}
+            className={`godseye-app godseye-app--${globeViewMode}`}
             style={{ width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden', background: '#0a0a0f' }}
         >
             <SharedRuntimeCacheBootstrap />

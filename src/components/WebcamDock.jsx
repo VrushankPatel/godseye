@@ -118,7 +118,6 @@ export default function WebcamDock() {
     const appIsActive = useStore((s) => s.appIsActive);
     const cctvEnabled = useStore((s) => s.layers.cctv.enabled);
     const cctvFeeds = useStore((s) => s.layers.cctv.data);
-    const uiLayoutMode = useStore((s) => s.uiLayoutMode);
     const setInspector = useStore((s) => s.setInspector);
     const [previewNonce, setPreviewNonce] = useState(Date.now());
     const [activeRegion, setActiveRegion] = useState('all');
@@ -324,7 +323,7 @@ export default function WebcamDock() {
         return (
             <button
                 onClick={() => setDockVisible(true)}
-                className={`glass-panel pointer-events-auto webcam-dock-shell ${uiLayoutMode === 'partitioned' ? 'webcam-dock-shell--partitioned' : ''}`}
+                className="glass-panel pointer-events-auto webcam-dock-shell"
                 style={{
                     position: 'absolute',
                     left: '50%',
@@ -350,7 +349,7 @@ export default function WebcamDock() {
 
     return (
         <div
-            className={`glass-panel pointer-events-auto webcam-dock-shell ${uiLayoutMode === 'partitioned' ? 'webcam-dock-shell--partitioned' : ''}`}
+            className="glass-panel pointer-events-auto webcam-dock-shell"
             style={{
                 position: 'absolute',
                 left: '50%',

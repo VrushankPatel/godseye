@@ -29,39 +29,13 @@ body {
 }
 
 .godseye-app {
-  --ops-left: max(16px, env(safe-area-inset-left));
-  --ops-right: max(16px, env(safe-area-inset-right));
-  --ops-gap: 18px;
-  --ops-top: calc(max(20px, env(safe-area-inset-top)) + 72px);
   --immersive-left-top-clearance: calc(max(20px, env(safe-area-inset-top)) + 92px);
   --immersive-right-top-clearance: calc(max(20px, env(safe-area-inset-top)) + 176px);
-  --ops-globe-width: min(42vw, 680px);
-  --ops-globe-height: min(46vh, 500px);
-  --ops-focus-x: calc(var(--ops-left) + (var(--ops-globe-width) / 2));
-  --ops-focus-y: calc(var(--ops-top) + (var(--ops-globe-height) / 2));
 }
 
 .globe-shell {
   position: absolute;
   inset: 0;
-}
-
-.godseye-app--partitioned .globe-shell {
-  left: var(--ops-left);
-  top: var(--ops-top);
-  width: var(--ops-globe-width);
-  height: var(--ops-globe-height);
-  inset: unset;
-  border: 1px solid rgba(14, 165, 233, 0.2);
-  border-radius: 14px;
-  overflow: hidden;
-  backdrop-filter: blur(6px);
-  background:
-    radial-gradient(circle at top, rgba(0, 180, 255, 0.06), transparent 62%),
-    rgba(2, 8, 20, 0.54);
-  box-shadow:
-    0 20px 50px rgba(0, 0, 0, 0.38),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.02);
 }
 
 /* ── Cesium Overrides ─────────────────────────────── */
@@ -412,31 +386,14 @@ body {
   bottom: 220px;
 }
 
-.layer-panel-shell--partitioned {
-  top: calc(var(--ops-top) + var(--ops-globe-height) + var(--ops-gap));
-  bottom: calc(24px + 180px + var(--ops-gap));
-}
-
 .layer-panel-toggle {
   top: 50%;
   transform: translateY(-50%);
 }
 
-.layer-panel-toggle--partitioned {
-  top: calc(var(--ops-top) + var(--ops-globe-height) + var(--ops-gap) + 12px);
-  transform: none;
-}
-
 .shader-toolbar-shell {
   bottom: 24px;
   left: 50%;
-  transform: translateX(-50%);
-}
-
-.shader-toolbar-shell--partitioned {
-  top: calc(var(--ops-top) + var(--ops-globe-height) - 144px);
-  bottom: auto;
-  left: calc(var(--ops-left) + (var(--ops-globe-width) / 2));
   transform: translateX(-50%);
 }
 
@@ -448,22 +405,10 @@ body {
   height: 24rem;
 }
 
-.reticle-shell--partitioned {
-  top: var(--ops-focus-y);
-  left: var(--ops-focus-x);
-  width: min(26vw, 340px);
-  height: min(26vw, 340px);
-}
-
 .focus-mask-banner {
   top: max(78px, env(safe-area-inset-top) + 58px);
   left: 50%;
   transform: translateX(-50%);
-}
-
-.focus-mask-banner--partitioned {
-  top: calc(var(--ops-top) + 12px);
-  left: var(--ops-focus-x);
 }
 
 /* ── Animations ───────────────────────────────────── */
@@ -636,13 +581,6 @@ body {
 
 .mission-hud-left--offset {
   left: calc(max(16px, env(safe-area-inset-left)) + 16rem + 16px);
-}
-
-.mission-hud-left--partitioned {
-  top: var(--ops-top);
-  left: calc(var(--ops-left) + var(--ops-globe-width) + var(--ops-gap));
-  width: min(22vw, 280px);
-  max-width: min(22vw, 280px);
 }
 
 .mission-label {
@@ -997,13 +935,6 @@ body {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-}
-
-.right-column-panel--partitioned {
-  top: var(--ops-top);
-  bottom: 24px;
-  width: min(25vw, 320px);
-  max-height: calc(100vh - var(--ops-top) - 24px);
 }
 
 .right-column-panel::-webkit-scrollbar {
@@ -1696,10 +1627,6 @@ body {
   transition: left 0.3s ease;
 }
 
-.sys-terminal--partitioned {
-  width: 16rem;
-}
-
 .sys-terminal-toggle {
   padding: 4px 10px;
   font-size: 9px;
@@ -1714,10 +1641,6 @@ body {
   backdrop-filter: blur(4px);
   z-index: 9;
   transition: left 0.3s ease;
-}
-
-.sys-terminal-toggle--partitioned {
-  bottom: 24px;
 }
 
 .sys-terminal-header {
@@ -1803,27 +1726,4 @@ body {
   color: #dff6ff;
   background: rgba(0, 180, 255, 0.16);
   box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.24), 0 0 12px rgba(0, 180, 255, 0.08);
-}
-
-.webcam-dock-shell--partitioned {
-  left: calc(var(--ops-left) + (var(--ops-globe-width) / 2)) !important;
-  transform: translateX(-50%) !important;
-  bottom: 24px !important;
-  width: min(29vw, 420px) !important;
-}
-
-@media (max-width: 1220px) {
-  .godseye-app--partitioned {
-    --ops-globe-width: min(46vw, 580px);
-    --ops-globe-height: min(38vh, 420px);
-  }
-
-  .godseye-app--partitioned .mission-hud-left--partitioned {
-    width: min(22vw, 250px);
-    max-width: min(22vw, 250px);
-  }
-
-  .godseye-app--partitioned .right-column-panel--partitioned {
-    width: min(25vw, 300px);
-  }
 }

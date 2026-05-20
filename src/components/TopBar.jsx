@@ -38,9 +38,7 @@ export default function TopBar() {
     const toggleLayerPanel = useStore((s) => s.toggleLayerPanel);
     const requestSharedRuntimeCacheRefresh = useStore((s) => s.requestSharedRuntimeCacheRefresh);
     const sharedRuntimeCache = useStore((s) => s.sharedRuntimeCache);
-    const uiLayoutMode = useStore((s) => s.uiLayoutMode);
     const globeViewMode = useStore((s) => s.globeViewMode);
-    const toggleUILayoutMode = useStore((s) => s.toggleUILayoutMode);
     const toggleGlobeViewMode = useStore((s) => s.toggleGlobeViewMode);
 
     useEffect(() => {
@@ -125,18 +123,6 @@ export default function TopBar() {
                 </button>
 
                 <div className="glass-panel godseye-view-controls mt-1 px-2.5 py-2 flex flex-col gap-2">
-                    <div className="flex items-center justify-between gap-3 text-[9px] tracking-[0.18em] uppercase text-text-dim">
-                        <span>Layout</span>
-                        <button
-                            onClick={toggleUILayoutMode}
-                            className="godseye-view-toggle"
-                            title="Switch between immersive and partitioned layout"
-                        >
-                            <span className={`godseye-view-toggle__pill ${uiLayoutMode === 'immersive' ? 'is-active' : ''}`}>Full</span>
-                            <span className={`godseye-view-toggle__pill ${uiLayoutMode === 'partitioned' ? 'is-active' : ''}`}>Ops</span>
-                        </button>
-                    </div>
-
                     <div className="flex items-center justify-between gap-3 text-[9px] tracking-[0.18em] uppercase text-text-dim">
                         <span>View</span>
                         <button
