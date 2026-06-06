@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useCallback } from 'react';
 import * as Cesium from 'cesium';
 import useStore from '../store/useStore';
 import { WORLDCAMS_FEEDS } from '../constants/worldcamsFeeds';
+import { isContinuousLiveCameraFeed } from '../services/cctvFeeds';
 
 const TRAFFIC_PATHS = [
     // North America
@@ -213,6 +214,7 @@ export default function TrafficLayer({ viewer }) {
             .slice(0, MAX_TRAFFIC_FEEDS);
 
         trafficFeeds.forEach((feed) => {
+            const continuousLive = isContinuousLiveCameraFeed(feed);
             const entity = viewer.entities.add({
                 id: `traffic-feed-${feed.id}`,
                 position: Cesium.Cartesian3.fromDegrees(feed.lng, feed.lat, 160),
@@ -237,7 +239,8 @@ export default function TrafficLayer({ viewer }) {
                     mediaType: feed.mediaType || 'embed',
                     mediaEnabled: true,
                     refreshSeconds: feed.refreshSeconds || 12,
-                    status: 'LIVE',
+                    continuousLive,
+                    status: continuousLive ? 'LIVE STREAM' : 'REFRESH FEED',
                 },
             });
             entitiesRef.current.push(entity);

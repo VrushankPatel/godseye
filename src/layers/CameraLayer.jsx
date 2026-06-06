@@ -4,6 +4,7 @@ import useStore from '../store/useStore';
 import { API_URLS } from '../constants/dataSources';
 import { discoverAllFeeds } from '../services/feedDiscovery';
 import {
+    isContinuousLiveCameraFeed,
     mergeFeeds,
     normalize511Feeds,
     normalizeCaltransFeed,
@@ -20,7 +21,7 @@ const MAX_ALBERTA_CAMERAS = 800;
 const MAX_TFL_CAMERAS = 850;
 const REQUEST_TIMEOUT_MS = 12000;
 const DEFAULT_RENDERED_CAMERAS = 6000;
-const CAMERA_CACHE_KEY = 'cctv-feeds-v3';
+const CAMERA_CACHE_KEY = 'cctv-feeds-v4';
 const CAMERA_CACHE_TTL_MS = 12 * 60 * 60 * 1000;
 
 function getCameraRenderBudget(activeShader) {
@@ -75,6 +76,7 @@ function createCameraIcon() {
 function addEntitiesToViewer(viewer, feeds, imageUrl) {
     const entities = [];
     feeds.forEach((cam) => {
+        const continuousLive = Boolean(cam.continuousLive || isContinuousLiveCameraFeed(cam));
         const entity = viewer.entities.add({
             position: Cesium.Cartesian3.fromDegrees(cam.lng, cam.lat, 140),
             name: cam.name,
@@ -102,7 +104,8 @@ function addEntitiesToViewer(viewer, feeds, imageUrl) {
                 streamCapable: Boolean(cam.streamCapable),
                 refreshSeconds: cam.refreshSeconds || 5,
                 verificationStatus: cam.verificationStatus || 'unknown',
-                status: cam.url || cam.videoUrl ? 'LIVE' : 'NO FEED URL',
+                continuousLive,
+                status: continuousLive ? 'LIVE STREAM' : (cam.url || cam.videoUrl ? 'REFRESH FEED' : 'NO FEED URL'),
             },
         });
         entities.push(entity);

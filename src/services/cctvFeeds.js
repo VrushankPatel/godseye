@@ -34,6 +34,61 @@ export function inferMediaTypeFromUrls({ url, videoUrl }) {
     return 'image';
 }
 
+export function unwrapCameraPlayerUrl(url) {
+    try {
+        const parsed = new URL(String(url || ''));
+        if (parsed.hostname.includes('worldcams.tv') && parsed.pathname.includes('/player')) {
+            return parsed.searchParams.get('url') || String(url || '');
+        }
+        return String(url || '');
+    } catch {
+        return String(url || '');
+    }
+}
+
+export function getEffectiveCameraVideoUrl(feed) {
+    return String(feed?.resolvedVideoUrl || unwrapCameraPlayerUrl(feed?.videoUrl) || '').trim();
+}
+
+export function isHlsStreamUrl(url) {
+    return /\.m3u8(\?|$)/i.test(String(url || ''));
+}
+
+export function isYoutubeEmbedUrl(url) {
+    return /(?:youtube\.com\/embed\/|youtube\.com\/watch\?v=|youtu\.be\/)/i.test(String(url || ''));
+}
+
+export function isRefreshOnlyCameraFeed(feed) {
+    const provider = String(feed?.provider || '').toLowerCase();
+    const videoUrl = getEffectiveCameraVideoUrl(feed).toLowerCase();
+    const mediaType = String(feed?.mediaType || '').toLowerCase();
+
+    if (provider.includes('tfl jamcams')) return true;
+    if (provider.includes('ontario 511') || provider.includes('alberta 511')) return true;
+    if (videoUrl.includes('.mp4')) return true;
+    if (!videoUrl && (feed?.url || feed?.fallbackUrl)) return true;
+    return mediaType === 'image';
+}
+
+export function isContinuousLiveCameraFeed(feed) {
+    if (!feed) return false;
+    if (String(feed.verificationStatus || '').toLowerCase() === 'stale') return false;
+    if (isRefreshOnlyCameraFeed(feed)) return false;
+
+    const provider = String(feed.provider || '').toLowerCase();
+    const videoUrl = getEffectiveCameraVideoUrl(feed);
+
+    if (isHlsStreamUrl(videoUrl)) return true;
+
+    // YouTube search results are requested with eventType=live. Seed embeds are
+    // intentionally not treated as dock-live unless they carry this live flag.
+    if (provider === 'youtube live' && feed.isLive && isYoutubeEmbedUrl(videoUrl)) {
+        return true;
+    }
+
+    return false;
+}
+
 export function normalizeCaltransFeed(text, maxFeeds = Infinity) {
     const feeds = [];
     const seen = new Set();
@@ -184,6 +239,7 @@ export function mergeFeeds(feedGroups) {
 
 export function getCameraPriority(feed) {
     let score = 0;
+    if (isContinuousLiveCameraFeed(feed)) score += 80;
     if (feed?.verificationStatus === 'verified') score += 35;
     if (feed?.verificationStatus === 'catalog_verified') score += 24;
     if (feed?.videoUrl) score += 50;
@@ -192,7 +248,7 @@ export function getCameraPriority(feed) {
     if (feed?.mediaType === 'video') score += 25;
     if (feed?.mediaType === 'embed') score += 18;
     if (feed?.provider === 'YouTube Live') score += 12;
-    if (feed?.provider === 'TfL JamCams') score += 10;
+    if (isRefreshOnlyCameraFeed(feed)) score -= 45;
     return score;
 }
 

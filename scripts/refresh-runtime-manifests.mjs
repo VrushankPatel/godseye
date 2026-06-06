@@ -6,12 +6,16 @@ import { CAMERA_FEEDS } from '../src/constants/staticData.js';
 import { WORLDCAMS_FEEDS } from '../src/constants/worldcamsFeeds.js';
 import {
   extractCaltransStreamUrl,
+  getEffectiveCameraVideoUrl,
+  isContinuousLiveCameraFeed,
+  isHlsStreamUrl,
   mergeFeeds,
   normalize511Feeds,
   normalizeCaltransFeed,
   normalizeTflFeeds,
   prioritizeFeeds,
 } from '../src/services/cctvFeeds.js';
+import { normalizeNgaPortRows } from '../src/services/maritimePorts.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..');
@@ -19,6 +23,7 @@ const manifestsDir = path.join(repoRoot, 'public', 'manifests');
 const CCTV_MANIFEST_PATH = path.join(manifestsDir, 'cctv-verified.json');
 const INTEL_MANIFEST_PATH = path.join(manifestsDir, 'intel-wire.json');
 const SATELLITE_MANIFEST_PATH = path.join(manifestsDir, 'satellite-active.json');
+const MARITIME_PORTS_MANIFEST_PATH = path.join(manifestsDir, 'maritime-ports.json');
 
 const FETCH_TIMEOUT_MS = 15_000;
 const VERIFY_TIMEOUT_MS = 8_000;
@@ -27,6 +32,7 @@ const MAX_INTEL_ITEMS = 80;
 const MAX_CCTV_WORLD_FEEDS = 2500;
 const CCTV_VERIFY_CONCURRENCY = 16;
 const CALTRANS_STREAM_RESOLUTION_LIMIT = 180;
+const NGA_WORLD_PORT_INDEX_URL = 'https://msi.nga.mil/api/publications/world-port-index?output=json';
 const INVALID_OPTIONAL_KEY_VALUES = new Set(['', '-', 'test', 'demo', 'placeholder', 'changeme', 'replace-me', 'your_key_here', 'your-api-key', 'undefined', 'null', 'false', '0']);
 const INTEL_RSS_SOURCES = [
   { name: 'Google News World', url: 'https://news.google.com/rss/headlines/section/topic/WORLD?hl=en-US&gl=US&ceid=US:en' },
@@ -262,6 +268,36 @@ async function buildSatelliteManifest(existingManifest) {
   }
 }
 
+async function buildMaritimePortsManifest(existingManifest) {
+  try {
+    const payload = await fetchJson(NGA_WORLD_PORT_INDEX_URL, 30_000);
+    const ports = normalizeNgaPortRows(payload);
+    if (ports.length < 100 && existingManifest?.ports?.length) {
+      return {
+        ...existingManifest,
+        retainedAt: new Date().toISOString(),
+        retainedReason: 'Fresh NGA World Port Index fetch returned insufficient records.',
+      };
+    }
+
+    return {
+      generatedAt: new Date().toISOString(),
+      source: 'NGA Maritime Safety World Port Index',
+      sourceUrl: NGA_WORLD_PORT_INDEX_URL,
+      recordCount: ports.length,
+      ports,
+    };
+  } catch {
+    return existingManifest || {
+      generatedAt: new Date().toISOString(),
+      source: 'NGA Maritime Safety World Port Index',
+      sourceUrl: NGA_WORLD_PORT_INDEX_URL,
+      recordCount: 0,
+      ports: [],
+    };
+  }
+}
+
 function getVerificationFingerprint(feed) {
   return [feed.url || '', feed.videoUrl || '', feed.fallbackUrl || '', feed.detailsUrl || ''].join('|');
 }
@@ -341,6 +377,7 @@ async function verifyWorldcamsPlayer(feed) {
     verificationStatus: ok ? 'verified' : 'stale',
     verifiedTransport: nested.toLowerCase().includes('.m3u8') ? 'hls' : 'embed',
     resolvedVideoUrl: ok ? nested : null,
+    continuousLive: ok && isHlsStreamUrl(nested),
   };
 }
 
@@ -393,6 +430,7 @@ async function enrichCaltransFeeds(feeds) {
       }
       nextFeed.verificationStatus = 'verified';
       nextFeed.verifiedTransport = nextFeed.mediaType || 'image';
+      nextFeed.continuousLive = isContinuousLiveCameraFeed(nextFeed);
       nextFeed.lastVerifiedAt = new Date().toISOString();
       return nextFeed;
     }
@@ -402,6 +440,7 @@ async function enrichCaltransFeeds(feeds) {
     ...feed,
     verificationStatus: 'catalog_verified',
     verifiedTransport: feed.mediaType || 'image',
+    continuousLive: false,
     lastVerifiedAt: new Date().toISOString(),
   }));
 
@@ -448,6 +487,7 @@ async function buildCctvManifest(existingManifest) {
         ...feed,
         verificationStatus: 'verified',
         verifiedTransport: feed.mediaType,
+        continuousLive: false,
         lastVerifiedAt: new Date().toISOString(),
       }))
     : [];
@@ -456,6 +496,7 @@ async function buildCctvManifest(existingManifest) {
         ...feed,
         verificationStatus: 'verified',
         verifiedTransport: feed.mediaType,
+        continuousLive: false,
         lastVerifiedAt: new Date().toISOString(),
       }))
     : [];
@@ -464,12 +505,17 @@ async function buildCctvManifest(existingManifest) {
         ...feed,
         verificationStatus: 'verified',
         verifiedTransport: feed.mediaType,
+        continuousLive: false,
         lastVerifiedAt: new Date().toISOString(),
       }))
     : [];
 
   const seedCandidates = mergeFeeds([CAMERA_FEEDS]);
   const worldcamsCandidates = WORLDCAMS_FEEDS.slice(0, MAX_CCTV_WORLD_FEEDS);
+  const worldcamsLiveCandidates = worldcamsCandidates.filter((feed) => {
+    const nested = unwrapWorldcamsPlayer(feed.videoUrl);
+    return isHlsStreamUrl(nested || getEffectiveCameraVideoUrl(feed));
+  });
 
   const verifiedSeeds = await runWithConcurrency(
     seedCandidates,
@@ -502,13 +548,48 @@ async function buildCctvManifest(existingManifest) {
       return {
         ...feed,
         ...verification,
+        continuousLive: Boolean(verification?.continuousLive || isContinuousLiveCameraFeed({ ...feed, ...verification })),
         verificationFingerprint: fingerprint,
         lastVerifiedAt: new Date().toISOString(),
       };
     }
   );
 
+  const verifiedWorldcamsLive = await runWithConcurrency(
+    worldcamsLiveCandidates,
+    CCTV_VERIFY_CONCURRENCY,
+    async (feed) => {
+      const previous = previousById.get(feed.id);
+      const fingerprint = getVerificationFingerprint(feed);
+      if (
+        previous &&
+        previous.verificationFingerprint === fingerprint &&
+        previous.lastVerifiedAt &&
+        Date.now() - Date.parse(previous.lastVerifiedAt) < REVERIFY_WINDOW_MS &&
+        isContinuousLiveCameraFeed(previous)
+      ) {
+        return {
+          ...feed,
+          ...previous,
+          verificationFingerprint: fingerprint,
+        };
+      }
+
+      const verification = await verifyWorldcamsPlayer(feed);
+      return {
+        ...feed,
+        ...verification,
+        mediaType: 'video',
+        streamCapable: Boolean(verification?.continuousLive),
+        verificationFingerprint: fingerprint,
+        lastVerifiedAt: new Date().toISOString(),
+      };
+    }
+  );
+
+  const liveWorldcamIds = new Set(worldcamsLiveCandidates.map((feed) => feed.id));
   const catalogWorldcams = worldcamsCandidates
+    .filter((feed) => !liveWorldcamIds.has(feed.id))
     .map((feed) => {
       const previous = previousById.get(feed.id);
       const fingerprint = getVerificationFingerprint(feed);
@@ -530,6 +611,7 @@ async function buildCctvManifest(existingManifest) {
         verificationFingerprint: fingerprint,
         verificationStatus: hasPlausibleMediaUrl(feed) ? 'catalog_verified' : 'stale',
         verifiedTransport: feed.mediaType || 'embed',
+        continuousLive: false,
         lastVerifiedAt: new Date().toISOString(),
       };
     })
@@ -542,6 +624,7 @@ async function buildCctvManifest(existingManifest) {
       albertaFeeds,
       tflFeeds,
       verifiedSeeds.filter((feed) => feed.verificationStatus !== 'stale'),
+      verifiedWorldcamsLive.filter((feed) => feed.verificationStatus !== 'stale'),
       catalogWorldcams,
     ])
   );
@@ -559,6 +642,7 @@ async function buildCctvManifest(existingManifest) {
     feedCount: merged.length,
     verifiedCount: merged.filter((feed) => feed.verificationStatus === 'verified').length,
     catalogCount: merged.filter((feed) => feed.verificationStatus === 'catalog_verified').length,
+    continuousLiveCount: merged.filter(isContinuousLiveCameraFeed).length,
     feeds: merged,
   };
 }
@@ -566,22 +650,25 @@ async function buildCctvManifest(existingManifest) {
 async function main() {
   await ensureDir(manifestsDir);
 
-  const [existingIntel, existingSatellite, existingCctv] = await Promise.all([
+  const [existingIntel, existingSatellite, existingCctv, existingMaritimePorts] = await Promise.all([
     readJsonIfExists(INTEL_MANIFEST_PATH),
     readJsonIfExists(SATELLITE_MANIFEST_PATH),
     readJsonIfExists(CCTV_MANIFEST_PATH),
+    readJsonIfExists(MARITIME_PORTS_MANIFEST_PATH),
   ]);
 
-  const [intelManifest, satelliteManifest, cctvManifest] = await Promise.all([
+  const [intelManifest, satelliteManifest, cctvManifest, maritimePortsManifest] = await Promise.all([
     buildIntelManifest(existingIntel),
     buildSatelliteManifest(existingSatellite),
     buildCctvManifest(existingCctv),
+    buildMaritimePortsManifest(existingMaritimePorts),
   ]);
 
   await Promise.all([
     writeJson(INTEL_MANIFEST_PATH, intelManifest),
     writeJson(SATELLITE_MANIFEST_PATH, satelliteManifest),
     writeJson(CCTV_MANIFEST_PATH, cctvManifest),
+    writeJson(MARITIME_PORTS_MANIFEST_PATH, maritimePortsManifest),
   ]);
 
   process.stdout.write(
@@ -589,6 +676,7 @@ async function main() {
       `INTEL_MANIFEST_ITEMS ${intelManifest?.itemCount || intelManifest?.items?.length || 0}`,
       `SATELLITE_MANIFEST_RECORDS ${satelliteManifest?.recordCount || satelliteManifest?.records?.length || 0}`,
       `CCTV_MANIFEST_FEEDS ${cctvManifest?.feedCount || cctvManifest?.feeds?.length || 0}`,
+      `MARITIME_PORTS_MANIFEST_RECORDS ${maritimePortsManifest?.recordCount || maritimePortsManifest?.ports?.length || 0}`,
     ].join('\n') + '\n'
   );
 }

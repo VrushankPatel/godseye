@@ -1,9 +1,20 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import useStore from '../store/useStore';
 import { isWithinIntelRegion } from '../services/intelMonitor';
+import {
+    getEffectiveCameraVideoUrl,
+    isContinuousLiveCameraFeed,
+    isHlsStreamUrl,
+} from '../services/cctvFeeds';
 
 const PREVIEW_REFRESH_MS = 9000;
 const MAX_DOCK_FEEDS = 6;
+const DOCK_ANCHOR_STYLE = {
+    position: 'absolute',
+    left: 'calc(17rem + max(16px, env(safe-area-inset-left)))',
+    top: 'calc(var(--immersive-left-top-clearance) + 128px)',
+    zIndex: 34,
+};
 const WEBCAM_REGIONS = [
     { id: 'all', label: 'ALL' },
     { id: 'mideast', label: 'MIDEAST' },
@@ -37,24 +48,12 @@ function extractYoutubeId(url) {
 }
 
 function isHlsUrl(url) {
-    return /\.m3u8(\?|$)/i.test(String(url || ''));
-}
-
-function unwrapPlayerUrl(url) {
-    try {
-        const parsed = new URL(String(url || ''));
-        if (parsed.hostname.includes('worldcams.tv') && parsed.pathname.includes('/player')) {
-            return parsed.searchParams.get('url') || String(url || '');
-        }
-        return String(url || '');
-    } catch (err) {
-        return String(url || '');
-    }
+    return isHlsStreamUrl(url);
 }
 
 function resolveDockMediaKind(feed) {
     if (!feed) return 'none';
-    const effectiveVideoUrl = feed.resolvedVideoUrl || unwrapPlayerUrl(feed.videoUrl);
+    const effectiveVideoUrl = getEffectiveCameraVideoUrl(feed);
     if (effectiveVideoUrl) return isHlsUrl(effectiveVideoUrl) ? 'video' : 'embed';
     if (feed.mediaType) return feed.mediaType;
     if (feed.url || feed.fallbackUrl) return 'image';
@@ -62,21 +61,7 @@ function resolveDockMediaKind(feed) {
 }
 
 function isLiveReadyFeed(feed) {
-    if (!feed) return false;
-
-    const provider = String(feed.provider || '').toLowerCase();
-    const verificationStatus = String(feed.verificationStatus || '').toLowerCase();
-    const effectiveVideoUrl = feed.resolvedVideoUrl || unwrapPlayerUrl(feed.videoUrl);
-    const hasDirectHls = isHlsUrl(effectiveVideoUrl);
-    const hasOfficialStill = Boolean(feed.url || feed.fallbackUrl) && ['caltrans', 'tfl jamcams', 'ontario 511', 'alberta 511'].includes(provider);
-    const hasYoutubeLiveDiscovery = provider === 'youtube live';
-    const hasOfficialEmbed = ['nasa tv', 'earthcam', 'venice beach cam', 'fairmont', 'svbc official', 'hangang cam', 'sydney cam'].includes(provider);
-    const isVerified = verificationStatus === 'verified';
-
-    if (isVerified && (hasDirectHls || hasOfficialStill || Boolean(feed.streamCapable))) return true;
-    if (hasYoutubeLiveDiscovery || hasOfficialEmbed) return true;
-    if (provider === 'worldcams' && hasDirectHls) return true;
-    return false;
+    return isContinuousLiveCameraFeed(feed);
 }
 
 function pickFeaturedFeeds(feeds, limit = MAX_DOCK_FEEDS) {
@@ -84,9 +69,8 @@ function pickFeaturedFeeds(feeds, limit = MAX_DOCK_FEEDS) {
 
     const candidates = feeds
         .filter(isLiveReadyFeed);
-    const workingSet = candidates.length ? candidates : feeds;
 
-    const filtered = workingSet
+    const filtered = candidates
         .filter((feed) => feed && (feed.videoUrl || feed.url || feed.fallbackUrl))
         .sort((a, b) => {
             const aScore = (isLiveReadyFeed(a) ? 20 : 0) + (a?.verificationStatus === 'verified' ? 14 : 0) + (a?.resolvedVideoUrl ? 8 : 0) + (a?.videoUrl ? 3 : 0) + (a?.mediaType === 'video' ? 2 : 0) + (a?.mediaType === 'embed' ? 1 : 0);
@@ -112,6 +96,129 @@ function pickFeaturedFeeds(feeds, limit = MAX_DOCK_FEEDS) {
     }
 
     return picked.slice(0, limit);
+}
+
+function addPreviewPlaybackParams(url) {
+    if (!url) return '';
+    try {
+        const parsed = new URL(url);
+        if (parsed.hostname.includes('youtube.com')) {
+            parsed.searchParams.set('autoplay', '1');
+            parsed.searchParams.set('mute', '1');
+            parsed.searchParams.set('controls', '0');
+            parsed.searchParams.set('playsinline', '1');
+        }
+        return parsed.toString();
+    } catch (err) {
+        return url;
+    }
+}
+
+function LiveFeedPreview({ feed, previewNonce }) {
+    const [videoFailed, setVideoFailed] = useState(false);
+    const videoRef = useRef(null);
+    const videoUrl = getEffectiveCameraVideoUrl(feed);
+    const mediaKind = resolveDockMediaKind(feed);
+
+    useEffect(() => {
+        setVideoFailed(false);
+    }, [feed]);
+
+    useEffect(() => {
+        const videoEl = videoRef.current;
+        if (!videoEl || mediaKind !== 'video' || !videoUrl || !isHlsUrl(videoUrl)) return undefined;
+
+        let cancelled = false;
+        let hlsInstance = null;
+
+        const setup = async () => {
+            if (videoEl.canPlayType('application/vnd.apple.mpegurl')) {
+                videoEl.src = videoUrl;
+                return;
+            }
+            try {
+                const module = await import('hls.js');
+                if (cancelled) return;
+                const Hls = module.default;
+                if (Hls?.isSupported?.()) {
+                    hlsInstance = new Hls({ enableWorker: true, lowLatencyMode: true });
+                    hlsInstance.loadSource(videoUrl);
+                    hlsInstance.attachMedia(videoEl);
+                    hlsInstance.on(Hls.Events.ERROR, (_, data) => {
+                        if (data?.fatal) setVideoFailed(true);
+                    });
+                } else {
+                    videoEl.src = videoUrl;
+                }
+            } catch (err) {
+                if (!cancelled) setVideoFailed(true);
+            }
+        };
+
+        setup();
+
+        return () => {
+            cancelled = true;
+            if (hlsInstance) hlsInstance.destroy();
+        };
+    }, [mediaKind, videoUrl]);
+
+    if (mediaKind === 'video' && videoUrl && !videoFailed) {
+        return (
+            <video
+                ref={isHlsUrl(videoUrl) ? videoRef : null}
+                src={isHlsUrl(videoUrl) ? undefined : videoUrl}
+                className="w-full h-[76px] object-cover bg-black"
+                autoPlay
+                muted
+                playsInline
+                preload="metadata"
+                onError={() => setVideoFailed(true)}
+            />
+        );
+    }
+
+    if (mediaKind === 'video' && videoUrl && videoFailed) {
+        return (
+            <div className="w-full h-[76px] bg-black flex items-center justify-center text-[8px] tracking-[0.18em] uppercase text-red-300 border border-red-500/20">
+                Stream check failed
+            </div>
+        );
+    }
+
+    if (mediaKind === 'embed' && videoUrl) {
+        return (
+            <iframe
+                src={addPreviewPlaybackParams(videoUrl)}
+                title={`${feed.name || 'Webcam'} preview`}
+                className="w-full h-[76px] bg-black"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+                referrerPolicy="strict-origin-when-cross-origin"
+                loading="lazy"
+                style={{ pointerEvents: 'none' }}
+            />
+        );
+    }
+
+    const previewUrl = isImageUrl(feed?.fallbackUrl)
+        ? withCacheBuster(feed.fallbackUrl, previewNonce)
+        : isImageUrl(feed?.url)
+            ? withCacheBuster(feed.url, previewNonce)
+            : (() => {
+                const ytId = extractYoutubeId(feed?.videoUrl);
+                return ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : '';
+            })();
+
+    return previewUrl ? (
+        <img
+            src={previewUrl}
+            alt={feed?.name || 'CCTV preview'}
+            className="w-full h-[76px] object-cover"
+            loading="lazy"
+        />
+    ) : (
+        <div className="w-full h-[76px] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900" />
+    );
 }
 
 export default function WebcamDock() {
@@ -151,7 +258,7 @@ export default function WebcamDock() {
         return () => window.removeEventListener('keydown', onKeyDown);
     }, [expandedFeed]);
 
-    const expandedVideoUrl = expandedFeed?.resolvedVideoUrl || unwrapPlayerUrl(expandedFeed?.videoUrl) || '';
+    const expandedVideoUrl = getEffectiveCameraVideoUrl(expandedFeed);
     const expandedMediaKind = resolveDockMediaKind(expandedFeed);
     const expandedOpenUrl = expandedFeed?.detailsUrl || expandedVideoUrl || expandedFeed?.url || expandedFeed?.fallbackUrl || '';
 
@@ -245,6 +352,10 @@ export default function WebcamDock() {
             );
         }
 
+        if (expandedMediaKind === 'video' && expandedVideoUrl && expandedMediaFailed) {
+            return <div className="rcp-media-fallback">LIVE STREAM UNAVAILABLE</div>;
+        }
+
         const imageUrl = expandedFeed.fallbackUrl || expandedFeed.url;
         if (imageUrl && !expandedMediaFailed) {
             return (
@@ -262,9 +373,10 @@ export default function WebcamDock() {
 
     const regionCounts = useMemo(() => {
         const counts = Object.fromEntries(WEBCAM_REGIONS.map((region) => [region.id, 0]));
-        counts.all = Array.isArray(cctvFeeds) ? cctvFeeds.length : 0;
+        const liveFeeds = (cctvFeeds || []).filter(isLiveReadyFeed);
+        counts.all = liveFeeds.length;
 
-        for (const feed of cctvFeeds || []) {
+        for (const feed of liveFeeds) {
             const latitude = Number(feed.lat ?? feed.latitude);
             const longitude = Number(feed.lng ?? feed.longitude);
             if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) continue;
@@ -280,8 +392,9 @@ export default function WebcamDock() {
     }, [cctvFeeds]);
 
     const filteredFeeds = useMemo(() => {
-        if (activeRegion === 'all') return cctvFeeds;
-        return (cctvFeeds || []).filter((feed) => {
+        const liveFeeds = (cctvFeeds || []).filter(isLiveReadyFeed);
+        if (activeRegion === 'all') return liveFeeds;
+        return liveFeeds.filter((feed) => {
             const latitude = Number(feed.lat ?? feed.latitude);
             const longitude = Number(feed.lng ?? feed.longitude);
             if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return false;
@@ -294,7 +407,7 @@ export default function WebcamDock() {
         [filteredFeeds]
     );
 
-    if (!cctvEnabled || (cctvFeeds || []).length === 0) return null;
+    if (!cctvEnabled || featuredFeeds.length === 0) return null;
 
     const openFeed = (feed, index) => {
         setInspector({
@@ -314,8 +427,9 @@ export default function WebcamDock() {
             mediaType: resolveDockMediaKind(feed),
             mediaEnabled: true,
             streamCapable: Boolean(feed.streamCapable || feed.videoUrl),
+            continuousLive: true,
             refreshSeconds: feed.refreshSeconds || 5,
-            status: 'LIVE',
+            status: 'LIVE STREAM',
         });
     };
 
@@ -325,11 +439,7 @@ export default function WebcamDock() {
                 onClick={() => setDockVisible(true)}
                 className="glass-panel pointer-events-auto webcam-dock-shell"
                 style={{
-                    position: 'absolute',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    bottom: '172px',
-                    zIndex: 34,
+                    ...DOCK_ANCHOR_STYLE,
                     border: '1px solid rgba(0, 255, 65, 0.28)',
                     background: 'rgba(6, 11, 18, 0.84)',
                     boxShadow: '0 12px 28px rgba(0, 0, 0, 0.46)',
@@ -351,12 +461,8 @@ export default function WebcamDock() {
         <div
             className="glass-panel pointer-events-auto webcam-dock-shell"
             style={{
-                position: 'absolute',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                bottom: '172px',
-                width: 'clamp(320px, 28vw, 420px)',
-                zIndex: 34,
+                ...DOCK_ANCHOR_STYLE,
+                width: 'clamp(300px, 22vw, 360px)',
                 border: '1px solid rgba(0, 255, 65, 0.28)',
                 background: 'rgba(6, 11, 18, 0.76)',
                 boxShadow: '0 12px 28px rgba(0, 0, 0, 0.46)',
@@ -406,15 +512,6 @@ export default function WebcamDock() {
 
             <div className="grid grid-cols-3 gap-2 p-2">
                 {featuredFeeds.map((feed, index) => {
-                    const previewUrl = isImageUrl(feed.fallbackUrl)
-                        ? withCacheBuster(feed.fallbackUrl, previewNonce)
-                        : isImageUrl(feed.url)
-                            ? withCacheBuster(feed.url, previewNonce)
-                            : (() => {
-                                const ytId = extractYoutubeId(feed.videoUrl);
-                                return ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : '';
-                            })();
-
                     return (
                         <div
                             key={`${feed.id || index}`}
@@ -430,19 +527,10 @@ export default function WebcamDock() {
                             role="button"
                             tabIndex={0}
                         >
-                            {previewUrl ? (
-                                <img
-                                    src={previewUrl}
-                                    alt={feed.name || 'CCTV preview'}
-                                    className="w-full h-[76px] object-cover"
-                                    loading="lazy"
-                                />
-                            ) : (
-                                <div className="w-full h-[76px] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900" />
-                            )}
+                            <LiveFeedPreview feed={feed} previewNonce={previewNonce} />
 
                             <div className="absolute top-1 left-1 bg-black/75 text-[9px] px-1.5 py-0.5 tracking-[0.2em] uppercase text-green-300 border border-green-500/35">
-                                {isLiveReadyFeed(feed) ? 'Live' : 'Catalog'}
+                                Live
                             </div>
                             <button
                                 onClick={(event) => {

@@ -7,6 +7,7 @@ import IntelBriefPanel from './IntelBriefPanel';
 import LiveNewsRelayPanel from './LiveNewsRelayPanel';
 import StrategicIntelPanel from './StrategicIntelPanel';
 import { discoverEntityVisuals } from '../services/visualDiscovery';
+import { isContinuousLiveCameraFeed } from '../services/cctvFeeds';
 
 // ── Massive city database (250+ cities, ranked by global significance) ──
 const ALL_CITIES = [
@@ -470,6 +471,16 @@ export default function MissionHud() {
         return nested || rawVideoUrl;
     })();
     const panelMediaKind = resolvePanelMediaKind(inspector, effectiveVideoUrl);
+    const isContinuousMedia = isContinuousLiveCameraFeed({
+        ...inspector,
+        resolvedVideoUrl: effectiveVideoUrl || inspector?.resolvedVideoUrl,
+        videoUrl: effectiveVideoUrl || inspector?.videoUrl,
+    });
+    const panelMediaStatusLabel = isContinuousMedia
+        ? 'LIVE STREAM'
+        : panelMediaKind === 'image'
+            ? 'REFRESH IMAGE'
+            : 'REFRESH FEED';
     const shouldShowVisualRecon = inspector && !hasMedia && supportsVisualRecon(inspector);
     const selectedVisual = inspectorVisuals[selectedVisualIndex] || null;
     const selectedVisualOpenUrl = selectedVisual?.sourceUrl || selectedVisual?.url || '';
@@ -631,7 +642,7 @@ export default function MissionHud() {
             return (
                 <iframe
                     src={effectiveVideoUrl}
-                    title="Live Feed"
+                    title="Surveillance media feed"
                     className={mediaClassName}
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
                     referrerPolicy="strict-origin-when-cross-origin"
@@ -790,7 +801,7 @@ export default function MissionHud() {
                             {hasMedia && (
                                 <div style={{ padding: '8px 10px 6px' }}>
                                     <div className="rcp-media-toolbar">
-                                        <span className="rcp-media-status">LIVE FEED</span>
+                                        <span className="rcp-media-status">{panelMediaStatusLabel}</span>
                                         <div className="rcp-media-actions">
                                             {(effectiveVideoUrl || panelMediaSrc) && (
                                                 <button
@@ -1016,8 +1027,8 @@ export default function MissionHud() {
                     >
                         <div className="rcp-media-theater-header">
                             <div>
-                                <div className="news-relay-title">{inspector?.name || inspector?.callsign || inspector?.id || 'LIVE FEED'}</div>
-                                <div className="news-relay-note">{inspectorDef?.label || 'SURVEILLANCE FEED'}</div>
+                                <div className="news-relay-title">{inspector?.name || inspector?.callsign || inspector?.id || panelMediaStatusLabel}</div>
+                                <div className="news-relay-note">{panelMediaStatusLabel} · {inspectorDef?.label || 'SURVEILLANCE FEED'}</div>
                             </div>
                             <div className="rcp-media-theater-actions">
                                 <button

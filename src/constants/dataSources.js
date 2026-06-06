@@ -3,6 +3,7 @@ export const API_URLS = {
     INTEL_WIRE_MANIFEST: '/manifests/intel-wire.json',
     VERIFIED_CCTV_MANIFEST: '/manifests/cctv-verified.json',
     SATELLITE_ACTIVE_MANIFEST: '/manifests/satellite-active.json',
+    MARITIME_PORTS_MANIFEST: '/manifests/maritime-ports.json',
     // OpenSky Network - anonymous access, no API key needed
     // CORS: Browser requests are blocked; this stays as a last-resort source.
     OPENSKY: 'https://opensky-network.org/api/states/all',
@@ -42,11 +43,10 @@ export const API_URLS = {
         'https://api.open-meteo.com/v1/forecast?current=temperature_2m,relative_humidity_2m,wind_speed_10m,wind_direction_10m,weather_code&timezone=GMT',
     OPEN_METEO_AIR_QUALITY:
         'https://air-quality-api.open-meteo.com/v1/air-quality?current=pm2_5,pm10,nitrogen_dioxide,ozone,us_aqi&timezone=GMT',
-    // WFP Global ports (ArcGIS FeatureServer, public)
-    GLOBAL_PORTS_ARCGIS_QUERY:
-        'https://gis.wfp.org/arcgis/rest/services/GLOBAL/GlobalPorts/FeatureServer/0/query?where=1%3D1&outFields=objectid,portname,prttype,prtsize,status,latitude,longitude,iso3,country,updatedate&returnGeometry=false&f=pjson',
-    GLOBAL_PORTS_ARCGIS_QUERY_PROXY:
-        'https://api.allorigins.win/raw?url=',
+    // NGA Maritime Safety World Port Index. Fetched during manifest refresh so browsers do
+    // not depend on a large external runtime request or public proxy.
+    NGA_WORLD_PORT_INDEX:
+        'https://msi.nga.mil/api/publications/world-port-index?output=json',
     // NOAA NDBC latest buoy observations (text table)
     NDBC_LATEST_OBS: 'https://www.ndbc.noaa.gov/data/latest_obs/latest_obs.txt',
     NDBC_LATEST_OBS_PROXY:

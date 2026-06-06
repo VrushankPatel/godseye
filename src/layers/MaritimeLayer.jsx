@@ -4,22 +4,18 @@ import useStore from '../store/useStore';
 import { API_URLS, POLL_INTERVALS } from '../constants/dataSources';
 import { getRuntimeKey } from '../utils/runtimeEnv';
 import { fetchJsonWithPolicy } from '../utils/network';
+import { normalizeNgaPortRows } from '../services/maritimePorts';
 
 const REQUEST_TIMEOUT_MS = 16000;
-const PORT_PAGE_SIZE = 2000;
 const MAX_PORTS = 4200;
 const MAX_VESSELS = 5000;
 const AIS_SYNC_INTERVAL_MS = 2000;
+const PORT_SOURCE_NAME = 'NGA World Port Index';
+const MARITIME_SOURCE_NAME = 'NGA World Port Index + AISstream';
 
 function toNumber(value) {
     const parsed = Number.parseFloat(String(value ?? ''));
     return Number.isFinite(parsed) ? parsed : null;
-}
-
-function toIsoFromEpochMs(value) {
-    const num = Number(value);
-    if (!Number.isFinite(num) || num <= 0) return 'N/A';
-    return new Date(num).toISOString();
 }
 
 function createPortIcon() {
@@ -72,71 +68,14 @@ function createVesselIcon() {
     return canvas.toDataURL('image/png');
 }
 
-function normalizePortRows(payload) {
-    const features = Array.isArray(payload?.features) ? payload.features : [];
-
-    const ports = features
-        .map((feature) => {
-            const attrs = feature?.attributes || {};
-            const lat = toNumber(attrs.latitude);
-            const lon = toNumber(attrs.longitude);
-            if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
-
-            const objectId = attrs.objectid || attrs.OBJECTID || `${lat}:${lon}`;
-            return {
-                id: `port-${objectId}`,
-                assetType: 'PORT',
-                name: attrs.portname || 'Port',
-                lat,
-                lon,
-                portType: attrs.prttype || 'Unknown',
-                portSize: attrs.prtsize || 'Unknown',
-                status: attrs.status || 'Unknown',
-                country: attrs.country || 'N/A',
-                iso3: attrs.iso3 || 'N/A',
-                updated: toIsoFromEpochMs(attrs.updatedate),
-                source: 'WFP Global Ports',
-                reference: 'https://gis.wfp.org/arcgis/rest/services/GLOBAL/GlobalPorts/FeatureServer/0',
-            };
-        })
-        .filter(Boolean)
-        .slice(0, MAX_PORTS);
-
-    return ports;
-}
-
-function buildPortsQueryUrl(offset = 0, direct = true) {
-    const base = `${API_URLS.GLOBAL_PORTS_ARCGIS_QUERY}&resultRecordCount=${PORT_PAGE_SIZE}&resultOffset=${offset}`;
-    if (direct) return base;
-    return `${API_URLS.GLOBAL_PORTS_ARCGIS_QUERY_PROXY}${encodeURIComponent(base)}`;
-}
-
 async function fetchPortsAllPages() {
-    const merged = [];
+    const payload = await fetchJsonWithPolicy(API_URLS.MARITIME_PORTS_MANIFEST, {
+        timeoutMs: REQUEST_TIMEOUT_MS,
+        retries: 1,
+        circuitKey: 'maritime:ports:manifest',
+    });
 
-    const fetchPaged = async (direct) => {
-        const rows = [];
-        for (let offset = 0; offset < MAX_PORTS + PORT_PAGE_SIZE; offset += PORT_PAGE_SIZE) {
-            const payload = await fetchJsonWithPolicy(buildPortsQueryUrl(offset, direct), {
-                timeoutMs: REQUEST_TIMEOUT_MS,
-                retries: direct ? 1 : 0,
-                circuitKey: `maritime:ports:${direct ? 'direct' : 'proxy'}:${offset}`,
-            });
-            const features = Array.isArray(payload?.features) ? payload.features : [];
-            if (!features.length) break;
-            rows.push(...features);
-            if (features.length < PORT_PAGE_SIZE) break;
-        }
-        return rows;
-    };
-
-    try {
-        merged.push(...(await fetchPaged(true)));
-    } catch (err) {
-        merged.push(...(await fetchPaged(false)));
-    }
-
-    return normalizePortRows({ features: merged });
+    return normalizeNgaPortRows(payload, MAX_PORTS);
 }
 
 function pickField(obj, fields) {
@@ -271,7 +210,7 @@ export default function MaritimeLayer({ viewer }) {
             ...vesselDataRef.current.values(),
         ];
         updateData('maritime', merged, {
-            sourceName: vesselDataRef.current.size ? 'WFP ports + AISstream' : 'WFP ports',
+            sourceName: vesselDataRef.current.size ? MARITIME_SOURCE_NAME : PORT_SOURCE_NAME,
             isCached: false,
             health: 'live',
         });
@@ -296,6 +235,11 @@ export default function MaritimeLayer({ viewer }) {
                 entity.properties.country = port.country;
                 entity.properties.iso3 = port.iso3;
                 entity.properties.updated = port.updated;
+                entity.properties.portNumber = port.portNumber;
+                entity.properties.region = port.region;
+                entity.properties.navArea = port.navArea;
+                entity.properties.chartNumber = port.chartNumber;
+                entity.properties.publication = port.publication;
                 entity.properties.latitude = port.lat.toFixed(4);
                 entity.properties.longitude = port.lon.toFixed(4);
                 return;
@@ -319,6 +263,14 @@ export default function MaritimeLayer({ viewer }) {
                     status: port.status,
                     country: port.country,
                     iso3: port.iso3,
+                    portNumber: port.portNumber,
+                    region: port.region,
+                    navArea: port.navArea,
+                    chartNumber: port.chartNumber,
+                    publication: port.publication,
+                    maxVesselLength: port.maxVesselLength,
+                    maxVesselBeam: port.maxVesselBeam,
+                    maxVesselDraft: port.maxVesselDraft,
                     updated: port.updated,
                     source: port.source,
                     reference: port.reference,
@@ -520,8 +472,8 @@ export default function MaritimeLayer({ viewer }) {
         if (!appIsActive || !isEnabled) return;
         try {
             if (!portsDataRef.current.size) {
-                markLayerFetchStart('maritime', { sourceName: 'WFP ports + AISstream' });
-                setStatus('maritime', 'loading', { sourceName: 'WFP ports + AISstream' });
+                markLayerFetchStart('maritime', { sourceName: MARITIME_SOURCE_NAME });
+                setStatus('maritime', 'loading', { sourceName: MARITIME_SOURCE_NAME });
             }
 
             const ports = await fetchPortsAllPages();
@@ -531,20 +483,20 @@ export default function MaritimeLayer({ viewer }) {
             setEntitiesVisible(true);
             syncStoreData();
             setStatus('maritime', 'active', {
-                sourceName: vesselDataRef.current.size ? 'WFP ports + AISstream' : 'WFP ports',
+                sourceName: vesselDataRef.current.size ? MARITIME_SOURCE_NAME : PORT_SOURCE_NAME,
                 isCached: false,
                 health: 'live',
             });
             viewer.scene.requestRender();
         } catch (err) {
             setStatus('maritime', portEntitiesRef.current.size ? 'active' : 'error', {
-                sourceName: 'WFP ports + AISstream',
+                sourceName: MARITIME_SOURCE_NAME,
                 health: portEntitiesRef.current.size ? 'degraded' : 'error',
                 errorCode: portEntitiesRef.current.size ? null : 'maritime_ports_unavailable',
             });
             if (!portEntitiesRef.current.size) {
                 updateData('maritime', [], {
-                    sourceName: 'WFP ports + AISstream',
+                    sourceName: MARITIME_SOURCE_NAME,
                     health: 'error',
                     errorCode: 'maritime_ports_unavailable',
                 });

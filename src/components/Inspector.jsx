@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import useStore from '../store/useStore';
 import { LAYER_DEFS } from '../constants/dataSources';
+import { isContinuousLiveCameraFeed } from '../services/cctvFeeds';
 
 const TRACKABLE_LAYER_TYPES = new Set(['aircraft', 'satellites', 'militaryActivity']);
 const DEFAULT_REFRESH_SECONDS = 5;
@@ -96,6 +97,19 @@ export default function Inspector() {
         if (mediaType === 'caltrans') return 'video';
         return mediaType;
     }, [effectiveStreamUrl, mediaType]);
+    const isContinuousMedia = useMemo(
+        () => isContinuousLiveCameraFeed({
+            ...inspector,
+            resolvedVideoUrl: effectiveStreamUrl || inspector?.resolvedVideoUrl,
+            videoUrl: effectiveStreamUrl || inspector?.videoUrl,
+        }),
+        [effectiveStreamUrl, inspector]
+    );
+    const mediaStatusLabel = isContinuousMedia
+        ? 'LIVE STREAM'
+        : effectiveMediaType === 'image'
+            ? 'REFRESH IMAGE'
+            : 'REFRESH FEED';
 
     useEffect(() => {
         setIsMaximized(false);
@@ -253,7 +267,7 @@ export default function Inspector() {
             return (
                 <iframe
                     src={embedUrl}
-                    title="CCTV Live Feed"
+                    title="CCTV media feed"
                     className={`w-full border-0 ${maxView ? 'aspect-video max-h-[85vh]' : 'aspect-video'}`}
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 />
@@ -433,7 +447,7 @@ export default function Inspector() {
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="absolute top-4 left-4 px-3 py-1 bg-black/80 text-green-500 font-mono text-sm border border-green-500/50 z-10 shadow-[0_0_10px_rgba(0,255,80,0.3)] flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span> LIVE FEED - {inspector.name || 'CCTV CAMERA'}
+                            <span className={`w-2 h-2 rounded-full ${isContinuousMedia ? 'bg-red-500 animate-pulse' : 'bg-amber-400'}`}></span> {mediaStatusLabel} - {inspector.name || 'CCTV CAMERA'}
                         </div>
                         <button
                             className="absolute top-4 right-4 text-white hover:text-red-500 hover:scale-110 transition-transform text-3xl font-bold z-10 bg-black/50 border border-white/20 w-10 h-10 flex items-center justify-center rounded-sm"

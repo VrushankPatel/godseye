@@ -100,12 +100,8 @@ else
   echo "GDACS_EVENTS ERR"
 fi
 
-if fetch_json "https://gis.wfp.org/arcgis/rest/services/GLOBAL/GlobalPorts/FeatureServer/0/query?where=1%3D1&returnCountOnly=true&f=json" "$TMP_DIR/global_ports_count.json"; then
-  ports="$(safe_jq_number "$TMP_DIR/global_ports_count.json" '.count' 0)"
-  if [ "${ports:-0}" = "0" ]; then
-    fetch_json "https://gis.wfp.org/arcgis/rest/services/GLOBAL/GlobalPorts/FeatureServer/0/query?where=1%3D1&returnCountOnly=true&f=pjson" "$TMP_DIR/global_ports_count.json" >/dev/null 2>&1 || true
-    ports="$(safe_jq_number "$TMP_DIR/global_ports_count.json" '.count' 0)"
-  fi
+if fetch_json "https://msi.nga.mil/api/publications/world-port-index?output=json" "$TMP_DIR/global_ports_count.json"; then
+  ports="$(safe_jq_number "$TMP_DIR/global_ports_count.json" '.ports | length' 0)"
   echo "GLOBAL_PORTS_COUNT ${ports:-0}"
 else
   echo "GLOBAL_PORTS_COUNT ERR"
