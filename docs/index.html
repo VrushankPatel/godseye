@@ -1,0 +1,1862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- SEO Meta Tags -->
+  <title>Godseye 1.0 — Geospatial Intelligence Dashboard Documentation</title>
+  <meta name="description" content="Official documentation and interactive overview of Godseye 1.0, a real-time geospatial intelligence (OSINT) dashboard featuring live aircraft, satellites, CCTV, seismic activity, and weather overlays on a 3D globe.">
+  <meta name="keywords" content="Godseye, Geospatial, Intelligence, OSINT, CesiumJS, React, Vite, Flight Tracking, Satellite Propagation, Live CCTV, Seismic Activity, Weather Alerts">
+  <meta name="author" content="Vrushank Patel">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://vrushankpatel.github.io/godseye/">
+  <meta property="og:title" content="Godseye 1.0 — Geospatial OSINT Dashboard">
+  <meta property="og:description" content="Real-time geospatial intelligence visualization platform with aircraft tracking, satellites, CCTV, and environmental hazards on a 3D globe.">
+  <meta property="og:image" content="https://vrushankpatel.github.io/godseye/imgs/Godseye.png">
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="https://vrushankpatel.github.io/godseye/">
+  <meta property="twitter:title" content="Godseye 1.0 — Geospatial OSINT Dashboard">
+  <meta property="twitter:description" content="Real-time geospatial intelligence visualization platform with aircraft tracking, satellites, CCTV, and environmental hazards on a 3D globe.">
+  <meta property="twitter:image" content="https://vrushankpatel.github.io/godseye/imgs/Godseye.png">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="https://vrushankpatel.github.io/godseye/favicon.svg" onerror="this.href='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>👁️</text></svg>'">
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    /* Design Tokens & Reset */
+    :root {
+      --bg-dark: #050508;
+      --bg-slate: #0b0d19;
+      --panel-bg: rgba(11, 13, 25, 0.6);
+      --panel-border: rgba(255, 255, 255, 0.06);
+      
+      --color-cyan: #00f0ff;
+      --color-cyan-glow: rgba(0, 240, 255, 0.35);
+      --color-green: #39ff14;
+      --color-green-glow: rgba(57, 255, 20, 0.3);
+      --color-orange: #ff8800;
+      --color-orange-glow: rgba(255, 136, 0, 0.3);
+      --color-red: #ff3b30;
+      
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      
+      --font-display: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --font-tactical: 'Share Tech Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-primary);
+      font-family: var(--font-display);
+      overflow-x: hidden;
+      line-height: 1.6;
+      /* Grid background overlay */
+      background-image: 
+        radial-gradient(circle at 50% 20%, rgba(16, 24, 48, 0.8) 0%, var(--bg-dark) 70%),
+        linear-gradient(rgba(255, 255, 255, 0.01) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.01) 1px, transparent 1px);
+      background-size: 100% 100%, 40px 40px, 40px 40px;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--bg-dark);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--color-cyan-glow);
+    }
+
+    /* Ambient Glow Spots */
+    .glow-spot {
+      position: absolute;
+      width: 400px;
+      height: 400px;
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--glow-color, var(--color-cyan-glow)) 0%, transparent 70%);
+      filter: blur(80px);
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.5;
+    }
+
+    /* Container Utility */
+    .container {
+      width: 100%;
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 2rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Typography */
+    h1, h2, h3, h4 {
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+    
+    .tactical-label {
+      font-family: var(--font-tactical);
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      font-size: 0.85rem;
+    }
+
+    /* Header Nav */
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: rgba(5, 5, 8, 0.7);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--panel-border);
+      z-index: 100;
+      transition: all 0.3s ease;
+    }
+
+    header.scrolled {
+      background: rgba(5, 5, 8, 0.9);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .nav-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      height: 80px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-family: var(--font-tactical);
+      font-size: 1.5rem;
+      color: #fff;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .logo svg {
+      color: var(--color-cyan);
+      filter: drop-shadow(0 0 8px var(--color-cyan-glow));
+    }
+
+    .logo-text span {
+      color: var(--color-cyan);
+    }
+
+    nav {
+      display: flex;
+      gap: 2rem;
+      align-items: center;
+    }
+
+    nav a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.95rem;
+      font-weight: 500;
+      transition: color 0.2s ease;
+    }
+
+    nav a:hover {
+      color: var(--color-cyan);
+    }
+
+    .btn-header {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: transparent;
+      color: var(--color-cyan);
+      border: 1px solid var(--color-cyan);
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      font-family: var(--font-tactical);
+      text-transform: uppercase;
+      font-size: 0.85rem;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 0 10px rgba(0, 240, 255, 0.05);
+    }
+
+    .btn-header:hover {
+      background: var(--color-cyan);
+      color: var(--bg-dark);
+      box-shadow: 0 0 15px var(--color-cyan-glow);
+    }
+
+    /* Hero Section */
+    .hero {
+      padding-top: 180px;
+      padding-bottom: 80px;
+      position: relative;
+    }
+
+    .hero-content {
+      text-align: center;
+      max-width: 800px;
+      margin: 0 auto 4rem auto;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(6, 182, 212, 0.1);
+      border: 1px solid rgba(6, 182, 212, 0.2);
+      color: var(--color-cyan);
+      padding: 0.4rem 1rem;
+      border-radius: 100px;
+      margin-bottom: 2rem;
+      font-family: var(--font-tactical);
+      box-shadow: inset 0 0 10px rgba(0, 240, 255, 0.05);
+    }
+
+    .hero-badge-dot {
+      width: 6px;
+      height: 6px;
+      background-color: var(--color-cyan);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--color-cyan);
+      animation: pulse 1.5s infinite;
+    }
+
+    .hero-title {
+      font-size: 4rem;
+      font-weight: 700;
+      line-height: 1.1;
+      margin-bottom: 1.5rem;
+      background: linear-gradient(to bottom, #ffffff 60%, var(--text-secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-desc {
+      font-size: 1.25rem;
+      color: var(--text-secondary);
+      margin-bottom: 2.5rem;
+      font-weight: 400;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 1.25rem;
+      justify-content: center;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.85rem 1.75rem;
+      border-radius: 6px;
+      font-family: var(--font-tactical);
+      text-transform: uppercase;
+      font-size: 1rem;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--color-cyan), #00a8ff);
+      color: var(--bg-dark);
+      box-shadow: 0 0 25px rgba(0, 240, 255, 0.3);
+      border: none;
+    }
+
+    .btn-primary:hover {
+      box-shadow: 0 0 35px rgba(0, 240, 255, 0.5);
+      transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--text-primary);
+      border: 1px solid var(--panel-border);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.15);
+      transform: translateY(-2px);
+    }
+
+    /* Simulator Panel */
+    .simulator-container {
+      max-width: 1000px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 2;
+    }
+
+    .simulator-panel {
+      background: var(--panel-bg);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(16px);
+    }
+
+    .simulator-header {
+      background: rgba(10, 10, 15, 0.8);
+      border-bottom: 1px solid var(--panel-border);
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .simulator-dots {
+      display: flex;
+      gap: 6px;
+    }
+
+    .simulator-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--dot-color);
+    }
+
+    .simulator-title {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .simulator-status {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: var(--font-tactical);
+      color: var(--color-green);
+      font-size: 0.8rem;
+    }
+
+    .simulator-status-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--color-green);
+      border-radius: 50%;
+      box-shadow: 0 0 6px var(--color-green);
+    }
+
+    /* Display Area */
+    .simulator-display {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16/9;
+      background: #000;
+      overflow: hidden;
+    }
+
+    .simulator-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: filter 0.4s ease;
+    }
+
+    /* Simulated Overlays */
+    .simulator-hud {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      z-index: 10;
+    }
+
+    /* Scanlines standard overlay for CRT/NVG */
+    .scanlines-overlay {
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        transparent 0px,
+        transparent 1px,
+        rgba(0, 0, 0, 0.25) 2px,
+        rgba(0, 0, 0, 0.25) 3px
+      );
+      pointer-events: none;
+      z-index: 11;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    /* CRT Vignette */
+    .crt-vignette {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle, transparent 60%, rgba(0, 0, 0, 0.8) 100%);
+      pointer-events: none;
+      z-index: 12;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    /* Target Reticle Overlay */
+    .hud-crosshair {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 100px;
+      height: 100px;
+      border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 50%;
+    }
+    
+    .hud-crosshair::before, .hud-crosshair::after {
+      content: '';
+      position: absolute;
+      background: rgba(255,255,255,0.25);
+    }
+
+    .hud-crosshair::before {
+      top: 50%;
+      left: -10px;
+      right: -10px;
+      height: 1px;
+    }
+
+    .hud-crosshair::after {
+      left: 50%;
+      top: -10px;
+      bottom: -10px;
+      width: 1px;
+    }
+
+    /* NVG Specific HUD */
+    .simulator-hud-nvg {
+      border: 2px solid rgba(57, 255, 20, 0.3);
+      box-shadow: inset 0 0 50px rgba(57, 255, 20, 0.2);
+    }
+    .simulator-hud-nvg .hud-crosshair {
+      border-color: var(--color-green);
+      box-shadow: 0 0 10px rgba(57, 255, 20, 0.2);
+    }
+    .simulator-hud-nvg .hud-crosshair::before, .simulator-hud-nvg .hud-crosshair::after {
+      background: var(--color-green);
+    }
+
+    /* FLIR Specific HUD */
+    .simulator-hud-flir {
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      box-shadow: inset 0 0 50px rgba(0,0,0,0.5);
+    }
+    .simulator-hud-flir .hud-crosshair {
+      border-color: #fff;
+    }
+
+    /* GOD MODE HUD */
+    .simulator-hud-god {
+      border: 2px solid var(--color-cyan);
+      box-shadow: inset 0 0 50px rgba(0, 240, 255, 0.15);
+    }
+    .simulator-hud-god .hud-crosshair {
+      border-color: var(--color-cyan);
+    }
+    .simulator-hud-god .hud-crosshair::before, .simulator-hud-god .hud-crosshair::after {
+      background: var(--color-cyan);
+    }
+
+    /* HUD Tech Box */
+    .hud-tech-box {
+      position: absolute;
+      background: rgba(10, 10, 15, 0.7);
+      border: 1px solid var(--hud-border-color, rgba(255,255,255,0.1));
+      padding: 0.5rem 0.75rem;
+      font-family: var(--font-tactical);
+      font-size: 0.75rem;
+      color: var(--hud-text-color, var(--text-primary));
+    }
+
+    .hud-top-left { top: 20px; left: 20px; }
+    .hud-top-right { top: 20px; right: 20px; text-align: right; }
+    .hud-bottom-left { bottom: 20px; left: 20px; }
+    .hud-bottom-right { bottom: 20px; right: 20px; text-align: right; }
+
+    /* Control Panel */
+    .simulator-controls {
+      background: rgba(10, 10, 15, 0.9);
+      border-top: 1px solid var(--panel-border);
+      padding: 1rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .mode-buttons {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-mode {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--text-secondary);
+      font-family: var(--font-tactical);
+      text-transform: uppercase;
+      font-size: 0.8rem;
+      padding: 0.4rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-mode:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+    }
+
+    .btn-mode.active[data-mode="default"] { background: #fff; color: #000; border-color: #fff; }
+    .btn-mode.active[data-mode="nvg"] { background: var(--color-green); color: #000; border-color: var(--color-green); box-shadow: 0 0 10px var(--color-green-glow); }
+    .btn-mode.active[data-mode="flir"] { background: #ff3b30; color: #fff; border-color: #ff3b30; box-shadow: 0 0 10px rgba(255,59,48,0.3); }
+    .btn-mode.active[data-mode="crt"] { background: var(--color-orange); color: #000; border-color: var(--color-orange); box-shadow: 0 0 10px var(--color-orange-glow); }
+    .btn-mode.active[data-mode="god-mode"] { background: var(--color-cyan); color: #000; border-color: var(--color-cyan); box-shadow: 0 0 10px var(--color-cyan-glow); }
+
+    /* Feed Terminal Console in Simulator */
+    .simulator-console {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      height: 24px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-grow: 1;
+      max-width: 400px;
+    }
+
+    .simulator-console span {
+      color: var(--console-color, var(--text-muted));
+    }
+
+    /* Sections General styling */
+    section {
+      padding: 80px 0;
+      position: relative;
+    }
+
+    .section-title-wrap {
+      text-align: center;
+      margin-bottom: 4rem;
+    }
+
+    .section-subtitle {
+      color: var(--color-cyan);
+      font-family: var(--font-tactical);
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      margin-bottom: 0.75rem;
+      display: block;
+    }
+
+    .section-title {
+      font-size: 2.5rem;
+      font-weight: 700;
+    }
+
+    /* Feature Grid Section */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .feature-card {
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 8px;
+      padding: 2.25rem 2rem;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      backdrop-filter: blur(12px);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--card-glow, var(--color-cyan)), transparent);
+      transform: scaleX(0);
+      transition: transform 0.4s ease;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(255, 255, 255, 0.12);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    }
+
+    .feature-card:hover::before {
+      transform: scaleX(1);
+    }
+
+    .feature-icon-box {
+      width: 48px;
+      height: 48px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+      color: var(--card-glow, var(--color-cyan));
+      transition: all 0.3s ease;
+    }
+
+    .feature-card:hover .feature-icon-box {
+      background: rgba(255, 255, 255, 0.08);
+      box-shadow: 0 0 15px var(--card-glow-glow, var(--color-cyan-glow));
+    }
+
+    .feature-title {
+      font-size: 1.35rem;
+      margin-bottom: 0.75rem;
+      font-weight: 600;
+    }
+
+    .feature-desc {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      margin-bottom: 1.5rem;
+      flex-grow: 1;
+    }
+
+    .feature-badges {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .feature-badge {
+      font-family: var(--font-tactical);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      padding: 0.25rem 0.5rem;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 4px;
+      color: var(--text-secondary);
+    }
+
+    .feature-badge.live {
+      color: var(--color-green);
+      border-color: rgba(57, 255, 20, 0.15);
+      background: rgba(57, 255, 20, 0.05);
+    }
+
+    .feature-badge.interactive {
+      color: var(--color-cyan);
+      border-color: rgba(0, 240, 255, 0.15);
+      background: rgba(0, 240, 255, 0.05);
+    }
+
+    .feature-badge.byok {
+      color: var(--color-orange);
+      border-color: rgba(255, 136, 0, 0.15);
+      background: rgba(255, 136, 0, 0.05);
+    }
+
+    /* Setup Guide (Tabbed) */
+    .setup-container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .setup-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--panel-border);
+      margin-bottom: 1.5rem;
+      gap: 0.5rem;
+    }
+
+    .setup-tab {
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      font-family: var(--font-tactical);
+      text-transform: uppercase;
+      padding: 0.75rem 1.5rem;
+      font-size: 0.9rem;
+      cursor: pointer;
+      position: relative;
+      transition: color 0.2s ease;
+    }
+
+    .setup-tab.active {
+      color: var(--color-cyan);
+    }
+
+    .setup-tab::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: var(--color-cyan);
+      transform: scaleX(0);
+      transition: transform 0.2s ease;
+    }
+
+    .setup-tab.active::after {
+      transform: scaleX(1);
+    }
+
+    .terminal-window {
+      background: #06060a;
+      border: 1px solid var(--panel-border);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
+    }
+
+    .terminal-header {
+      background: rgba(255, 255, 255, 0.02);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding: 0.75rem 1.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .terminal-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      font-family: var(--font-tactical);
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: color 0.2s ease;
+    }
+
+    .terminal-btn:hover {
+      color: var(--color-cyan);
+    }
+
+    .terminal-body {
+      padding: 1.5rem;
+      overflow-x: auto;
+    }
+
+    .terminal-body pre {
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      line-height: 1.5;
+      color: #e2e8f0;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .comment { color: var(--text-muted); }
+    .command { color: var(--color-cyan); }
+    .args { color: #f8fafc; }
+
+    /* BYOK Grid Section */
+    .byok-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin-top: 3rem;
+    }
+
+    .byok-card {
+      background: rgba(255, 255, 255, 0.01);
+      border: 1px solid var(--panel-border);
+      border-radius: 8px;
+      padding: 1.5rem;
+      position: relative;
+    }
+
+    .byok-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1rem;
+    }
+
+    .byok-key-name {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      color: var(--color-orange);
+      background: rgba(255, 136, 0, 0.06);
+      border: 1px solid rgba(255, 136, 0, 0.15);
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+    }
+
+    .byok-optional-badge {
+      font-family: var(--font-tactical);
+      font-size: 0.7rem;
+      background: rgba(255, 255, 255, 0.04);
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      color: var(--text-muted);
+    }
+
+    .byok-feature-title {
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      font-size: 1.05rem;
+    }
+
+    .byok-desc {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    /* Data Sources Section */
+    .filter-bar {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-bottom: 3rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--panel-border);
+      color: var(--text-secondary);
+      font-family: var(--font-tactical);
+      text-transform: uppercase;
+      font-size: 0.8rem;
+      padding: 0.5rem 1.25rem;
+      border-radius: 100px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .filter-btn:hover {
+      background: rgba(255, 255, 255, 0.06);
+      color: #fff;
+    }
+
+    .filter-btn.active {
+      background: var(--color-cyan);
+      color: var(--bg-dark);
+      border-color: var(--color-cyan);
+      box-shadow: 0 0 15px var(--color-cyan-glow);
+    }
+
+    .sources-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .source-card {
+      background: rgba(10, 12, 22, 0.4);
+      border: 1px solid var(--panel-border);
+      border-radius: 8px;
+      padding: 1.5rem;
+      backdrop-filter: blur(8px);
+      transition: all 0.3s ease;
+    }
+
+    .source-card:hover {
+      border-color: rgba(0, 240, 255, 0.2);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .source-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+    }
+
+    .source-name {
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+
+    .source-category {
+      font-family: var(--font-tactical);
+      font-size: 0.7rem;
+      color: var(--color-cyan);
+      background: rgba(0, 240, 255, 0.05);
+      border: 1px solid rgba(0, 240, 255, 0.15);
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    .source-endpoint {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: 0.75rem;
+      word-break: break-all;
+    }
+
+    .source-details {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      border-top: 1px solid rgba(255,255,255,0.04);
+      padding-top: 0.75rem;
+    }
+
+    /* Footer */
+    footer {
+      background: #030305;
+      border-top: 1px solid var(--panel-border);
+      padding: 4rem 0 2rem 0;
+      position: relative;
+      z-index: 10;
+    }
+
+    .footer-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 2.5rem;
+      margin-bottom: 3rem;
+    }
+
+    .footer-brand {
+      grid-column: span 2;
+    }
+
+    .footer-desc {
+      color: var(--text-muted);
+      margin-top: 1rem;
+      font-size: 0.9rem;
+      max-width: 320px;
+    }
+
+    .footer-title {
+      font-family: var(--font-tactical);
+      color: #fff;
+      font-size: 0.95rem;
+      margin-bottom: 1.25rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .footer-links {
+      list-style: none;
+    }
+
+    .footer-links li {
+      margin-bottom: 0.75rem;
+    }
+
+    .footer-links a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.85rem;
+      transition: color 0.2s ease;
+    }
+
+    .footer-links a:hover {
+      color: var(--color-cyan);
+    }
+
+    .footer-bottom {
+      border-top: 1px solid rgba(255, 255, 255, 0.04);
+      padding-top: 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    .footer-bottom a {
+      color: var(--text-secondary);
+      text-decoration: none;
+    }
+
+    .footer-bottom a:hover {
+      color: var(--color-cyan);
+    }
+
+    @media (max-width: 1024px) {
+      .hero-title { font-size: 3.25rem; }
+      .footer-brand { grid-column: span 1; }
+    }
+
+    @media (max-width: 768px) {
+      .nav-container { height: auto; padding: 1.5rem 0; flex-direction: column; gap: 1rem; }
+      nav { flex-wrap: wrap; justify-content: center; gap: 1rem; }
+      .hero { padding-top: 140px; }
+      .hero-title { font-size: 2.5rem; }
+      .hero-actions { flex-direction: column; }
+      .features-grid { grid-template-columns: 1fr; }
+      .simulator-controls { flex-direction: column; align-items: stretch; }
+      .simulator-console { max-width: none; }
+    }
+
+    /* Keyframe Animations */
+    @keyframes pulse {
+      0%, 100% { opacity: 0.3; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.2); }
+    }
+
+    @keyframes scanline-anim {
+      0% { transform: translateY(-100%); }
+      100% { transform: translateY(100%); }
+    }
+
+    @keyframes flicker {
+      0%, 19.999%, 22%, 62.999%, 64%, 64.999%, 70%, 100% { opacity: 0.99; }
+      20%, 21.999%, 63%, 63.999%, 65%, 69.999% { opacity: 0.4; }
+    }
+
+    /* Custom Simulator Filter CSS overrides */
+    .sim-nvg-active {
+      filter: sepia(1) hue-rotate(85deg) saturate(4) brightness(0.65) contrast(1.4);
+    }
+    
+    .sim-flir-active {
+      filter: grayscale(1) invert(1) contrast(1.75) brightness(0.9);
+    }
+
+    .sim-crt-active {
+      filter: contrast(1.25) brightness(1.1) saturate(0.85);
+    }
+
+    .sim-god-active {
+      filter: saturate(1.8) hue-rotate(240deg) brightness(1.15) contrast(1.3);
+    }
+
+    /* Active State helpers for HUD Overlays */
+    .hud-visible {
+      opacity: 1 !important;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Background Ambient Glows -->
+  <div class="glow-spot" style="top: 10%; left: 10%; --glow-color: rgba(0, 240, 255, 0.15);"></div>
+  <div class="glow-spot" style="top: 50%; right: 5%; --glow-color: rgba(255, 136, 0, 0.08);"></div>
+  <div class="glow-spot" style="top: 80%; left: 20%; --glow-color: rgba(57, 255, 20, 0.08);"></div>
+
+  <!-- Header Nav -->
+  <header id="header">
+    <div class="container nav-container">
+      <a href="#" class="logo">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0z"/><circle cx="12" cy="12" r="3"/></svg>
+        <span class="logo-text">GODS<span>EYE</span></span>
+      </a>
+      <nav>
+        <a href="#features">Features</a>
+        <a href="#simulator">Simulator</a>
+        <a href="#byok">BYOK Keys</a>
+        <a href="#quickstart">Quick Start</a>
+        <a href="#sources">Data Sources</a>
+        <a href="https://github.com/VrushankPatel/godseye" target="_blank" aria-label="GitHub Repository">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-github"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
+        </a>
+        <a href="https://godseye-x.web.app/" target="_blank" class="btn-header">
+          Launch App
+          <i data-lucide="external-link" style="width: 14px; height: 14px;"></i>
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-content">
+        <div class="hero-badge">
+          <div class="hero-badge-dot"></div>
+          <span class="tactical-label">OSINT SURVEILLANCE PLATFORM ACTIVE</span>
+        </div>
+        <h1 class="hero-title">Geospatial Intelligence at Your Fingertips</h1>
+        <p class="hero-desc">Godseye is a keyless-optional, frontend-only geospatial intelligence terminal. Visualize live aircraft telemetry, satellite orbits, weather warnings, CCTV streams, and geological events mapped on a 3D tactical globe.</p>
+        <div class="hero-actions">
+          <a href="https://godseye-x.web.app/" target="_blank" class="btn btn-primary">
+            <i data-lucide="play" style="width: 18px; height: 18px;"></i>
+            Launch Hosted Dashboard
+          </a>
+          <a href="https://github.com/VrushankPatel/godseye" target="_blank" class="btn btn-secondary">
+            <i data-lucide="github" style="width: 18px; height: 18px;"></i>
+            View Source Code
+          </a>
+        </div>
+      </div>
+
+      <!-- Simulator Component -->
+      <div id="simulator" class="simulator-container">
+        <div class="simulator-panel">
+          <div class="simulator-header">
+            <div class="simulator-dots">
+              <div class="simulator-dot" style="--dot-color: var(--color-red);"></div>
+              <div class="simulator-dot" style="--dot-color: var(--color-orange);"></div>
+              <div class="simulator-dot" style="--dot-color: var(--color-green);"></div>
+            </div>
+            <div class="simulator-title">
+              <i data-lucide="terminal" style="width: 14px; height: 14px;"></i>
+              VISUAL MODE SIMULATOR (godseye_preview.sys)
+            </div>
+            <div class="simulator-status">
+              <div class="simulator-status-dot"></div>
+              LIVE DEPLOYED
+            </div>
+          </div>
+          
+          <div class="simulator-display">
+            <!-- Scanlines / Vignette overlays -->
+            <div id="sim-scanlines" class="scanlines-overlay"></div>
+            <div id="sim-vignette" class="crt-vignette"></div>
+
+            <!-- Main preview image -->
+            <img id="preview-img" src="imgs/Godseye.png" class="simulator-image" alt="Godseye Geospatial HUD Preview">
+
+            <!-- HUD: Night Vision (NVG) -->
+            <div id="hud-nvg" class="simulator-hud simulator-hud-nvg" style="--hud-border-color: rgba(57,255,20,0.3); --hud-text-color: var(--color-green);">
+              <div class="hud-crosshair"></div>
+              <div class="hud-tech-box hud-top-left">
+                SYS.MODE: NVG ACTIVE<br>
+                SENS: +24dB PHOSPHOR<br>
+                SPECTRUM: 850nm IR
+              </div>
+              <div class="hud-tech-box hud-top-right">
+                UTC: <span class="utc-clock">--:--:--</span><br>
+                AZIMUTH: 184.22°<br>
+                ELEVATION: 36.4°
+              </div>
+              <div class="hud-tech-box hud-bottom-left">
+                LOC: METROPOLITAN SEGMENT<br>
+                AGC: LEVEL 4 AUTO<br>
+                BATT: 98.4%
+              </div>
+              <div class="hud-tech-box hud-bottom-right">
+                FPS: 60.0 STABLE<br>
+                FEED RATIO: 8/8 ENHANCED<br>
+                REC ●
+              </div>
+            </div>
+
+            <!-- HUD: Thermal (FLIR) -->
+            <div id="hud-flir" class="simulator-hud simulator-hud-flir" style="--hud-border-color: rgba(255,255,255,0.3); --hud-text-color: #ffffff;">
+              <div class="hud-crosshair"></div>
+              <div class="hud-tech-box hud-top-left">
+                SYS.MODE: FLIR ACTIVE<br>
+                WHITE-HOT THERMAL<br>
+                LENS: f/1.2 50mm
+              </div>
+              <div class="hud-tech-box hud-top-right">
+                UTC: <span class="utc-clock">--:--:--</span><br>
+                RANGE: 4,821m<br>
+                FOV: 45° X 30°
+              </div>
+              <div class="hud-tech-box hud-bottom-left">
+                TEMP RANGE: 10°C - 85°C<br>
+                EMISSIVITY: 0.95<br>
+                AUTO-CAL: ON
+              </div>
+              <div class="hud-tech-box hud-bottom-right">
+                T_MAX: 74.2°C<br>
+                T_MIN: 12.1°C<br>
+                FLIR CORE: V3
+              </div>
+            </div>
+
+            <!-- HUD: Retro CRT -->
+            <div id="hud-crt" class="simulator-hud simulator-hud-crt" style="--hud-border-color: rgba(255, 136, 0, 0.3); --hud-text-color: var(--color-orange);">
+              <div class="hud-tech-box hud-top-left">
+                MONITOR: AMBER CRT<br>
+                H-SYNC: 15.6 kHz<br>
+                V-SYNC: 60 Hz
+              </div>
+              <div class="hud-tech-box hud-top-right">
+                UTC: <span class="utc-clock">--:--:--</span><br>
+                BAUD: 9600 bps<br>
+                PARITY: NONE
+              </div>
+              <div class="hud-tech-box hud-bottom-left">
+                SECTOR: GLOBAL OVERLAY<br>
+                SCANLINE: PASS 1<br>
+                MEM: 640KB BASE
+              </div>
+              <div class="hud-tech-box hud-bottom-right">
+                TTY ACTIVE<br>
+                VIDEO: NTSC TACTICAL<br>
+                WARN: DEV CONSOLE OPEN
+              </div>
+            </div>
+
+            <!-- HUD: God Mode -->
+            <div id="hud-god" class="simulator-hud simulator-hud-god" style="--hud-border-color: rgba(0,240,255,0.4); --hud-text-color: var(--color-cyan);">
+              <div class="hud-crosshair"></div>
+              <div class="hud-tech-box hud-top-left">
+                SYS.MODE: GOD MODE ACTIVE<br>
+                FULL INTEGRATION ON<br>
+                CELESTIAL ANCHOR: SET
+              </div>
+              <div class="hud-tech-box hud-top-right">
+                UTC: <span class="utc-clock">--:--:--</span><br>
+                SUBPOINT: GEO-LOCK<br>
+                GRID REF: OSINT-1
+              </div>
+              <div class="hud-tech-box hud-bottom-left">
+                FEEDS AUDIT: 100% ONLINE<br>
+                RTDB CRYPTO LAYER: HYDRATED<br>
+                BYOK INTEGRATION: EXPANDED
+              </div>
+              <div class="hud-tech-box hud-bottom-right">
+                SAT PROPAGATING...<br>
+                ADS-B MIL TRACKS: SCANNING<br>
+                WARP INDEX: 1.0
+              </div>
+            </div>
+
+          </div>
+
+          <div class="simulator-controls">
+            <div class="mode-buttons">
+              <button class="btn-mode active" data-mode="default">Default</button>
+              <button class="btn-mode" data-mode="nvg">Night Vision (NVG)</button>
+              <button class="btn-mode" data-mode="flir">Thermal (FLIR)</button>
+              <button class="btn-mode" data-mode="crt">Retro CRT</button>
+              <button class="btn-mode" data-mode="god-mode">God Mode</button>
+            </div>
+            <div class="simulator-console">
+              <i data-lucide="chevron-right" style="width: 14px; height: 14px; flex-shrink: 0;"></i>
+              <div id="console-text" class="console-log">Ready. Select a visualization mode to simulate HUD overlays.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section id="features">
+    <div class="container">
+      <div class="section-title-wrap">
+        <span class="section-subtitle">Features Blueprint</span>
+        <h2 class="section-title">Tactical Control Center</h2>
+      </div>
+
+      <div class="features-grid">
+        <!-- 3D Globe -->
+        <div class="feature-card" style="--card-glow: var(--color-cyan); --card-glow-glow: var(--color-cyan-glow);">
+          <div class="feature-icon-box">
+            <i data-lucide="globe"></i>
+          </div>
+          <h3 class="feature-title">Interactive 3D Engine</h3>
+          <p class="feature-desc">Powered by CesiumJS. Fluidly interact with a global 3D map rendering topography, satellite coordinates, and dynamic tactical overlay markers in real time.</p>
+          <div class="feature-badges">
+            <span class="feature-badge interactive">CesiumJS</span>
+            <span class="feature-badge">WebGL</span>
+          </div>
+        </div>
+
+        <!-- Aviation -->
+        <div class="feature-card" style="--card-glow: var(--color-cyan); --card-glow-glow: var(--color-cyan-glow);">
+          <div class="feature-icon-box">
+            <i data-lucide="plane"></i>
+          </div>
+          <h3 class="feature-title">Aviation Intelligence</h3>
+          <p class="feature-desc">Track live civilian flights globally using OpenSky Network/ADSB.lol, monitor tactical military air traffic, parse airport meteorological observations (METAR), and plot SIGMET/AIRMET weather hazard zones.</p>
+          <div class="feature-badges">
+            <span class="feature-badge live">Live Feeds</span>
+            <span class="feature-badge">ADS-B</span>
+          </div>
+        </div>
+
+        <!-- Space -->
+        <div class="feature-card" style="--card-glow: var(--color-cyan); --card-glow-glow: var(--color-cyan-glow);">
+          <div class="feature-icon-box">
+            <i data-lucide="orbit"></i>
+          </div>
+          <h3 class="feature-title">Space Domain Awareness</h3>
+          <p class="feature-desc">Propagate satellite orbits locally in the browser. Renders active satellite tracks from CelesTrak TLE manifests, displaying flight paths and overhead vectors.</p>
+          <div class="feature-badges">
+            <span class="feature-badge live">Live</span>
+            <span class="feature-badge">Satellite JS</span>
+          </div>
+        </div>
+
+        <!-- CCTV Overlay -->
+        <div class="feature-card" style="--card-glow: var(--color-cyan); --card-glow-glow: var(--color-cyan-glow);">
+          <div class="feature-icon-box">
+            <i data-lucide="video"></i>
+          </div>
+          <h3 class="feature-title">Live Camera Overlays</h3>
+          <p class="feature-desc">Access public CCTV and traffic cameras in real-time. Streams municipal webcams and major landmarks alongside live space telemetry feeds (e.g., NASA TV and ISS feeds).</p>
+          <div class="feature-badges">
+            <span class="feature-badge live">Live HLS</span>
+            <span class="feature-badge">Webcams</span>
+          </div>
+        </div>
+
+        <!-- Environmental & Hazards -->
+        <div class="feature-card" style="--card-glow: var(--color-cyan); --card-glow-glow: var(--color-cyan-glow);">
+          <div class="feature-icon-box">
+            <i data-lucide="activity"></i>
+          </div>
+          <h3 class="feature-title">Geological & Hazard Feeds</h3>
+          <p class="feature-desc">Tracks real-time earthquakes (USGS), global seismograph networks (IRIS), volcanic activity alerts (Smithsonian GVP), active thermal fires (NASA FIRMS MODIS), and extreme disaster alerts (GDACS).</p>
+          <div class="feature-badges">
+            <span class="feature-badge live">USGS & NASA</span>
+            <span class="feature-badge">IRIS</span>
+          </div>
+        </div>
+
+        <!-- Geopolitics -->
+        <div class="feature-card" style="--card-glow: var(--color-cyan); --card-glow-glow: var(--color-cyan-glow);">
+          <div class="feature-icon-box">
+            <i data-lucide="shield-alert"></i>
+          </div>
+          <h3 class="feature-title">Conflict & Infrastructure Layers</h3>
+          <p class="feature-desc">Overlays global armed conflict data geocoded from Wikidata SPARQL queries, power grid outage indicators (US DOE ODIN), global ports indices (WFP), and global power plant registry structures.</p>
+          <div class="feature-badges">
+            <span class="feature-badge">SPARQL</span>
+            <span class="feature-badge">WFP</span>
+          </div>
+        </div>
+
+        <!-- BYOK Model -->
+        <div class="feature-card" style="--card-glow: var(--color-orange); --card-glow-glow: var(--color-orange-glow);">
+          <div class="feature-icon-box">
+            <i data-lucide="key"></i>
+          </div>
+          <h3 class="feature-title">BYOK Access Model</h3>
+          <p class="feature-desc">Bring Your Own Key architecture. Runs fully client-side without any backend database. Provides robust graceful degradation, enabling keyless features by default.</p>
+          <div class="feature-badges">
+            <span class="feature-badge byok">Keyless Ready</span>
+            <span class="feature-badge">Decentralized</span>
+          </div>
+        </div>
+
+        <!-- Runtime Cache -->
+        <div class="feature-card" style="--card-glow: var(--color-green); --card-glow-glow: var(--color-green-glow);">
+          <div class="feature-icon-box">
+            <i data-lucide="database"></i>
+          </div>
+          <h3 class="feature-title">Encrypted Shared Cache</h3>
+          <p class="feature-desc">Prewarm and cache slow-changing manifests (satellites, CCTVs, intel wires) inside an encrypted Firebase Realtime Database. Securely decrypted entirely on client-side.</p>
+          <div class="feature-badges">
+            <span class="feature-badge">Firebase RTDB</span>
+            <span class="feature-badge">AES Crypto</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BYOK Keys Section -->
+  <section id="byok" style="background: rgba(10, 12, 22, 0.4); border-top: 1px solid var(--panel-border); border-bottom: 1px solid var(--panel-border);">
+    <div class="container">
+      <div class="section-title-wrap">
+        <span class="section-subtitle" style="color: var(--color-orange);">API Integration Matrix</span>
+        <h2 class="section-title">Bring Your Own Key</h2>
+        <p style="color: var(--text-secondary); max-width: 600px; margin: 1rem auto 0 auto; font-size: 0.95rem;">Godseye degrades gracefully. Missing keys will disable individual data enrichments but will never crash the core dashboard.</p>
+      </div>
+
+      <div class="byok-grid">
+        <!-- Google Maps -->
+        <div class="byok-card">
+          <div class="byok-header">
+            <span class="byok-key-name">VITE_GOOGLE_MAPS_3D_KEY</span>
+            <span class="byok-optional-badge">Optional</span>
+          </div>
+          <h4 class="byok-feature-title">Google 3D Photorealistic Tiles</h4>
+          <p class="byok-desc">Enables Google Earth-style photorealistic 3D city overlays when zooming into urban sectors. Falls back to default OSM buildings.</p>
+        </div>
+
+        <!-- Youtube -->
+        <div class="byok-card">
+          <div class="byok-header">
+            <span class="byok-key-name">VITE_YOUTUBE_API_KEY</span>
+            <span class="byok-optional-badge">Optional</span>
+          </div>
+          <h4 class="byok-feature-title">CCTV Webcam Feeds</h4>
+          <p class="byok-desc">Used for discovery of real-time municipal streaming webcams and camera channels on YouTube to inject into the CCTV terminal panel.</p>
+        </div>
+
+        <!-- Guardian -->
+        <div class="byok-card">
+          <div class="byok-header">
+            <span class="byok-key-name">VITE_GUARDIAN_API_KEY</span>
+            <span class="byok-optional-badge">Optional</span>
+          </div>
+          <h4 class="byok-feature-title">Intelligence Wire Feed</h4>
+          <p class="byok-desc">Powers real-time keyword-based news ticker updates, adding context to geopolitical anomalies occurring near visual coordinate indicators.</p>
+        </div>
+
+        <!-- AISstream -->
+        <div class="byok-card">
+          <div class="byok-header">
+            <span class="byok-key-name">VITE_AISSTREAM_API_KEY</span>
+            <span class="byok-optional-badge">Optional</span>
+          </div>
+          <h4 class="byok-feature-title">Real-time Maritime AIS</h4>
+          <p class="byok-desc">Subscribes to live WebSocket ocean-faring vessel position streams, rendering active cargo, tanker, and service crafts globally.</p>
+        </div>
+
+        <!-- Firebase URL -->
+        <div class="byok-card">
+          <div class="byok-header">
+            <span class="byok-key-name">VITE_FIREBASE_RTDB_URL</span>
+            <span class="byok-optional-badge">Optional</span>
+          </div>
+          <h4 class="byok-feature-title">Shared Runtime Database</h4>
+          <p class="byok-desc">Specifies the endpoint for the client-side encrypted Firebase Realtime Database to store prewarmed data manifests.</p>
+        </div>
+
+        <!-- Cache Secret -->
+        <div class="byok-card">
+          <div class="byok-header">
+            <span class="byok-key-name">VITE_GODSEYE_CACHE_SECRET</span>
+            <span class="byok-optional-badge">Optional</span>
+          </div>
+          <h4 class="byok-feature-title">Client Encryption Key</h4>
+          <p class="byok-desc">AES decryption key for the shared Firebase cache data. Required to hydrate/decrypt telemetry data fetched from the cache.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Quick Start Section -->
+  <section id="quickstart">
+    <div class="container">
+      <div class="section-title-wrap">
+        <span class="section-subtitle">Local Deployment</span>
+        <h2 class="section-title">Quick Start</h2>
+      </div>
+
+      <div class="setup-container">
+        <div class="setup-tabs">
+          <button class="setup-tab active" data-tab="local">Local Development</button>
+          <button class="setup-tab" data-tab="build">Build Production</button>
+          <button class="setup-tab" data-tab="cache">Shared Cache</button>
+        </div>
+
+        <div class="terminal-window">
+          <div class="terminal-header">
+            <div class="simulator-dots">
+              <div class="simulator-dot" style="--dot-color: var(--color-red);"></div>
+              <div class="simulator-dot" style="--dot-color: var(--color-orange);"></div>
+              <div class="simulator-dot" style="--dot-color: var(--color-green);"></div>
+            </div>
+            <div class="simulator-title">zsh — terminal</div>
+            <button class="terminal-btn" id="copy-btn">
+              <i data-lucide="copy" style="width: 13px; height: 13px;"></i>
+              <span>Copy</span>
+            </button>
+          </div>
+          <div class="terminal-body">
+            <!-- Local Tab -->
+            <div id="tab-local" class="tab-content active">
+              <pre><span class="comment"># 1. Clone repository</span>
+<span class="command">git clone</span> <span class="args">https://github.com/VrushankPatel/godseye.git</span>
+<span class="command">cd</span> <span class="args">godseye</span>
+
+<span class="comment"># 2. Set up local keys configuration (see BYOK list)</span>
+<span class="command">cp</span> <span class="args">scripts/local-secrets.example.sh scripts/local-secrets.sh</span>
+<span class="comment"># Edit scripts/local-secrets.sh with your text editor</span>
+
+<span class="comment"># 3. Install packages</span>
+<span class="command">npm install</span>
+
+<span class="comment"># 4. Start local development HUD</span>
+<span class="command">./scripts/with-local-secrets.sh</span> <span class="args">npm run dev</span></pre>
+            </div>
+
+            <!-- Build Tab -->
+            <div id="tab-build" class="tab-content">
+              <pre><span class="comment"># Build production bundles with injected secrets</span>
+<span class="command">./scripts/with-local-secrets.sh</span> <span class="args">npm run build</span>
+
+<span class="comment"># Preview locally on port 4173</span>
+<span class="command">./scripts/with-local-secrets.sh</span> <span class="args">npm run preview</span></pre>
+            </div>
+
+            <!-- Cache Tab -->
+            <div id="tab-cache" class="tab-content">
+              <pre><span class="comment"># Force pre-warm and publish the encrypted client cache payload</span>
+<span class="comment"># to the designated Firebase RTDB endpoint</span>
+<span class="command">./scripts/with-local-secrets.sh</span> <span class="args">npm run shared-cache:publish</span></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Data Sources Section -->
+  <section id="sources" style="background: rgba(10, 12, 22, 0.4); border-top: 1px solid var(--panel-border);">
+    <div class="container">
+      <div class="section-title-wrap">
+        <span class="section-subtitle">Integration Mapping</span>
+        <h2 class="section-title">Telemetry Sources</h2>
+        <p style="color: var(--text-secondary); max-width: 600px; margin: 1rem auto 0 auto; font-size: 0.95rem;">Godseye utilizes free public streams and coordinates fallback mechanisms to ensure high resilience under heavy payload limits.</p>
+      </div>
+
+      <div class="filter-bar">
+        <button class="filter-btn active" data-filter="all">All Feeds</button>
+        <button class="filter-btn" data-filter="aviation">Aviation</button>
+        <button class="filter-btn" data-filter="space">Space</button>
+        <button class="filter-btn" data-filter="geological">Geological/Hazard</button>
+        <button class="filter-btn" data-filter="infrastructure">Infrastructure</button>
+        <button class="filter-btn" data-filter="weather">Weather</button>
+      </div>
+
+      <div class="sources-list" id="sources-container">
+        <!-- OpenSky -->
+        <div class="source-card" data-cat="aviation">
+          <div class="source-header">
+            <span class="source-name">OpenSky Network API</span>
+            <span class="source-category">Aviation</span>
+          </div>
+          <div class="source-endpoint">GET /api/states/all</div>
+          <p class="source-details">Provides dense real-time air traffic monitoring. Aggregated with fallback mapping via ADSB.lol keyless ADS-B mirrors for tracking military aircraft callsigns.</p>
+        </div>
+
+        <!-- CelesTrak -->
+        <div class="source-card" data-cat="space">
+          <div class="source-header">
+            <span class="source-name">CelesTrak Catalog</span>
+            <span class="source-category">Space</span>
+          </div>
+          <div class="source-endpoint">GET /pub/TLE/catalog.txt</div>
+          <p class="source-details">Delivers Two-Line Element (TLE) tracking sets. Allows direct client-side SGP4 orbital propagation of active space systems in the browser.</p>
+        </div>
+
+        <!-- USGS -->
+        <div class="source-card" data-cat="geological">
+          <div class="source-header">
+            <span class="source-name">USGS Earthquake Hazards</span>
+            <span class="source-category">Geological</span>
+          </div>
+          <div class="source-endpoint">GET /earthquakes/feed/v1.0/summary/...</div>
+          <p class="source-details">Queries live seismic movements and magnitudes worldwide. Automatically falls back to IRIS text parses if USGS servers fail.</p>
+        </div>
+
+        <!-- NASA EONET -->
+        <div class="source-card" data-cat="geological">
+          <div class="source-header">
+            <span class="source-name">NASA EONET Feeds</span>
+            <span class="source-category">Geological</span>
+          </div>
+          <div class="source-endpoint">GET /api/v3/events</div>
+          <p class="source-details">Coordinates geospatial indicators of extreme environmental disturbances: volcanic flows, heavy floods, severe storms, and active wildfire events.</p>
+        </div>
+
+        <!-- GDACS -->
+        <div class="source-card" data-cat="geological">
+          <div class="source-header">
+            <span class="source-name">GDACS Alerts</span>
+            <span class="source-category">Geological</span>
+          </div>
+          <div class="source-endpoint">GET /xml/rss.xml</div>
+          <p class="source-details">Provides early-warning coordinates and impact grids for major natural catastrophes including cyclones, droughts, floods, and earthquakes.</p>
+        </div>
+
+        <!-- Wikidata -->
+        <div class="source-card" data-cat="infrastructure">
+          <div class="source-header">
+            <span class="source-name">Wikidata SPARQL</span>
+            <span class="source-category">Infrastructure</span>
+          </div>
+          <div class="source-endpoint">POST /sparql</div>
+          <p class="source-details">Fetches geocoded entities for ongoing active conflicts, disputes, and regional military base coordinate indicators.</p>
+        </div>
+
+        <!-- NOAA Buoys -->
+        <div class="source-card" data-cat="weather">
+          <div class="source-header">
+            <span class="source-name">NOAA Buoy Telemetry</span>
+            <span class="source-category">Weather</span>
+          </div>
+          <div class="source-endpoint">GET /data/latest_obs/latest_obs.txt</div>
+          <p class="source-details">Parses global weather buoys telemetry (wave heights, water temperatures, barometric changes, wind speeds) using client CORS proxies.</p>
+        </div>
+
+        <!-- Open-Meteo -->
+        <div class="source-card" data-cat="weather">
+          <div class="source-header">
+            <span class="source-name">Open-Meteo API</span>
+            <span class="source-category">Weather</span>
+          </div>
+          <div class="source-endpoint">GET /v1/forecast</div>
+          <p class="source-details">Supplies dense meteorological grids, aerosol data, particulate densities (PM2.5, PM10, ozone), and localized forecast grids dynamically.</p>
+        </div>
+
+        <!-- US DOE ODIN -->
+        <div class="source-card" data-cat="infrastructure">
+          <div class="source-header">
+            <span class="source-name">US DOE ODIN</span>
+            <span class="source-category">Infrastructure</span>
+          </div>
+          <div class="source-endpoint">GET /data/outages.json</div>
+          <p class="source-details">Monitors grid security, grid overload statistics, and major county-level power grid outage alerts across the US.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a href="#" class="logo">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0z"/><circle cx="12" cy="12" r="3"/></svg>
+            <span class="logo-text">GODS<span>EYE</span></span>
+          </a>
+          <p class="footer-desc">An interactive geospatial terminal offering total situational awareness by merging global satellite orbits, civilian flight patterns, and disaster feeds on a 3D interface.</p>
+        </div>
+        <div>
+          <h4 class="footer-title">Navigation</h4>
+          <ul class="footer-links">
+            <li><a href="#features">Features</a></li>
+            <li><a href="#simulator">Simulator</a></li>
+            <li><a href="#byok">BYOK Keys</a></li>
+            <li><a href="#quickstart">Quick Start</a></li>
+            <li><a href="#sources">Data Sources</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="footer-title">Integrations</h4>
+          <ul class="footer-links">
+            <li><a href="https://cesium.com/" target="_blank">CesiumJS</a></li>
+            <li><a href="https://celestrak.org/" target="_blank">CelesTrak</a></li>
+            <li><a href="https://opensky-network.org/" target="_blank">OpenSky</a></li>
+            <li><a href="https://earthquake.usgs.gov/" target="_blank">USGS Earthquakes</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div>
+          © 2026 Godseye. Built with ❤️ by <a href="https://github.com/VrushankPatel" target="_blank">Vrushank Patel</a>.
+        </div>
+        <div>
+          Licensed under <a href="https://github.com/VrushankPatel/godseye/blob/master/LICENSE" target="_blank">Apache License 2.0</a>.
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script>
+    // Initialize Lucide Icons
+    lucide.createIcons();
+
+    // Scroll Header Style Change
+    window.addEventListener('scroll', () => {
+      const header = document.getElementById('header');
+      if (window.scrollY > 50) {
+        header.classList.add('scrolled');
+      } else {
+        header.classList.remove('scrolled');
+      }
+    });
+
+    // UTC Clock Simulation
+    function updateClock() {
+      const now = new Date();
+      const timeStr = now.toISOString().slice(11, 19) + ' Z';
+      document.querySelectorAll('.utc-clock').forEach(clock => {
+        clock.textContent = timeStr;
+      });
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Simulator Interactive Modes
+    const modeButtons = document.querySelectorAll('.btn-mode');
+    const previewImg = document.getElementById('preview-img');
+    const consoleText = document.getElementById('console-text');
+    const scanlines = document.getElementById('sim-scanlines');
+    const vignette = document.getElementById('sim-vignette');
+    
+    const huds = {
+      nvg: document.getElementById('hud-nvg'),
+      flir: document.getElementById('hud-flir'),
+      crt: document.getElementById('hud-crt'),
+      god: document.getElementById('hud-god')
+    };
+
+    const consoleLogs = {
+      'default': 'Ready. Select a visualization mode to simulate HUD overlays.',
+      'nvg': '[SYS] NVG CHIP INIT: OK // RES: 850nm ENHANCED // INTENSITY GAIN: +24dB PHOSPHOR // GEO-RANGE: 15km LOCK',
+      'flir': '[SYS] FLIR THERMAL INIT: OK // DETECTOR: LWIR UNCOOLED // SENS: WHITE-HOT DYNAMIC // CALIBRATED [T_MAX: 74.2C]',
+      'crt': '[SYS] AMBER CRT INITIALIZED // GRID: SCANLINE PASS // BAUD: 9600 // WARN: EMULATOR ON VINTAGE DECAY MODE // TTY OK',
+      'god-mode': '[SYS] GOD MODE: INTEGRATED OVERLAY // ALL FEEDS ACTIVE [AIRCRAFT, SATELLITE, CCTV, WEATHER, SEISMIC] // CACHE UNLOCKED'
+    };
+
+    const consoleColors = {
+      'default': '#94a3b8',
+      'nvg': 'var(--color-green)',
+      'flir': '#ffffff',
+      'crt': 'var(--color-orange)',
+      'god-mode': 'var(--color-cyan)'
+    };
+
+    modeButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        // Toggle active class on buttons
+        modeButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        const mode = btn.dataset.mode;
+
+        // Reset image classes
+        previewImg.className = 'simulator-image';
+        
+        // Hide all HUDs
+        Object.values(huds).forEach(hud => hud.classList.remove('hud-visible'));
+        scanlines.style.opacity = 0;
+        vignette.style.opacity = 0;
+
+        // Apply classes and HUD visibility based on mode
+        if (mode === 'nvg') {
+          previewImg.classList.add('sim-nvg-active');
+          huds.nvg.classList.add('hud-visible');
+          scanlines.style.opacity = 0.4;
+          vignette.style.opacity = 0.5;
+        } else if (mode === 'flir') {
+          previewImg.classList.add('sim-flir-active');
+          huds.flir.classList.add('hud-visible');
+          vignette.style.opacity = 0.7;
+        } else if (mode === 'crt') {
+          previewImg.classList.add('sim-crt-active');
+          huds.crt.classList.add('hud-visible');
+          scanlines.style.opacity = 0.65;
+          vignette.style.opacity = 0.4;
+        } else if (mode === 'god-mode') {
+          previewImg.classList.add('sim-god-active');
+          huds.god.classList.add('hud-visible');
+          vignette.style.opacity = 0.2;
+        }
+
+        // Print Console Log
+        consoleText.textContent = consoleLogs[mode];
+        document.querySelector('.simulator-console').style.setProperty('--console-color', consoleColors[mode]);
+      });
+    });
+
+    // Quick Start Setup Tabs
+    const tabButtons = document.querySelectorAll('.setup-tab');
+    const tabContents = document.querySelectorAll('.tab-content');
+    const copyBtn = document.getElementById('copy-btn');
+
+    tabButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        tabButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        const targetTab = btn.dataset.tab;
+        tabContents.forEach(content => {
+          content.classList.remove('active');
+          if (content.id === `tab-${targetTab}`) {
+            content.classList.add('active');
+          }
+        });
+      });
+    });
+
+    // Copy to clipboard function
+    copyBtn.addEventListener('click', () => {
+      const activeTabContent = document.querySelector('.tab-content.active');
+      const textToCopy = activeTabContent.textContent.replace(/#.*$/gm, '').trim(); // Remove comment lines for clean commands
+      
+      // For fallback copy without regex filtering if needed, or clean copy
+      const rawText = activeTabContent.innerText;
+
+      navigator.clipboard.writeText(rawText).then(() => {
+        const copySpan = copyBtn.querySelector('span');
+        copySpan.textContent = 'Copied!';
+        setTimeout(() => {
+          copySpan.textContent = 'Copy';
+        }, 2000);
+      });
+    });
+
+    // Data Sources Filter
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    const sourceCards = document.querySelectorAll('.source-card');
+
+    filterButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        filterButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        const filter = btn.dataset.filter;
+
+        sourceCards.forEach(card => {
+          if (filter === 'all' || card.dataset.cat === filter) {
+            card.style.display = 'block';
+          } else {
+            card.style.display = 'none';
+          }
+        });
+      });
+    });
+  </script>
+</body>
+</html>
