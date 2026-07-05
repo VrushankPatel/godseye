@@ -11,7 +11,6 @@ export default function LayerPanel() {
     const {
         layers,
         toggleLayer,
-        enableAllLayers,
         layerPanelOpen,
         toggleLayerPanel
     } = useStore();
@@ -176,15 +175,6 @@ export default function LayerPanel() {
                             )}
                         </div>
                     )}
-                </div>
-
-                <div className="px-4 py-3 border-t border-border-panel bg-black/20">
-                    <button
-                        onClick={enableAllLayers}
-                        className="w-full py-2 border border-neon-cyan/30 bg-neon-cyan/10 text-neon-cyan text-[11px] tracking-widest hover:bg-neon-cyan/20 hover:shadow-[0_0_15px_rgba(0,255,255,0.2)] transition-all font-bold uppercase rounded-sm"
-                    >
-                        PANOPTIC OVERRIDE
-                    </button>
                 </div>
 
             </div>
