@@ -41,7 +41,10 @@ function withCacheBuster(url, nonce) {
 function extractYoutubeId(url) {
     const value = String(url || '');
     const embedMatch = value.match(/youtube\.com\/embed\/([^?&/]+)/i);
-    if (embedMatch?.[1]) return embedMatch[1];
+    if (embedMatch?.[1]) {
+        if (embedMatch[1] === 'live_stream') return '';
+        return embedMatch[1];
+    }
     const watchMatch = value.match(/[?&]v=([^?&/]+)/i);
     if (watchMatch?.[1]) return watchMatch[1];
     return '';
@@ -73,8 +76,8 @@ function pickFeaturedFeeds(feeds, limit = MAX_DOCK_FEEDS) {
     const filtered = candidates
         .filter((feed) => feed && (feed.videoUrl || feed.url || feed.fallbackUrl))
         .sort((a, b) => {
-            const aScore = (isLiveReadyFeed(a) ? 20 : 0) + (a?.verificationStatus === 'verified' ? 14 : 0) + (a?.resolvedVideoUrl ? 8 : 0) + (a?.videoUrl ? 3 : 0) + (a?.mediaType === 'video' ? 2 : 0) + (a?.mediaType === 'embed' ? 1 : 0);
-            const bScore = (isLiveReadyFeed(b) ? 20 : 0) + (b?.verificationStatus === 'verified' ? 14 : 0) + (b?.resolvedVideoUrl ? 8 : 0) + (b?.videoUrl ? 3 : 0) + (b?.mediaType === 'video' ? 2 : 0) + (b?.mediaType === 'embed' ? 1 : 0);
+            const aScore = (a.seed ? 100 : 0) + (isLiveReadyFeed(a) ? 20 : 0) + (a?.verificationStatus === 'verified' ? 14 : 0) + (a?.resolvedVideoUrl ? 8 : 0) + (a?.videoUrl ? 3 : 0) + (a?.mediaType === 'video' ? 2 : 0) + (a?.mediaType === 'embed' ? 1 : 0);
+            const bScore = (b.seed ? 100 : 0) + (isLiveReadyFeed(b) ? 20 : 0) + (b?.verificationStatus === 'verified' ? 14 : 0) + (b?.resolvedVideoUrl ? 8 : 0) + (b?.videoUrl ? 3 : 0) + (b?.mediaType === 'video' ? 2 : 0) + (b?.mediaType === 'embed' ? 1 : 0);
             return bScore - aScore;
         });
     if (filtered.length <= limit) return filtered;
@@ -83,11 +86,16 @@ function pickFeaturedFeeds(feeds, limit = MAX_DOCK_FEEDS) {
     const seenProviders = new Set();
 
     for (const feed of filtered) {
-        const provider = String(feed.provider || '').toLowerCase();
-        if (!provider || seenProviders.has(provider)) continue;
-        picked.push(feed);
-        seenProviders.add(provider);
-        if (picked.length >= Math.ceil(limit / 2)) break;
+        if (feed.seed) {
+            picked.push(feed);
+            if (picked.length >= limit) break;
+        } else {
+            const provider = String(feed.provider || '').toLowerCase();
+            if (!provider || seenProviders.has(provider)) continue;
+            picked.push(feed);
+            seenProviders.add(provider);
+            if (picked.length >= Math.ceil(limit / 2)) break;
+        }
     }
 
     for (const feed of filtered) {

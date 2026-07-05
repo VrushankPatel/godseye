@@ -1,567 +1,567 @@
 {
-  "generatedAt": "2026-06-06T00:43:37.991Z",
+  "generatedAt": "2026-07-05T08:27:35.874Z",
   "sourceCount": 8,
   "itemCount": 80,
   "items": [
     {
-      "id": "Google News Energy-39-US strikes Iranian radar sites a",
-      "source": "South China Morning Post",
-      "title": "US strikes Iranian radar sites after drone shootdown in Strait of Hormuz - South China Morning Post",
-      "link": "https://news.google.com/rss/articles/CBMixAFBVV95cUxOTjRTYVVFdXJ6MTJQYll0U1ppYVZmVHVrY2xOVE4xXzhEUTFrenNub0NyaElyS3MxXzZEbGlySWJVQ3ZmczN6T0ozXzNiVGVZTTcwZ01sbTRKRi1GMVZRZGJaLWhWT2VZUEtrQllQcXloY2tzWkhxUG1qeDE4NG1rRjVBV0U2d25tVmhrYXp1SjVEZnpybmRXVHhwTndDb0tjOTFfUHg1cjVrU3RwYTcwaGRsRnhiUW0xM253UVYzUUtrcHkw0gHEAUFVX3lxTE8zY01MWGR0ZFZqZ3JLRzM4M2pjeE1ReC1NVEczVk9iYl9OT0hpMjR5S3hueWNyZkQ1bS1UV0xvajI0MWtkcTlYNVJGRUJkbE5XQ2MxekdTaHliNWxBZzdKcC1RQy1RZXI3UExyVXQ3cENvbXFCWjV1MFpVLU9BenVhVXNYRlZaZFFzMU8wcDlsMTM4TUwtWXMzamo0Njl4ZXNVNmx4ZEdaOG5HdUpKcFRrYjllYXBrS3prU0VUUGRmRkxmRFk?oc=5",
-      "publishedAt": 1780706362000
-    },
-    {
-      "id": "Google News Military-88-US military says it shot down Ir",
-      "source": "Standard Democrat",
-      "title": "US military says it shot down Iranian drones launched toward Strait of Hormuz - Standard Democrat",
-      "link": "https://news.google.com/rss/articles/CBMixgFBVV95cUxPU2pXTEN1QUhpQlBEQ0dhWWh5R0U4bDFRWV9qUEZ3YjNLdEFTUjlScmdNb1FHSTBrUDc5cUJVcVRIRVJuazJXR0djdGpSQ0IxYTBDSzMyZ3NuUFdrbzk0VGxELTFjcEtMM201Uzdoa3FRMnFCT3U5VVRkZXN4YjIwRjAyOW5MYUl3bmpEdTRpelpvYjhHS3RENFhXV3pqQ2EtUzZvTkdUZE1wOWh2cmMyRENlS0xxN2ZRT0FxUTdaa0NBSVVoTUE?oc=5",
-      "publishedAt": 1780706027000
-    },
-    {
-      "id": "Google News Military-62-EU Mulls Excluding Military-Age ",
-      "source": "Eurasia Review",
-      "title": "EU Mulls Excluding Military-Age Ukrainian Men From Protection Scheme - Eurasia Review",
-      "link": "https://news.google.com/rss/articles/CBMirAFBVV95cUxNUU40TkZMRDRWUy1SLUpzRElremhkWEpiRlF6MXp0cGtQZU1RR2puQnA2d01ZdGFaWDV4aGN1NTkzV053RlNydkdQS0t2VmxjM3JIbnFFOWZJZHJTX05hZFlsUFN4ZlV5NjhVbW90R1oycWh6bXVpbV9lM2g1dDQxXzM4aUloSnBMZm9mNG1ibmJGdFlVc2tWa1ZNLUs1QlZkU25Ec2lta0gzeElw?oc=5",
-      "publishedAt": 1780705699000
-    },
-    {
-      "id": "Google News Military-49-Press Release: Rep. Jill Tokuda ",
-      "source": "Quiver Quantitative",
-      "title": "Press Release: Rep. Jill Tokuda Advances Key Provisions in Defense Policy Bill While Protecting Hawaiʻi Lands - Quiver Quantitative",
-      "link": "https://news.google.com/rss/articles/CBMi4wFBVV95cUxNS05QV1JxZnhiT2h1dDR3eVMyVlRYclNxaVhJcG1EVHhLcFVsb19jOTlwbXl5MmZJaF9qYnQtZHBrbU9UM09rZ1ZPOXdndXE2aTZhRFZkVTgxYUFYYzVnWHR5bEpLZExqRWlXcUpfcHVHY2RsMzk4SkpocmJ6czgxVHdwbHh2X2xoUUxIUlFWYVpfS2RKS1R4UkRqVXg5bndTZXJ4Nl9pYUtaQ2Vvb1hVSnlzX1pXVmFobWh3Tzd2UktOb2ZPcnlxT2lRT0xLV003UWtRTjNMNmRMSXpyRG9hdnMwMA?oc=5",
-      "publishedAt": 1780705200000
-    },
-    {
-      "id": "Google News Military-20-U.S. military shoots down Irania",
-      "source": "Pittsburgh Post-Gazette",
-      "title": "U.S. military shoots down Iranian drones launched toward Strait of Hormuz - Pittsburgh Post-Gazette",
-      "link": "https://news.google.com/rss/articles/CBMisgFBVV95cUxNajh5eVRtT3A5Y1lzVGxCeE91eXJCVUFpVXRpeHF5UjVsV05CMXY4VEI1b3pXSS1pcmxJdUpVVmNmd0wzUEVZZ0RVb1dUdm9mV3NTQlF1RGo5VW1aYkZJV0tWN3VmbkRBaE9yVUNXN1J6alJjdGZ6ZmpLeU1BMlpYVTBJcU5OV3VOUVpKZlNBWEVTcV9pR3FEbkF5UG9xYmF1N3NpMTFlb09sWnY2ZXNPZ3pR?oc=5",
-      "publishedAt": 1780705079000
-    },
-    {
-      "id": "Google News Military-26-Sun, Food and Gratitude: JBER Ho",
-      "source": "Alaska's News Source",
-      "title": "Sun, Food and Gratitude: JBER Honors Military Families, Service members and vets during annual picni - Alaska's News Source",
-      "link": "https://news.google.com/rss/articles/CBMi2AFBVV95cUxNSGlNSUQtRmNsMHZ4Q0g2Z1BvaHJBZnViakZBTXJWNlJtSDdLN2l6c2hDRGdudktmbFlPeXBnY2gxWDd2ZGNGVDloWkNNMnFEeldiNjBYTWppc1JHaUtldWN4RW1DZ0xnYjA4X0lFTndlTmFzMW5RZVZZVVNFNWIzVGt3bXdVdUQwUEJCbTdrOFNadEk3ODhtR21RWVN2VG5nZE5OdW1ZOTZhNldlSlJtYUtvT1J6SnZoUEloMC1CYmxIMFc5Uk5SS1RacXV3SV90cGdVajlZbVQ?oc=5",
-      "publishedAt": 1780704720000
-    },
-    {
-      "id": "Google News Military-72-49ers coordinator couldn’t hide ",
-      "source": "49ers Webzone",
-      "title": "49ers coordinator couldn’t hide excitement after defense picks off Brock Purdy - 49ers Webzone",
-      "link": "https://news.google.com/rss/articles/CBMilAFBVV95cUxOWWVkaTJDNGtTVEZWcDVSVGYzdkdvZmxmcV9iVzlJZm11ZGk1QlhlTUxwTS1vWllwWE81eTBGREgwX3JrRTkwTk1wRkk4QU55eU5QOHNTRWYyemM4LXJXRHBQVUw4NVRlMVdpbVpITFB5dzdGSnQzeW42anR0WjV1NGE1M29CbjR4amNmN19JaU5NOUc0?oc=5",
-      "publishedAt": 1780704541000
-    },
-    {
-      "id": "Google News Energy-59-US strikes Iranian radar sites n",
-      "source": "The New Arab",
-      "title": "US strikes Iranian radar sites near Strait of Hormuz - The New Arab",
-      "link": "https://news.google.com/rss/articles/CBMihAFBVV95cUxQNFRNOWFULVVrVTNvTHF3bFcxVzR5UzNIc2ZoY1o1ai1iQW0wX2FJQ3pxMTd6M0I2SzVqWXdhZHRpM1paY2xCRVNqbU9RMGUyMnNLWURKLWx5QWZvRm53cHM3ZFhRNnpGSFZ5ZjVkUTg5UTJsSXhYT0sxRkI2ZWJpOTAtZEjSAYoBQVVfeXFMTldfRS04UUp6eFNiNU44TGhBRWlhdHQyTmVEMEdWMENtTy1ZZ2ZZaXdNcVBsUF94cjBKck9oUHJRWE9yX21WX3UtNC14SzRpWUNaUFdlRVVBVlJ2T3p1VThfTkh2LWRWc0JPOUFrc0UzMjdOWGs5ZFVnS055VFFLNlZmMWl1UGlZeXF3?oc=5",
-      "publishedAt": 1780704386000
-    },
-    {
-      "id": "Google News Energy-37-US Shoots Down Iranian Drones, S",
-      "source": "NDTV",
-      "title": "US Shoots Down Iranian Drones, Strikes Radar Sites In Latest Escalation - NDTV",
-      "link": "https://news.google.com/rss/articles/CBMiuwFBVV95cUxPZ3NFdmZvMG9hRGFvb0NWYWdXOUZVc28xcUhmWGxXNU4zY3hhdExPaGVoSEJvWUJCS2QxQ1JiZk1aVjFWdFBLVEgzbXVwMzBKM1ZWczNxMjNUWTlzRFJEa3JaemNWMG9SU3FxQWIycE8xX2lxOUhTSlY5NWUtU0lhWDhmYTg1NjJnYmRDZ2VIODI1cFV3WUlaWWdaVHVBOGNjWXVNWFFJSmVkS3pnMW5UTURIRTI1Y0JIUVBz0gHDAUFVX3lxTE9LcWFNVk81WHFjQ2Z2TkJXYTZCZlZnZEdCOUJpbUx6LTF2aXQzSXB3LTBIME12VnNRNXhWUS1JZ1ktNUY0cFA2dlEzMHFxbE52V2pPRmRsdkhHeWx2TlZTaEtZMmNIRTV4amtsOXJSbEJMaUxYeUFKUUhNd3FtR2VRdmNUTlRYTGhZeGdVRGs0UXhiNzdwTkNzOWE3SWwtS0Y2eDl0V1I0U3NLeVZSLVZQSm8xQ1FZLTdGUXhQYnEzdk5xMA?oc=5",
-      "publishedAt": 1780704310000
-    },
-    {
-      "id": "Google News Military-94-Japan Eases Rules On Weapons Exp",
-      "source": "Eurasia Review",
-      "title": "Japan Eases Rules On Weapons Exports - Eurasia Review",
-      "link": "https://news.google.com/rss/articles/CBMiggFBVV95cUxOOVk4VVZsaE5IRnpqNjV3bGtlUmZTWnlNUkhEREwtZGVGbFFXODlEVWRSMUt4d3Q1TC1OcElpSC0xWnBOaFpHUXRzU3hjdnUxTWQ1V3kwYXI2Vktmbmp6V0s1SENIbldzeVBhZVlfblVvTFFERk1aQTFtWWRnZWpVVC13?oc=5",
-      "publishedAt": 1780704271000
-    },
-    {
-      "id": "Google News Military-46-CeeDee Lamb makes bold statement",
-      "source": "Cowboys Wire",
-      "title": "CeeDee Lamb makes bold statement about Cowboys' new look defense - Cowboys Wire",
-      "link": "https://news.google.com/rss/articles/CBMi_AFBVV95cUxQZEFzbE9wOTlQVU5IMTNxUWF4QlNFOHFReXlaalcxOFBHcTNRczA3X1JYWndNTy05azMxcmF0VTlqSjNtNEtSQzg3M2FPQ3NkUWhpMFgzWVZPNkF6UUs4VlplWkc3LUhwRVlQQ1hNN2pLd0hTRVBZVXFBRV9vYm9QWmJjTVdTRGRmTnV6aXB6UE45WW1mUFNiOW9nQWswVEQ0QUVjbnlqbGNNYWZRb2d1NzZMLUJydzdvM1liYkZHQ0JLN0FnZFRFd0J3SlhRYWt4T2RlUVZwUEJZVm9fMnRkSVc4dVNBVDlySWhuaFhyb1NYWUE2SnJlVmtyQnM?oc=5",
-      "publishedAt": 1780704120000
-    },
-    {
-      "id": "Google News Energy-78-US attacks Iranian coastal sites",
-      "source": "Reuters",
-      "title": "US attacks Iranian coastal sites after Iran launches drones in latest flare-up - Reuters",
-      "link": "https://news.google.com/rss/articles/CBMiyAFBVV95cUxOZ1o1RDBJVGVQai1scDRmSmlnaWxVZlZBaDZyZUswRHNMY0c1N25BM053RXdmWGV5aGJkalg3V0lpUnpVOEFpUWY5YTBCY0syV1dmejdaUVlJVXZkc0tNVTQ2RmlTVWlEUVlDYkZEYl9yQVZ1QWtLVzZYNl9RRTBzaENsNlBVMWJCYjJLd0ZtdGlpUTljLVBhV0JlVDFJRWJwdm9YQjhIZ3BqdHdua2Z6TFMzS0xXbHhuZTFuNC0yWDhHaUlWSFo2MQ?oc=5",
-      "publishedAt": 1780704120000
-    },
-    {
-      "id": "Google News Military-63-US military says it shot down Ir",
-      "source": "Caledonian Record",
-      "title": "US military says it shot down Iranian drones launched toward Strait of Hormuz - Caledonian Record",
-      "link": "https://news.google.com/rss/articles/CBMihAJBVV95cUxQMnBHZkdaeHpoWVhXOUV6SjVwaWJOSzloS21jc1VOV2RXdklCQTJaYW5qVk1HNmF3ZjRpVmhCWHpkVGNGU3NRM25YU2YzVThZLXdQNUc4SUFLQ1FtNzhiMDFwOWVqeDRlV2V0Q1k3Znp3TnpHbFVSRHREb3dzQVE0RDU2TkVnZG9rb2hCVnhhTEZmaUYxakhENkstb245MHp6aDlTVk5fMXhpWHAzYnpHQmRaTkJQWWVfbV9fMndFQzg5bjFYMjM5Z0JfSl9zR1NzZkxJdjF1dERUQS0wNmU4ZUVqUHdEenhzNXBDY2hYb3NLMXAtTzUyN3pLR3JIVVZfa3VEWg?oc=5",
-      "publishedAt": 1780704062000
-    },
-    {
-      "id": "Google News Military-65-US military says it shot down Ir",
-      "source": "The Killeen Daily Herald",
-      "title": "US military says it shot down Iranian drones launched toward Strait of Hormuz - The Killeen Daily Herald",
-      "link": "https://news.google.com/rss/articles/CBMi7wFBVV95cUxNWXlhYl9VaEF4V0VacjNTLUNFTmNHMWFHcDZ1bEZOcFhWQ0tzbDVEMmlkQ1hWSVZ2RDhkSVlnMVZQZENONmViRG5USGRtZTZMTms2eFB2THBIS3d1V1VBWHVkenkzdlRFeTc3M19lNk9sRHo3dUJWV2NpM1YzYWFiMG1oSnJ5VzRrUGJ6UkhDb25MbmJzaVVuRFVoXzFOc0RtRXJWLXRITWplQ0dIamVXYzNxenJ4dXdrZ0JBRlFSU0FtVjQ1UjlrYWNEMEw5TnYtaG1Sa3NxV0JwdDBqenpxZlNMWDJ5UG1pMjYzWWczRQ?oc=5",
-      "publishedAt": 1780704062000
-    },
-    {
-      "id": "Google News Military-79-US military says it shot down Ir",
-      "source": "Star Beacon",
-      "title": "US military says it shot down Iranian drones launched toward Strait of Hormuz - Star Beacon",
-      "link": "https://news.google.com/rss/articles/CBMi8wFBVV95cUxOU3NOZVd1LWZpN29Bbmp5aHQ0NkFnZ29nOEtKLTlKSXhMU2UwQlBBOW1FYjhDa2xhNFhqMmpMNDV1TmY2dktQbEpJajJIREFPZjkzb0xQN3lIelp4R2d4RzNtb08zMlI2RWR1aG93N01mZ1JXOFdqb0ItOU16cHc1LVdPaVF5M2dQRmR5cld1QXIxVVZxbHRVeEhwTllqNXF5MTlWclp1SnIxMUtVMzhmZ29CajFLd2xYVFlvd1hCQk9fRlo0dm9JZmJVTnVZZ190RmIzeGlieGhyV1dtM21nYmxrOFdDWDdDcVp6MlA0R2s4aHM?oc=5",
-      "publishedAt": 1780704062000
-    },
-    {
-      "id": "Google News Military-83-US military says it shot down Ir",
-      "source": "Idaho Press",
-      "title": "US military says it shot down Iranian drones launched toward Strait of Hormuz - Idaho Press",
-      "link": "https://news.google.com/rss/articles/CBMi-AFBVV95cUxOVEgzQ3pxS1NodGtUNVNOZEhhVVQwV2xvRFBnS3lJZjZKVndzTUsxQzVUTHJfb2FZenBrNDROeHJFeEVsaXZ0MklBSEtocUNjc3oyaHlxOW9HclNOcTY5SURrN19EQW1uek96TXMyMy0tYnUtbklqSGtPQ1ZkNWxMX3Fua2lHYmRtazlRaS1lVkx3blExcW9qSzh1MnNFRzh0WHAyU0c5Mk44UU5BQjhwVUdFOFVPaExkMkRqQTVVdngxT002OGdaZk1VdDZ4X3FKaFVSN1ZHY2ZkT3J6SVNCWWoySkFRbFNQMmZaTzRlZU45Z1dvOGZySw?oc=5",
-      "publishedAt": 1780704062000
-    },
-    {
-      "id": "Google News Military-85-US military says it shot down Ir",
-      "source": "dailyrecordnews.com",
-      "title": "US military says it shot down Iranian drones launched toward Strait of Hormuz - dailyrecordnews.com",
-      "link": "https://news.google.com/rss/articles/CBMi_wFBVV95cUxQTEdfRGFhS2w5Zkx0VkNvaFYwVkVHOHFWNUxGeFIzTnktbC1DQ050UjdCUWZkTnpILWs5aFZUNkRCTmdHblNYVGJCX1ZaaTZseTBxUC12Y0xOZ3FrTkNncjdaX0k3UGpYeEtBUV9fVFUxVWdjWnNkZHdEUlJxRlhsOU12Y2x1ZTdicFM3LThTNXdpN3JseTVmamYzMGdLbjhDdE1Dc1hkdHB5WkhIbThsYUYxNGVXY2xzWUY2YlFScm5zTDRjNW94NkFtWlhndjcxT1pGM01hZnIzVFROdTRWM0hScnZzNzNQdnZ6Vjk0MEdEY3VKMVMxZzh0bjBBeGM?oc=5",
-      "publishedAt": 1780704062000
-    },
-    {
-      "id": "Google News Energy-72-US shoots down four Iranian dron",
-      "source": "The Independent",
-      "title": "US shoots down four Iranian drones bound for Strait of Hormuz - The Independent",
-      "link": "https://news.google.com/rss/articles/CBMirwFBVV95cUxOQWN1WG1MVnU4STRiUWRqMU5OeXM0LWJ2czZYelU3ZHNESGJlOUlaZmV4MGtqN2JPcjRVcmdySzZ0cUJLOVlDR1RJcWtFTF9YZC0tMi0wSmpKMGJmQ0hqS2JPVlJsZGd2YzBNQ2ljSVdLWmRDSlg1VVpWQnlnZ3hzY3FkQ2lBTlN3aE9JNzVFVkJJckk0aTJyLXdJSkhvSHlXbmFaMjd6bkgtYlpIUUVF?oc=5",
-      "publishedAt": 1780703880000
-    },
-    {
-      "id": "Google News Energy-67-Trump administration to auction ",
-      "source": "KSL News",
-      "title": "Trump administration to auction oil drilling rights in Alaska wildlife refuge - KSL News",
-      "link": "https://news.google.com/rss/articles/CBMitAFBVV95cUxQdEt0T21wWmxGNkFhYmVnSXhaVF9SOFo5OWlWSmdiNzhndGNoNEt3cC1nTy1RclF6b2djbFd0bFE5b3BWck91MDQzYWRtbld3OXl6Slh2ZmZhZVVKMktOcjd5RUs0V2E2YkRzZzE5V25OM21zaVZlTDEwc1MwT0o1NEtFTDFvNDlkZ0FmOUFyX2pCbndTc1kwZHRKX3d5OXlUY2RZMGxvOFFJNWRoZEF4NTZCMms?oc=5",
-      "publishedAt": 1780703716000
-    },
-    {
-      "id": "Google News Energy-91-Oil Inventories Hitting ‘Dangero",
-      "source": "Carscoops",
-      "title": "Oil Inventories Hitting ‘Dangerously Low Levels’ And You’re About To Pay The Price - Carscoops",
-      "link": "https://news.google.com/rss/articles/CBMidEFVX3lxTE1UYmFEMXdNQ2FiZnF1eGdkMGsxTVV1UC03MWczYmFTNFpoZmEyelZKUW9uVXU4Zk42cGlqSzZWZzFmRUk0QzNCbUd1QWRFWnNYeFdVSng3MkRJdzVhb0l5WFlydW9KU3Jxcm1yOHplMG1EMTNV?oc=5",
-      "publishedAt": 1780703447000
-    },
-    {
-      "id": "Google News Military-60-U.S. military says it shot down ",
-      "source": "Inquirer.com",
-      "title": "U.S. military says it shot down Iranian drones launched toward Strait of Hormuz - Inquirer.com",
-      "link": "https://news.google.com/rss/articles/CBMirgFBVV95cUxNU2V4VkNLMEdSTVNOdUIyYkVlMXI3MzJ5aWpsdUFEd2xlbGZ2amVHVkcxUXh5UWpMYVFmdU5hbmtvTlJFanBwLTNGbGNSamZyNzVJZWU0X0xXNkwzMGEyUmtiQld1eThjTTQ5VTRxVDZjR2VvaDBxd1BLblNVLTN2d1FjRGFDSi13MEhJRGRFdC1KTDNqeGF4Z0xTcWd3djE1QzFiTERkX1BQd01VZmc?oc=5",
-      "publishedAt": 1780703428000
-    },
-    {
-      "id": "Google News Military-23-Regional military-like training ",
-      "source": "Orange County Register",
-      "title": "Regional military-like training in SoCal urban settings proactive ahead of special events - Orange County Register",
-      "link": "https://news.google.com/rss/articles/CBMixwFBVV95cUxQYkNVWEZLTFlSeElTUGVGMW5PbllNVWN0NzB4cFVybmZpMEJwNmZUaXI1cnQtdEtMQzBmS05aenlWVW1RT3VjTkZCdkVCLS1mOXhJdDFOWVRFdkxGbVN0emsyOVFhX203LVg3dXJTOTNZc1BfM091SFV5ZC1TS1Y5WXRiUnhDMnZhMUZhUEQ0N0J2anoyalNRS3UxRzhnc0l2SEdCeGY0TnpiSy1CWFZhM3VTRGFYWmR2QlBWTzV5OEd4X0I3QVd3?oc=5",
-      "publishedAt": 1780703408000
-    },
-    {
-      "id": "Google News Energy-85-As Iran chokes Hormuz, Gulf stat",
-      "source": "Yahoo Finance",
-      "title": "As Iran chokes Hormuz, Gulf states race to lock in overseas renewables - Yahoo Finance",
-      "link": "https://news.google.com/rss/articles/CBMimwFBVV95cUxQeWxwZEUwV016YWVUZkZNOVB1NURMMDN2QWFCMzREN0FyY0wzZ1lQRGVhS0NyM216UkFBcGRBM0g4LThqc1VZTnJxX2tJRW9PaFp4dUs5aE9GS19VbHdhRlliU1RIdm53MUpXUmg3dktJZFI4RzlKT2VCUUpGdjdzYmNsQ05jSDJmMldfbXAxV1Mta0RnNVI0YnRSTQ?oc=5",
-      "publishedAt": 1780703400000
-    },
-    {
-      "id": "Google News Military-81-Students dispute self‑defense cl",
-      "source": "CBS News",
-      "title": "Students dispute self‑defense claim on Day 2 of Karmelo Anthony murder trial - CBS News",
-      "link": "https://news.google.com/rss/articles/CBMisgFBVV95cUxNMWc1VndyNHE1SGlRblpJNjFoTFQ3V3U0d09xOUl0TFREZVcwOG1WU280a1pKVUFsUDN3VEZVbjRRVWpOSFU2Rllrek5qVkVUNUt0dDh0UUNMN1hxTDdnSEdoYm9uRllNdlBXWi1uSWVZUlVfZmFmWHBGSW1kWHNSY0w4aHZabldnSDhYYU0tS21lVWVUSGRVclJiZEdxN1VhaGJDNTVrQ3JzX2FNSUZXMEh3?oc=5",
-      "publishedAt": 1780703390000
-    },
-    {
-      "id": "Google News Energy-61-See the 486-foot tall oil rig lo",
-      "source": "Pensacola News Journal",
-      "title": "See the 486-foot tall oil rig looming over Port of Pensacola - Pensacola News Journal",
-      "link": "https://news.google.com/rss/articles/CBMiwgFBVV95cUxOMGR6S25vb0luZ3YzWUJZeUxRQnpRTlhJdVpKVE9wVXk5elpTNno0SG9DOVhxV1lJUGczOWFfdlB5WHc4OHlFNFREVFJNQ0dLSXRjNDJnQ3VxTlIzZTlrTFN2TzlfOXQwVmMxcHhrdW5MUXMwOGhpUTM3eGhxbENPQ1ZXS0hHX0xvM3NtcHRYaVBmbjJZNHB0REt0Uy00ZUFPNzRmQVpJZ0RveDNPZTI1OFQ3RkdoTVpOQ3l5VkwyVFNidw?oc=5",
-      "publishedAt": 1780703340000
-    },
-    {
-      "id": "Google News World-0-US military says it struck Irani",
-      "source": "BBC",
-      "title": "US military says it struck Iranian drones and radar sites - BBC",
-      "link": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE9NcGpqajQxUkRMcHZWNWNOb2dWS0FRRHIzUEo4RlRub0RKRmtHbV9wMWZjbjVacmRVd1BmeW5CUTg5aEw0ZHpoeGJPRnpKeDJQZjBueFRPNDZUUQ?oc=5",
-      "publishedAt": 1780703338000
-    },
-    {
-      "id": "Google News Energy-6-Major oil firms skip Trump’s auc",
-      "source": "The Washington Post",
-      "title": "Major oil firms skip Trump’s auction of Arctic wildlife refuge drilling leases - The Washington Post",
-      "link": "https://news.google.com/rss/articles/CBMiywFBVV95cUxOakFrUHJXd3RuWi0yQUtHdjE1emhtdVpDTklGR1VCQnhveGR6MGo3T3k0YTktc3lTZjJwMjhUZmYxNFRwN19Zd2l2OTk3UW5BUkhpcFZ1bXdybWhhSnF6U1BQX2hCV0RPRkM4TzZpTkYycndHVDBSdmRKbXE1cnA5bmJYanpDc05qam03X2pLNm1UYzRMWEwyX2pOOEh2dmRsNnY3SjVwdU9SNzJlRFZxNDlhSkwxdTRnY01FZXJheGROWC1MdEdmbXdfVQ?oc=5",
-      "publishedAt": 1780703142000
-    },
-    {
-      "id": "Google News Energy-7-Controversial oil lease sale in ",
-      "source": "Alaska Beacon",
-      "title": "Controversial oil lease sale in Alaska wildlife refuge draws limited interest - Alaska Beacon",
-      "link": "https://news.google.com/rss/articles/CBMitAFBVV95cUxOTzVkZW03S2p4ZUpXVGI1b2RHallvaUtRY2JJSVozTENuMVdsQ2hFcGZUS0s4X0dmWlNCTjZwZUptdjV1aUlvZUMyb29LalBVQUdTbGJ2QXNHaUxEODNaXzZoVWpfOWNIUnV5SFBTckdaVzNHczlQQ0pOSXhkR24taFpxNGpnSDFOMnhfTEtJVExfeG92b3h3cmpSSTl1elNPSjZ1UFNRRHFhNEZqN2VjQ2NvWDA?oc=5",
-      "publishedAt": 1780703073000
-    },
-    {
-      "id": "Google News Energy-90-US shoots down Iranian drones ne",
-      "source": "Crypto Briefing",
-      "title": "US shoots down Iranian drones near Strait of Hormuz after Trump remarks - Crypto Briefing",
-      "link": "https://news.google.com/rss/articles/CBMioAFBVV95cUxNU3ZvWjBtdlRuRnZENkVhSVAyZGpvSHRvZTVTLWFrdFk1bzFaNUxjUHhxRFAxOTlPbFRpSE1vdkN0TzhUSGo4TG9vTVJvQXFuWVZPRzVfTmFIdTB4aHF6TzRDWnl1NVoyN3FMbU9Zc2IybFBkaEZvQ0ZxaFVqTV85T29LclVmQkRoTDhZRjY4SmtSSVdHOW1OQW5SRnUwSlJr?oc=5",
-      "publishedAt": 1780703025000
-    },
-    {
-      "id": "Google News Energy-65-US downs Iranian drones headed t",
-      "source": "Washington Examiner",
-      "title": "US downs Iranian drones headed toward Strait of Hormuz - Washington Examiner",
-      "link": "https://news.google.com/rss/articles/CBMimwFBVV95cUxPSUJQQ3Atc24tQ1UzUEtpYVk4YnYtMHNiMm9sM2dNb3c4cVVMcHJETXEtTEhNdnhVYVJxUDJ2OXRiLTU5S1FFNnNOeUctNDloTDFPSHpabVpWY08zelpHMkdKME1CTjgyZVYyUXZ2dEQ4Ym1zMnJXQkY3cmJFY3VrWlE1ZEFMajN2SzNJMGxNbmFiTXNuemo1djRvNA?oc=5",
-      "publishedAt": 1780702860000
-    },
-    {
-      "id": "Google News Energy-95-Trump Administration officials j",
-      "source": "News Channel 3-12",
-      "title": "Trump Administration officials join Sable Offshore to celebrate forced restart of local oil production - News Channel 3-12",
-      "link": "https://news.google.com/rss/articles/CBMi8AFBVV95cUxOZ0NPZVB2SDZaTWR4aEh5Y2FTN01mN0RRNVdGY21wSWFjbXRnOXkzVEwtWDRnQkJValdmcmJUUDhUZmphdnVEYnZDUDFnbm5pNl9YN3hMMjhoMmlfQ1p3cDFVRUk5YndJM3ZVMUJnZFI4a3pla3I3cGdwTEpTZ0NrVDVTa3VrSnozYVFvOVdMSWQzQmw0WExySzh1N0IwaHd4TTFmd282cjNtNThfZlBxajBTOTRqSEdGZEs5Wmc1XzdpczZLdUoxRWx5V0owQzduOU5NbVItNDdwQW5xTThpTUlsYy1COEhlem1mSmZOSGY?oc=5",
-      "publishedAt": 1780702713000
-    },
-    {
-      "id": "Google News Military-92-Tense testimony from students ch",
-      "source": "Yahoo",
-      "title": "Tense testimony from students challenges self‑defense claim in Karmelo Anthony murder trial - Yahoo",
-      "link": "https://news.google.com/rss/articles/CBMikwFBVV95cUxQTWxPek9TaElYbkpyQ0pDM0JKc1VKcjRlN2hhdkdDN0JUSXRBVDBQWnJjbFhiQlFEWHU5TVUtS1AxVi15Rzh5dm1pVE54MkljaVRkMDhkZU9xQWZjTHUxbjlYZFM0YjF3akc5XzVvOWI3QzN4dnFsQVBDZDBhOVh3SExIVTJ5SFpzRWxfNkpSeEtud1U?oc=5",
-      "publishedAt": 1780702500000
-    },
-    {
-      "id": "Google News Military-32-Freedom250 Reflective Moments of",
-      "source": "MilitaryNews.com",
-      "title": "Freedom250 Reflective Moments of America's Military Week 23 - MilitaryNews.com",
-      "link": "https://news.google.com/rss/articles/CBMi6AFBVV95cUxPdUg1bEVDY0VhekV5dks2eFRPdTlDc0VFY0xvTGo5d0tEQWJwTDJNWklKNzVTa2VFakhjVlhraHkyeVZaN091Z2pGRWV5a1lZQ3hMX1VaTmZQbFBYNGkyRjVIbC1JR3BReV9mcTBtYXJTTXFvSmRhOHByUGgtaTN2RUNJYXV4ZlZ0aFhqTDNrdzU5dUd1MjNiRWIxZ2ZaRGxhT01XcHRyU2haZW1zXzVYdW90c0lrdkZFX2RodzgtenhUeUcxenNOVERGOWg5UThZYzZMMlk2MVpQcjdtX2J1UGZWcGdDa3JX?oc=5",
-      "publishedAt": 1780702216000
-    },
-    {
-      "id": "Google News Military-71-US military says it shot down Ir",
-      "source": "Ottumwa Courier",
-      "title": "US military says it shot down Iranian drones launched toward Strait of Hormuz - Ottumwa Courier",
-      "link": "https://news.google.com/rss/articles/CBMiiAJBVV95cUxNWndFZENwdWlLek92bVpLT292eVNjbkZ4TTNFWnBIekl2UnJpU1BGZDZUMXNtWEVUUDRIV3BXSUx5enRZWUZqQUg1dVp0ZktqV1pWNzRVTVo4dVNfcjk1cTlOa0JIbnl3VC1DTGJ4LWRkOHplSDZjSlRJNEVUVG9EcGhZVmFlMjR4VUVYaFh2UGdvaW93TFdFbHdPLU0zbU9JZEhza3FpUU0xbTV6RGZmeTlDVnFwOWptcFpYOXJOUU5selU2WUV4dVZTUndFaThGOVBGU2hYdjBQTE5HT1duRzhmNy15bVFCeHZGMmRBdklzYThKSW9mSWVuS0FXZWd4WmdQVW0wWGg?oc=5",
-      "publishedAt": 1780701858000
-    },
-    {
-      "id": "Google News Energy-35-US forces intercept drones launc",
-      "source": "Anadolu Ajansı",
-      "title": "US forces intercept drones launched by Iran toward Strait of Hormuz: CENTCOM - Anadolu Ajansı",
-      "link": "https://news.google.com/rss/articles/CBMixgFBVV95cUxOdXU5X1NQSkxfUWI2SEFEb3ZCZkJNYWV5V19LaWJrcUUyQUpYa1l2YTdVbE5UR3FlalZYbFV0cnFRRmdsRHNHaDJ4QTBDaEpjdFltZGh5R0lsTVU0c0lweXZ6dGtlN1p4WTBnbFlVRXdqU0dSRkQ5Vl83QlpqWF95UGJJRU1BYVBwQUMxd2ZqaVNlMzAxemxfbWZ6enhmeEhnWEY1aFU0Wk9wdUQyNVNpaHl1WXFBTkZRTjd6ejIxR2N1LVN2UkE?oc=5",
-      "publishedAt": 1780701603000
-    },
-    {
-      "id": "Google News Energy-10-Iran Fired Attack Drones Toward ",
-      "source": "The New York Times",
-      "title": "Iran Fired Attack Drones Toward Strait of Hormuz, U.S. Official Says - The New York Times",
-      "link": "https://news.google.com/rss/articles/CBMigwFBVV95cUxPMElJNTFWUFhqeEdWLUtxSEdMOS05ZjFhbVlFTlNYd2dGTFhma0xGREdJSnBuR1pFenB3UU05OHRValFIb1BLMW4zeElXeE1jRVZtS3ZRWlpZYkRXZElmS0dGMHltYnlKNURHVWVzWF9UYXJzeFByM3VTQlVSMnc4THV1VQ?oc=5",
-      "publishedAt": 1780701519000
-    },
-    {
-      "id": "Google News Military-93-US military shot down Iranian dr",
-      "source": "KSAT",
-      "title": "US military shot down Iranian drones launched toward Strait of Hormuz - KSAT",
-      "link": "https://news.google.com/rss/articles/CBMitgFBVV95cUxPODU1angwODc3M0F1bUdJdWozV2FycFdPb0R5MmVaZzlobFdrTVlGZ2Y5OFlaUW9aa2JtdDlJclBxMW1RTTg1UmVqUkFMaDhkb2VkYkQyNUJ0V2VBTXJnbzJpdTZDdXdGLTZxblBnYkdHQjVjRzVqVWcxOVpvamx4REJPdFJHUUNHQ0k2RzFqYjdHcUlhRW00QVliWG9GaVQxaEowemx3aUZCc2Q4MWtTY09tOE1sdw?oc=5",
-      "publishedAt": 1780701460000
-    },
-    {
-      "id": "Google News Energy-52-US military shot down Iranian dr",
-      "source": "WPXI",
-      "title": "US military shot down Iranian drones launched toward Strait of Hormuz - WPXI",
-      "link": "https://news.google.com/rss/articles/CBMixAFBVV95cUxQdXdUVUU3NkFtYlpVXzZFU2dnR2tOemxfdHZXTWxQZng1YmZVbmhxN25sMzZEblF6dDM1endkeUIxQ3JaVFVLUGgyM0xkOFUwOThGOHBrdXVnSmhfRHBNN2JPcG9Ibm5XSHZTTEdmdEd3SWNCWnNzQWlRbzRUN2FkOG9GVGd1aWx0R2pkMkVLeVVtUGJRcVRSbzBsMjFOMzhrdXJ5NlYwRkN6eFN6M3E5QUtRYVFrQzlYXzV0WmZOY3lSNTcw0gHYAUFVX3lxTE8zV1lwOXo1RjNqemhjM2k3TG1Ba1ViUGdKcFFxa2xPUHd5RWZwRGk4aWtVem5LQkhNSEYzanhzaW9XNjhhMUpSMDg1WjlSR29YdEpvMlJYdmR2NkpOZzJuNkx3R3ZxcHJ2czVCUjVDYmx2bWVZQXdwV0xIVjZkYXJ0UDZNTVc0andkOFo5ZXh3TFBxbm13dG8wRUJwdnQ5MU85Qkg2cERMaDRfRHRDUFJpeUZ0ZnNXTEdnSjVubW9DdEdnbGZUaUJYZGlYdHBEMUZQTlVROWU3SA?oc=5",
-      "publishedAt": 1780701429000
-    },
-    {
-      "id": "Google News Energy-46-US shoots down Iranian drones la",
-      "source": "New York Post",
-      "title": "US shoots down Iranian drones launched toward Strait of Hormuz after Trump said 'we're straightening out a little unfinished business' - New York Post",
-      "link": "https://news.google.com/rss/articles/CBMi_wFBVV95cUxNV0RTVktOUDdPOHZCREZFUDNqUTBSbWt2REoySkU5akZoVHJzSm5IUl84TlRwRElTZk5uN3Q1Q0pIZzNCWDUxSlAybU1tN0hNVlIzaV84QWxWenMzdlV2ck9YbnRFR2Fiek05RXBnZ2FmQnJ4SnpoSURwQU1OQkhFZEpSaUJuTFJESjNaYjBFUHNIaEJBLTdrOXQ5UmY2SVVJWE5FTGFnOGktSXowZjZfNTFRaE8xVElnZFpRU2xrXzg2bHdpYlN4M2JmNUlXenFybGtDMDM1bmlxOUdnNWVvVnBtZ0dDdlJqemhuQ282YkVSUTduNHlWcm0tX2lQZWs?oc=5",
-      "publishedAt": 1780701420000
-    },
-    {
-      "id": "Google News Military-87-Ukraine could have won in 2022, ",
-      "source": "Euromaidan Press",
-      "title": "Ukraine could have won in 2022, NATO’s former military chief admits - Euromaidan Press",
-      "link": "https://news.google.com/rss/articles/CBMiqAFBVV95cUxPMVFxdU13QndXX0EwRHZxckRUenMzV0lGdXhEak1QNmhSNFowZHVBM190bnpJSHl2ZUhjZUVzR21pRHp3SGRhaDNYbEFaOENDY2xWWFZINmNfaTZQUW5DQmJOcVU5cnJjTzhhZVdzN3I5RzQ1V0JjV0l2RmFydTJuQlZYdUVta1BHVGhLdnJ0UEg3LVBXV0VRTUZ0WHVYMnNXNUo4TlN5aDc?oc=5",
-      "publishedAt": 1780701143000
-    },
-    {
-      "id": "Google News Military-59-US military strikes Iranian rada",
-      "source": "The Times of Israel",
-      "title": "US military strikes Iranian radar sites after drones launched toward Strait of Hormuz - The Times of Israel",
-      "link": "https://news.google.com/rss/articles/CBMiywFBVV95cUxQVVdTTjVuM2hFNnprUFlBeWNFY0kwYjJwTmNzdDVPUS1TM3J5RUQtWm1pc1FZQU1BSHdONnJnZVoxNFQ4eWdSSmlnTnI2M2JFQjRhWVJpTURSemRTS0VNbUpYMG1Hc0V5WnBJYkRoTzl3QVZwRkhhTlY1UnAyU0hQTFYxT2ZRb0pOcEs3Slh4UldpaHpoWmF3aXVXRHJuX0hBRjFlVnpsVGVlNVNSXzQ5R1ZkX1M4aUc4Q2JyMktyYlZkR2lucDZoQkluZw?oc=5",
-      "publishedAt": 1780701120000
-    },
-    {
-      "id": "Google News Military-44-Kratos Contract Wins Signal Shif",
-      "source": "Yahoo Finance",
-      "title": "Kratos Contract Wins Signal Shift Toward Broader Global Defense Role - Yahoo Finance",
-      "link": "https://news.google.com/rss/articles/CBMinwFBVV95cUxPTWtKUldMb3N1RXZ0aExqbG5ta3ZzLXFrNXdXcXNmZ3FYTVlQNUVLbjZqSFFfOUQzWWZVM09PQUZRUTFYQ2hUSllrY1RkZ18yb2xXWHhhWmZNTGZWZmxJM0xCVVdlTVN4cjZrT0pmZDM0T0tmNnlkd2pjMGV6ZkRHZ0pmZ3FLN29UYVdsZVE0LWJHMG9GM3RxdTdPbTBwMk0?oc=5",
-      "publishedAt": 1780701080000
-    },
-    {
-      "id": "Google News Military-61-US military shot down Iranian dr",
-      "source": "AP News",
-      "title": "US military shot down Iranian drones launched toward Strait of Hormuz - AP News",
-      "link": "https://news.google.com/rss/articles/CBMiigFBVV95cUxPY1h5Qk1UNmoyeVpUMGJlLVlteWk0TTlqd1pCSHNGX1h5Q1c2aW9PZ3NaY1BNM1NHdWs5bUFHRHdkX0ZPallOVFRMNmVBSkFMM1prWW9mUHVKSmpZa3MxSWZBQkh3aFNqNWpCRERmYzBUREN3MzVUcUgzRFpxNVdaX0pkMC1SazlvX2c?oc=5",
-      "publishedAt": 1780700760000
-    },
-    {
-      "id": "Google News Military-73-49ers defense ranks among NFL’s ",
-      "source": "49ers Webzone",
-      "title": "49ers defense ranks among NFL’s least expensive units in 2026 - 49ers Webzone",
-      "link": "https://news.google.com/rss/articles/CBMiiAFBVV95cUxOUFZncTZUbUNJQnBjMFE1bHFFclV0Z1lyR1Z3SmdPOWU0WVVxN3M3M3ptdkN4ZjdISEtlaEtvMzRyTVRxNENFOFdGb0hKZ3FCSnFCMVZCSEN2RG9hNktQQXg1SDlkeml0OWlfSmhZSzU1d01KTzdnMG9GSUtIdm0xMmxva3VwcW5x?oc=5",
-      "publishedAt": 1780700760000
-    },
-    {
-      "id": "Google News Energy-81-US military shot down Iranian dr",
-      "source": "The Seattle Times",
-      "title": "US military shot down Iranian drones launched toward Strait of Hormuz - The Seattle Times",
-      "link": "https://news.google.com/rss/articles/CBMiuwFBVV95cUxNQW1EWkJmRnNlOFBEX21kZHVFZkw0cFB6XzRiOFloaGNzR0ZLVVgyaUNvOGlyMk51NTlGWi13MktYM3lIYnkyVDM4dnI3Z1BTNEQ4WjN2bkRBem5EdGdMUWVWdVgxVUNhNUtfdGQ1OGozYWpxWWJtYks4TG1RUm1FcGJvQnF0MF8xeWRLbHNHUXRMUU9OSFJJLUpYTTVRMzJUTjRfSEV6a0xqQnZROVpxQ2c5enk5cjZlV2k0?oc=5",
-      "publishedAt": 1780700647000
-    },
-    {
-      "id": "Google News Military-58-US military shot down Iranian dr",
-      "source": "WOWK 13 News",
-      "title": "US military shot down Iranian drones launched toward Strait of Hormuz - WOWK 13 News",
-      "link": "https://news.google.com/rss/articles/CBMisAFBVV95cUxQcmpkcExFZUd5blVxWVh2bEo1cXExMkRLc0E2YVBaUklXckJUeW5pY1JZaXNmS3VZcS1UNXdjalhoRVZsYWFxTFZXNHRjSnUwZnZUN3RvN2MxdWZGVEJ0MlY4WmdGTXQ1b09fbE1HSENqcTB4aC0tQTluVzZRelk1UTBvRmhFcWJCQzZxeG95YjZpc29Nc1U3MWpvYUhja1lIcnlsVTJTSGtWbEhtZlhyOdIBtgFBVV95cUxNMkVJdXlmbEo4Ynd1aGhPalNjY2FTeWZlNnFVdEk2bjQ0eWZrVHhGbU5VdWhTOXZRMC14amZ1ck0wS0JNLXN1S19CaU4wMURpNUNITno2VVZFYkFtQ2JLWm4tR3VrRUFUdERNNUFObGtzb3BaZ2JjMHdHNm9qZGNqUXV3aVZzZUwwUHlmemtVWFBiN013eVlmenVzMmpadmFHUzA0bzg2VXU3dTRtdGEzaGtBSFU5Zw?oc=5",
-      "publishedAt": 1780700603000
-    },
-    {
-      "id": "Google News Military-69-US military shot down Iranian dr",
-      "source": "The Sun Chronicle",
-      "title": "US military shot down Iranian drones launched toward Strait of Hormuz - The Sun Chronicle",
-      "link": "https://news.google.com/rss/articles/CBMi_gFBVV95cUxNZjViVlIxUXMzN3VuQjNPMmI5cjZIakcwSE5CTXEyRnFIOFl0UVlzNkVIUFVtR1dlOXMxTHdiVVc4MnA0aUpzSTRSTUI5OXJrTzN2RlRZWFBtN0xhNWpkZi1hcTFscWJOMzlNU2ttZmNZellPTTZYUGxfU3NWLUNfMkpwVEdSSVVQeXRidFRGV1FJYTM4LU0xYVFoRXJPQi1STThZVE1BQVNjelhOdk1BX3M5b2xZbFRoMVdmY1ZtSGthVThhOUhSaDFlUHMxc3dfdm5aWXBOdm9SRDJZdVZEUlJlY1RuTS1UY2lhQ1JfNGZ4cFVVd3JYTGZjSE85dw?oc=5",
-      "publishedAt": 1780700603000
-    },
-    {
-      "id": "Google News Military-75-US military shot down Iranian dr",
-      "source": "Oskaloosa Herald",
-      "title": "US military shot down Iranian drones launched toward Strait of Hormuz - Oskaloosa Herald",
-      "link": "https://news.google.com/rss/articles/CBMi9wFBVV95cUxQT1ZjVGhHMXoyVGRPaG4zVnpwM2dVbG1nU3VYUUJtaU83dDQtekt6Q0RTZ1BoM3VhdElOLW4wM2JtZVdYU1RUMVhicmw3NXdrYWRaNTRaSmp5MnhUOHd3a1F2ZTVTT1ZSZFk0Ynh1cGE5dHYtaGhEQWRJNzVYbngtOFFFR2YzZWNVdXBsSHZOOXpiUlFOd0x5dWJJemdqSG9BTkJYZFRwaTJjWURqS2drcDFaSFo2UHc5aHhxTDh3S290WGlZcUlNeWNBc1hLdU9ZZ2tILXhsUUxmazl5amxqcFdVWUdBZm0wWU9GX2ZKOVlOd09HMFVZ?oc=5",
-      "publishedAt": 1780700603000
-    },
-    {
-      "id": "Google News Military-54-US military says it shot down Ir",
-      "source": "ClickOnDetroit | WDIV Local 4",
-      "title": "US military says it shot down Iranian drones launched toward Strait of Hormuz - ClickOnDetroit | WDIV Local 4",
-      "link": "https://news.google.com/rss/articles/CBMiwAFBVV95cUxPX1dlaXd2dXJTdjNxNVNxRXlaTzFYWVZVWVU3WUJ3dkZCd1EwSG8xV0RfWjJIbURKNWpQSkJER3ZqM0lSR2owZkdvSVhyMHpLRTRRX053cDYxbVJZbDFVeDdERF9uWFdZMWw2ZHRQdGk5WmtEMS1VTXh0NEc5cGd1OXN3LVRlWmxhanFGc1d3Y1Q0UEFmSjNfMVJvaUxTVEd0alZ4UWNZcEE5elRKM2dsQURSNmU0RERoQXR2Qy1IZnk?oc=5",
-      "publishedAt": 1780700602000
-    },
-    {
-      "id": "Google News Military-68-US military says it shot down Ir",
-      "source": "MyNorthwest.com",
-      "title": "US military says it shot down Iranian drones launched toward Strait of Hormuz - MyNorthwest.com",
-      "link": "https://news.google.com/rss/articles/CBMiugFBVV95cUxQYUMwUGZXZkJVXzBHM1NRSmhkQVRLZDBsY0UyQ1g4bTNtc0NXWnc5anc5dlRFNHdMcjctekRUZW1jOUdWU3lNbUNta1NyVHNnbXhfd050bkV0ZjMxVHRpSkdQNGpJU1hLVzQ2d0hlbUgxbWgwampYV18zbXN5d3MwUmczUUwyRWw5N1BQMDRFd3QtbEJIUFRNcTBXai1qZ3gxV1RkNV9Yd1BlNmtQNGlzNzlHMjF5UE9QWmc?oc=5",
-      "publishedAt": 1780700602000
-    },
-    {
-      "id": "Google News Military-17-US military shoots down 4 Irania",
-      "source": "The Hill",
-      "title": "US military shoots down 4 Iranian drones heading toward Strait of Hormuz - The Hill",
-      "link": "https://news.google.com/rss/articles/CBMiigFBVV95cUxPYTBDX212Qkg3MTlkdFA4UzVuQVZtS0Zlbkg4TlRBbXlvQ1dfVFFjZnczRWV3YlA0ZHQ0cnVIYVdtZ1ZUUlpvM2hsZ0dNb25UTGd0RlRLNldRQnZTLUE0ZHRxa29PTXpBUWpMM1JOdU9qVkF4UlVCdkJVVEhFT09VQ3dyWWUzOWRsa2fSAY8BQVVfeXFMTndtdmxwaWZWR3Z3LTQ4ZVFQcUR4TGltTEZKTEtfUFoxdjI5bGZYMFBVajVra2d0NURFR2FjRzl1N29OLTVNa3QxWG54RU1qQ1JQMW5Xbm4zUE5IQ3lJNFZ2NE4yZG9nbmNrLTg3ckdjV1RoNUtjRldpSVI2SmNqMlBodEFPNl9IbkF0YVR5VHM?oc=5",
-      "publishedAt": 1780700460000
-    },
-    {
-      "id": "Google News Energy-77-Crude oil slides ahead of the we",
-      "source": "Seeking Alpha",
-      "title": "Crude oil slides ahead of the weekend as traders bet against renewed U.S.-Iran fighting - Seeking Alpha",
-      "link": "https://news.google.com/rss/articles/CBMiuwFBVV95cUxOSzd2R3lYRVBQd0pQX1k3NVBrMlVadVFwRGhGN2VqOXpKWlZmVmhObEZwUlNrUFlSU2sxNmdVd19ndVRZR09PdTI0RmpqbHFLbTIxLTJqanRJYUE3SGcyTUI2bVJQRzFvY3NRYnkxQ0tsTTlQdjV4eWtwcVdObTBDYUduNmgtVkI3dWgtYWNWTGlhMzVtVThSR0pweVNpRjVmbWQ1d3prUEFJQkhpS24yRFdaS0d0YVBJVjdn?oc=5",
-      "publishedAt": 1780700456000
-    },
-    {
-      "id": "Google News Military-57-US military says it shot down Ir",
-      "source": "Springfield News-Sun",
-      "title": "US military says it shot down Iranian drones launched toward Strait of Hormuz, then struck surveillance radar sites - Springfield News-Sun",
-      "link": "https://news.google.com/rss/articles/CBMilgJBVV95cUxOak5mcjdteDhJXzZLWEwtM19QVFRUSThFX2xyS1VfSWYzZDI3UFVVZEk3UjVCd20zRXRJZW5vMWcydXJrVmo3ZjFObENDWlV5aWxZbFd5Tzg1UjJraW5FeW04VnFRNW9MMk83VDRDTnoyLWpwZDdLdjNBXzVpSThWdkpLT2lhenFNTHUtVTV6YmpoYUZScXJNbVEwWjROMHdna2JlNkRQb1g3NC14NERfQnRSVFlNQnZRbXlQSkhHczJ2b0JqNGFYNldtVU9TVEkwVnN3WFRSd202c1BoX0dOaVpNdmZyVXBlWGR5UndpOEZYdHE3TWRMZ0hYTWIyeVlLLWVhc1lyQUplUnFOX3UtMGlfUzhSZw?oc=5",
-      "publishedAt": 1780700450000
-    },
-    {
-      "id": "Google News Military-55-US military says it shot down Ir",
-      "source": "10TV",
-      "title": "US military says it shot down Iranian drones launched toward Strait of Hormuz, then struck surveillance radar sites - 10TV",
-      "link": "https://news.google.com/rss/articles/CBMitwJBVV95cUxOUEh2WDA3Ml90em5KM2w3UVZsVHhQWjk5Vmt1cWFMQnNuRWdPbHBMNnhrSUtIakpxcmlxNno5M1lKYVBiaEZwcGRaMVNnS29SM1dWb1h3NHU2Y2tNQkpNWV9iRlZ6X1NZa0VkcnJnRGZhMzM0R01wdi1PeHhZUkZYZVRvaW9IRHlPcVlFaW1WZkIxbFMtQjlQMFBXUGVSRGNYYkpsLWJZd2JRLXpyRVRlLUVxbVM0aGFsRHFqdjYtQzA4WF9DYnlKUXl0bE5FUmRoZDdTMExZMFFCdXE2YkxrdHh1NmNPckczU0VlM3E0VE9PVzJ6Z0p5ai1tZEt6eHUxcE4yeDlXVUJETE1McWFEdGp5azFaU2lJSmxwNEpHV2h4N2QxWjVZNWowT1NFQ1pabHhMRUx3bw?oc=5",
-      "publishedAt": 1780700400000
-    },
-    {
-      "id": "Google News Energy-98-Letter: Teachers can show the yo",
-      "source": "LimaOhio.com",
-      "title": "Letter: Teachers can show the youth opportunities in oil, gas - LimaOhio.com",
-      "link": "https://news.google.com/rss/articles/CBMipwFBVV95cUxNU2JrUWlIczV6enhuWGlpT1RDaHpMZnVrUFlVcHB6M1FUZHlubE85MEdrcTBaUFBRUzVXMmtOM216Z0hUWDQ5LUhoaFRBZl9FN1ZCN0dqZ2h1Sm94WGRfdllGdW9fWkFSMlFlOVdxVXNZX1drcmRfTThYMExmdmJTdzFZXzFvQ2JmMGdTMHFJZTVkcmVFQ3lSUWdiMXNZUUUyQU9rdTRqTQ?oc=5",
-      "publishedAt": 1780700400000
-    },
-    {
-      "id": "Google News Military-11-Polish military leader arrives i",
-      "source": "WSFA",
-      "title": "Polish military leader arrives in Wiregrass for Fort Rucker visit - WSFA",
-      "link": "https://news.google.com/rss/articles/CBMilgFBVV95cUxPWXdyTVdYdEYyb3VZd3RPRFdnalh5RlhfZXZObXVlTmlYZzBxWTFsZl9JS1Z4aS10eVhiY3ViMFBOZl9VWUlQdTJhVkFBa0RYaXlmNDd3Y1RzM05CQ0NQaW1PcDFyQUIyczVJZ1QyX2RMWWtsSV9tU2xBV241SlF0U2x4TUxPczlSa3dydWU5bXg3VmxES3c?oc=5",
-      "publishedAt": 1780700340000
-    },
-    {
-      "id": "Google News Energy-42-Oil City News presents: VOICES w",
-      "source": "Oil City News",
-      "title": "Oil City News presents: VOICES w/ Stacy Nelson - Oil City News",
-      "link": "https://news.google.com/rss/articles/CBMimgFBVV95cUxNNkRkTDNGTy04TFg4c3NtSzNvWDJVa0JCZFh0bExUOEEtTEJHMDVSN2habEpDVGZNdkJKcGVOb2QtbFR2SFVtRUw5azZKd2hFZ0xTRlRCRjdraG1oTmljNEFlbm5DaHMtellkTjBuZWZBa3Y2STYyRXYwT0o4R2NmcW92S3hIaUttaEJILTJZcmJabFFoTEhUd0h3?oc=5",
-      "publishedAt": 1780700327000
-    },
-    {
-      "id": "Google News Energy-23-Oil companies continue to show l",
-      "source": "Anchorage Daily News",
-      "title": "Oil companies continue to show little interest in Arctic refuge drilling - Anchorage Daily News",
-      "link": "https://news.google.com/rss/articles/CBMixwFBVV95cUxOdkZpWlcyZVQ0SHZ4Z3duVWpJT0QxSlBxdjgxV1R0Z0g2dExJUWZRZC1zbDhBSFNrTDQtU0JVZkk2VnFKV18taVhfanFSQmFlSGVhdmhKakY1QXp6Nkw4ZkV0SEJEQW8tNzU4QmNvVUVZRVlIbXNoeGZZVFRZZkdiTFhhNGZXSk5paDFrQ2hkN3pXb1JSNWxTdGYxbG5IWU5qTUMySFk1NEdBRnFTaWZmV1pFaENRYUgzaFMzMTM0N1JMYzVDZko4?oc=5",
-      "publishedAt": 1780699694000
-    },
-    {
-      "id": "Google News Energy-64-The world will have to adapt to ",
-      "source": "Fox Business",
-      "title": "The world will have to adapt to Iran’s Strait of Hormuz pressure, retired US Army captain says - Fox Business",
-      "link": "https://news.google.com/rss/articles/CBMiW0FVX3lxTFBvQjB3Z2IyMEFyZHFST0piUkYwc3l1bW85UUNkT2xJNlh1Rkw3czZUWFFlb3lnQTRXVmJKQ0R3bTFDcElFSkFFVWxEdlhmNUhYZDhCS21aWGNBVEU?oc=5",
-      "publishedAt": 1780699119000
-    },
-    {
-      "id": "Google News Energy-28-Cramer’s week ahead: Stocks face",
-      "source": "CNBC",
-      "title": "Cramer’s week ahead: Stocks face pressure from rates, oil, and a flood of new offerings - CNBC",
-      "link": "https://news.google.com/rss/articles/CBMivAFBVV95cUxOeTNzQWFSQzlMVHFNQXBWLUM0VGdrNlJlNXU1SThkLWhtSHJEaW84ZEZjZjdYbTZHUHlJTXFSYWtXVElwWHJCd3BpOVp2TXluOXRPSWJCMnBENHMxY214bnBTTzBnb2ZOeHZCRDRhR3pscGhyVnZNS3AzYW5kZnBZQzRXME5weEJTWHlNeVJ1d3BDcVFfSi14X3hpcl9TVkZzQVNkNzBoX2ZJSnRaSlRfcmZFMUJkOFoycGJ1N9IBwgFBVV95cUxOSlNrQXI3Uy10TjZyVy1ONzA2THlSRk9EVlBuRC1rMDV2MXBvMkc4VUJRTERMNTE0YUVsUHRnblljM2k1UzRxeEFlRGlhTUduRkF3ZjQ5MzFiRWZld09TVk15UjlIOXFiNUUyTHFIWHk1TG9kNVJBdVoxMVYzT0JvaVc3bHB1amZkWjc5Q3NOTU03NHpHYXRIR3VndFRmOUM3d1JzUkZUbDdTVk1LRDVKVTRRWjRrNHZxRF9QcDBKdHdDZw?oc=5",
-      "publishedAt": 1780698436000
-    },
-    {
-      "id": "Google News Energy-8-Oil prices are up; whither the T",
-      "source": "Federal Reserve Bank of Dallas",
-      "title": "Oil prices are up; whither the Texas boom? - Federal Reserve Bank of Dallas",
-      "link": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE1abkNScjlqaGgxVmQ3MTBjYkpLV1M2MkpfY0ZQNnI0Z0FVQ0xKdTV3SVFqOWtVX1pFN3p4YjNZaEtqR1BfTlo1RlRMb1dSTDZkd1NYU0U0cEcwTlItYmxSNg?oc=5",
-      "publishedAt": 1780698049000
-    },
-    {
-      "id": "Google News Energy-3-Iran has launched multiple drone",
-      "source": "Reuters",
-      "title": "Iran has launched multiple drones towards the Strait of Hormuz, CNN reports - Reuters",
-      "link": "https://news.google.com/rss/articles/CBMivgFBVV95cUxPaWNoMWljcEVLeTNSU09PSGdTTllERnBWUXVqRlNrSGI2S3I1Y1VZdlRBY05FbXNlX0tudmZlalJKYV9VaVpJZHBRTWFqTThMQ01TakJDVXVnTGJ2OVBmNmxNdVRRRXNKRThuWnFDUzRDZlFyQkt4Uy1EUDlqVzVMNW56U0tvZzAtYmNoby1tdnpTaGNrWkV3eHk4TGhTUWdaVGg4S3dHakNRaTNpR2tFTnNiYTFmaDl0cjk3eU9R?oc=5",
-      "publishedAt": 1780697854000
-    },
-    {
-      "id": "Google News Military-84-NATO’s former military chief adm",
-      "source": "Euromaidan Press",
-      "title": "NATO’s former military chief admits there was never a plan for Ukraine to win - Euromaidan Press",
-      "link": "https://news.google.com/rss/articles/CBMitwFBVV95cUxPdmRoU0hKMEFUdVlNcmtNYkYwaWpFZ3gwZmdyLV8xQ3RucTRYNVVrMHhPRkJHRkxocWpCX0lzMTFtWU96VDUxVHNmV0EtdFVoQTJBWmRscUQyNzl6dUtNYlhTY2E4M1lsZVBTNDBManptSzFvbFdaa056SEs3WnFLQk1WSUJJV192NHQ5bEQxOGdUcDM5OUxYeTRWdkJjZG1OaHRsOXF1dno3RkN3Yl93OUx0RWZ0M0k?oc=5",
-      "publishedAt": 1780697832000
-    },
-    {
-      "id": "Google News Military-33-South Korean air defense stocks ",
-      "source": "upi.com",
-      "title": "South Korean air defense stocks surge on Middle East demand - upi.com",
-      "link": "https://news.google.com/rss/articles/CBMivgFBVV95cUxNLUhFSkhJZzVXbnNObDZ1dzhqSUR2WEFZVmQ4cG1OWGdJcGE1Rm1RX0ZjMnFWbHNjaUdaX2Mzc2JtMGF6NjZWaDhPX0dLQ3pGVVNEbHZVVUY3QzhFUzlaUmdHMU9aR01HQkVMUDBhcTNibzlyYk9ZTmpSVDI5MmVnNkhEQzNacWNlOWZFSXNDS3hWaE92MVlqQXhFdEpUMzFCTTVfTjBLRWpaZEp1bWlsUkU5MHJuWUZaMHpwUE130gHDAUFVX3lxTE5mM2hnNV82VTFpYTUzS0lfbll6SmdpSi1mNENOLVBXZEloUkN0eVpQOXlCeFJSLVdDel9reFZNUUJPb3hHekp6UzQ4bnU2XzRkWkVmUFMyWGdLN3RwajlRaFRMWWVuQnZKOFlXdjNsd1hvN0F3YWxWTHppU3R4SUZKVUF0RFpFZmZSMkphbVNCeEY1LVh5RWtGdWpQNmdlbHlpZTdlc3RxN0JKUlpvNzkzSGJMZm9oSmhhNl9XT1dVLVpkUQ?oc=5",
-      "publishedAt": 1780697475000
-    },
-    {
-      "id": "Google News Military-12-Hegseth directs DOD to drop hund",
-      "source": "USA Today",
-      "title": "Hegseth directs DOD to drop hundreds of faiths from recognized religion list - USA Today",
-      "link": "https://news.google.com/rss/articles/CBMizAFBVV95cUxOYVF2QlBMU3AwVVJPcHF1ejE1MWRPS2hyUThqRkV6dlNTem45V3poTGQwRGN3bE5WeXRPaDhsUk1sMkxyVW1ycnpRVnRMaEhNdkwyeXFNbmZ5SWdaU2lZMXdxeXhHZlBfV3B1OTh5bVQ1MXB4LXNja3RoRXRLeTc1VE8wUERvU1c5VkpVelN1NFBwSFlEcGRoQXRjTjFCdVJtTG9fU2l3aVg0RHdYV01QQkZYWGZWQUVnSUJRaUtPN0RZN0JUYVgtOUNlc2g?oc=5",
-      "publishedAt": 1780697160000
-    },
-    {
-      "id": "Google News Energy-9-Big Oil Stays Away from the Arct",
-      "source": "Earthjustice",
-      "title": "Big Oil Stays Away from the Arctic Refuge, But the Fight Isn’t Over - Earthjustice",
-      "link": "https://news.google.com/rss/articles/CBMirwFBVV95cUxNNnJIQ1VUQzR3azVoWUZ6SExNVXQ2VmIyc1NvM0FYM00wdzFWbmExejhmbDlCZ1RCcmxnZEJ2Wmdabm9rWXlBbkJ0LTZXME9ZVGVmQ1ZhUElwY1Z5OExWTFRiS0t3cElSMWZjZGQxeVhMaFhURjZ5bnNBcVdZOHZsQklmbVk0OTBlUl9EWERVR2F1NllVek0zT01OMFJSeFdjZXBDV3JGd0tzeFZhSWpz?oc=5",
-      "publishedAt": 1780696689000
-    },
-    {
-      "id": "Google News Energy-14-U.S. Forces Interdict Ship Conne",
-      "source": "USNI News",
-      "title": "U.S. Forces Interdict Ship Connected to Iran in Indian Ocean, Iranian Oil Exports See Decrease - USNI News",
-      "link": "https://news.google.com/rss/articles/CBMiwwFBVV95cUxOYjRDcFp6ZU55dWZ2T0NCR215ZEl2eGU0Rl92SVVRcnV5dTFDR084SDh1ODJrOElqX21tbGhOc2ZsYkdDTEpUa3p5SlZCM2JJcVQzOE9lM0dUeUdtbHY2aXlCR2tGaktxTmswd0tmX053Ump3Qm8xVzFsNFYtc0xTdnJsRFl0aklaVloxMGNua2wyNE1wNGRuZW1uZmV5Q3lCMWJBaElTMGdhc1F0WUsxdXRrMXhvQnBmdzhkdm16SzlwZWM?oc=5",
-      "publishedAt": 1780696620000
-    },
-    {
-      "id": "Google News Military-30-Buglers play at Lake Wawasee to ",
-      "source": "WNDU",
-      "title": "Buglers play at Lake Wawasee to honor those who died in military service - WNDU",
-      "link": "https://news.google.com/rss/articles/CBMiqAFBVV95cUxOU2xQQmtBXy05dXRqT2ZIdlE5U3pXT0gzS2ttZHBxRzZ1cVVXcVFoOXVhNmlJR0tyYjBTdE1jZVBTYnllQzloYmNDRXhfd1Z5UXhBYndFWmlhLTZsaEJQcFhvZEczaDVTVDRyWkRlUFc2VFhlRjNRRTRXeklTU2Y2Q3hzQUJTRkxQbTZadjNjQTE5TjlScWpuY2g0M0NCSnkzNm1UQ0s1U0rSAbwBQVVfeXFMUGt1WFpTb3pkdzJrOXhGOEhqU2V0ZmQ4YjNMaHlscXlqM2czLXJGZDVBazNJQVlUMW00WDBKX2J4eFNmZkhsODdmSkxJV3E0c2h5Mk5rYXVCUGZtV1ZBZkdET2NxUEJnMVdLdW1xRXIydjlJWjYwaFd5aUdTdU9URzBnSFhpMXdjVmZBR05yUFdsTnJ4ZV8tb2RSbldiV1haSHJZdWV6TFlNVjNPZkp2dDZqc3ZfUldJQWlOOFg?oc=5",
-      "publishedAt": 1780696440000
-    },
-    {
-      "id": "Google News Energy-56-Natrona County Circuit Court ini",
-      "source": "Oil City News",
-      "title": "Natrona County Circuit Court initial appearances (6/5/26) - Oil City News",
-      "link": "https://news.google.com/rss/articles/CBMimgFBVV95cUxQQnlxaE01NnVISnh0ZmtiNEhjUkk5dUFyUnpqc09HeGtNdXd6VExlakxJY1hTLUdGeGNYMXBCazBDZW0waktxS0x6UUlNQ0FoSzF5Wmo1NWFqQ2RNejBrVl81REpfVHcwQTJWT1hrVm82Q2N1VTNpcUxkOEM1OGtTcjNJUTV5MGhFOEdVQ21SNUFvTE1NZ2xvR2RB?oc=5",
-      "publishedAt": 1780696430000
-    },
-    {
-      "id": "Google News Military-47-Johnson & Johnson Scores Defense",
-      "source": "Law.com",
-      "title": "Johnson & Johnson Scores Defense Verdict in 2nd Talc Bellwether in Los Angeles Superior Court - Law.com",
-      "link": "https://news.google.com/rss/articles/CBMi0wFBVV95cUxQQmJyYm14YzlKQlZDLVVnWWJjQWNCWkREQlh5V2daV3NIVWJqakNoNEx4bGxKZE9peUFuejlyOE41blZncmtQMldfcmM5OU9zVENVMnV0OUhOSXAtTjE5bGljVmJUMTJJekJvNVoxVHJwVENyNFJPZDRHVVBHVFRSZXZRY24xR2FBb0dVYnN3WUFfX0VIUGJXaEtfckJoVURhNUpFbG5IeVNoRjJpR3p4ZmI3eHB4akFseUQyWkJOcW5SYlJSREtPOHUwU3gyLVNTYXV3?oc=5",
-      "publishedAt": 1780696380000
-    },
-    {
-      "id": "Google News Energy-20-Arctic Refuge Oil Draws Few Bids",
-      "source": "The New York Times",
-      "title": "Arctic Refuge Oil Draws Few Bids, Despite Trump’s Push for ‘Liquid Gold’ - The New York Times",
-      "link": "https://news.google.com/rss/articles/CBMiekFVX3lxTE9jUnRMYmdKN3FaY01wTF8wVnZDb3RaSDFfQnYwZGZvVThUVEpoTDNWeVFNcU1pTmliQ3cwTWhJcExwTWFLQXNraHFsMjVvd3BkWFVneTdKMk5GNDU3WnZDZkJabFU4RXl2TDlDdnh0VF96WFhEMEZBdzBR?oc=5",
-      "publishedAt": 1780696003000
-    },
-    {
-      "id": "Google News Military-0-Pentagon Cuts 180 Religious Iden",
-      "source": "The New York Times",
-      "title": "Pentagon Cuts 180 Religious Identities From Military Personnel Records - The New York Times",
-      "link": "https://news.google.com/rss/articles/CBMiggFBVV95cUxNMHdtN3hqT0ltSHBucWdibFFOQ09VTlFjbFRMVGp4bHhUSUM1TU5PZXpKa1lMeUNSVXo5dndSNlIxOHhfQkVoYWYzeTludElIaGpHYUFiOU44UzByNWRWMTY5TWhodHZneHBwUW9QUllYTWVVWlN6YWhaTEQ0c25PcDRn?oc=5",
-      "publishedAt": 1780695959000
-    },
-    {
-      "id": "Google News Energy-75-Trump administration in 'active ",
-      "source": "Politico",
-      "title": "Trump administration in 'active dialogue' on strategic petroleum reserve in California - Politico",
-      "link": "https://news.google.com/rss/articles/CBMimgFBVV95cUxNQTB5R1loTkNsVEwwTUdLSzJaZ1R5TThYalV0MzVRa2NfOTBEUDJQNEFPWk92dklQQVZ3ZW5CN0RCS2tNWmFBU2plX0RRb2IwZDNLSHdKdE9QTmN5aC1xX3o3TFV6RjY0VFU0UHJQRHkxMnJCUlAybzV2ejhnN2dqaG5mZUdmTXh3MmxUWFJ3eEtMam5xbWUwLURB?oc=5",
-      "publishedAt": 1780695833000
-    },
-    {
-      "id": "Google News Military-24-Trump calls for military to acce",
-      "source": "AP News",
-      "title": "Trump calls for military to accelerate use of AI while protecting Americans - AP News",
-      "link": "https://news.google.com/rss/articles/CBMirgFBVV95cUxPUDhHYTNOX1lkaGhuN1JTeUR0ZUdCSnJxT0lyOHQ0Y25hekNPVzljdUlWems5ZURxVVhmd3p0Q1lyaVItWDY1LVRGc1RqOFY4QUJXY2hZRWJDTUdGM05Na05QSDhKZUJtOFUzdWNpdWJiUUhWQm1hRGRRUHBZMHc4VUpJSTRFNkhUVkF0VENUU2lxeE1ESlR0WXhCWi1iYVZnNWxnWU9BSU94UXkwVFE?oc=5",
-      "publishedAt": 1780695540000
-    },
-    {
-      "id": "BBC World-2-Astronauts return to ISS after s",
+      "id": "BBC World-0-US marks 250th birthday with fir",
       "source": "BBC World",
-      "title": "Astronauts return to ISS after sheltering during air leak repair attempt",
-      "link": "https://www.bbc.com/news/articles/c5y7yryg01mo?at_medium=RSS&at_campaign=rss",
-      "publishedAt": 1780695355000
+      "title": "US marks 250th birthday with fireworks, flyovers and extreme weather",
+      "link": "https://www.bbc.co.uk/news/articles/cp9lppvkmz5o?at_medium=RSS&at_campaign=rss",
+      "publishedAt": 1783239872000
     },
     {
-      "id": "Google News World-14-Ukraine: Marine drone explodes i",
-      "source": "DW",
-      "title": "Ukraine: Marine drone explodes in Romanian port - DW",
-      "link": "https://news.google.com/rss/articles/CBMid0FVX3lxTFB1b19hYjdqUnhZRFNEXzdTc0FxUDVQNkdKZ211YUhLbVpLbzdTUnVCNVZva3ZxVE1uU0JSU0JkWHEwR05JQWk1ZEZ1TWt1UzBpUC1LankzbGpiSlJIYnJ3NnhqdXBFT1lnYjlhWW1kUDhUVjhyaGkw?oc=5",
-      "publishedAt": 1780695349000
+      "id": "Google News Military-82-In pacifist Japan, officials str",
+      "source": "The Japan Times",
+      "title": "In pacifist Japan, officials stress “defense” rather than “warfare” as nation beefs up capabilities - The Japan Times",
+      "link": "https://news.google.com/rss/articles/CBMilgFBVV95cUxNSmkwNHZhZzk4bHpwQTZ6SGdiQmdZbHRfaFJ6Sjktai1VYWo4cnktTmlnM2NYYlQ1SEVacVc1aXlwcmd3NUFzR2l0REdWb2NZUXZ3S0J6cFFnbVRFRUl4aG45V25UY18xcUJ2Z2ZOZURkdnJPa19MMXVTREFKeHZrSmhCSDdEd0x6TDlqOWRZS0VPMjJzdUE?oc=5",
+      "publishedAt": 1783239780000
     },
     {
-      "id": "Google News Energy-11-Limited interest in latest oil a",
-      "source": "AP News",
-      "title": "Limited interest in latest oil and gas lease sale for Alaska’s Arctic National Wildlife Refuge - AP News",
-      "link": "https://news.google.com/rss/articles/CBMinwFBVV95cUxQc01oeExVb1hDTjFoZW1MVXhyMjlZTnNnRXpLemNBcG52QVhYV3hQcV9hZi1aTHYybHBOc0dzQk1pUmtMSm8tT2Nzc3JwcFAyZGhyMnRFQ1k1ek4wQmx3WnlqUnBWeTVSWlN4VGRrd0FVQ3hEUXJZWlV5Mk1XejU1X1NDU2JGUTVwckpXOXVHV1U2eHplQzdZQzRkY2tFTzg?oc=5",
-      "publishedAt": 1780695180000
+      "id": "Google News Energy-1-Iran’s China envoy vows ‘special",
+      "source": "Al Jazeera",
+      "title": "Iran’s China envoy vows ‘special’ Hormuz treatment for ‘friendly’ countries - Al Jazeera",
+      "link": "https://news.google.com/rss/articles/CBMirwFBVV95cUxPeElWdFdhdUEtbm9Ra3psZ0VTNG00Ykxfd1Frck13R2M2NDBDVlBkSVRyUXR3TjVqdVZ2UjVjM1VSV25yRU81eXNKNk5FcXN0M0xPNG1ablotdFhiVFZqTDhST3E1NzdaamdWSHlrWHBxWmxqR2lrMkJsT0liRkhGcFU1OWZ5SmJxZVRiNkcwUkxqZnNFVUMzSnBjUmQ2VUt1MTVsTlIyU0tzZFhfWTFV0gG0AUFVX3lxTE82WWRzUTF0QXlvVjdUX0l3UFRYa01NYVdjS3N0Vy0tWEVnMFZMeFdjZlpKQzBnTzcyNUVnVWliRVljWlZRRUxmWkJGUVphWDJhd0c3TUFGc0x0QWg2Sjd3ckVGdHJhenJiOVZlNDJxSnVFeDB5dFpqWTh1dlcxcjZaQjZMUEtKMmgydEVSc0k2YUtCSzdwSkQzWEZIVHJza1g1RFJmejk3RmdqX0paanVzN3hwNw?oc=5",
+      "publishedAt": 1783239300000
     },
     {
-      "id": "Google News Energy-45-Goldman Sachs says global oil de",
+      "id": "Google News Military-94-Military aircraft fly over New Y",
+      "source": "Yahoo News Canada",
+      "title": "Military aircraft fly over New York for US Independence Day - Yahoo News Canada",
+      "link": "https://news.google.com/rss/articles/CBMifEFVX3lxTFB1MDZoQkk3a3EyaU54cnd6ZFV0eDJESFJncGtyWUNfcmt5bGJFckloWEF3WVZmWUZRaVl0OC00LXpKU196el9CNXBrZklNV0ZucHhfUmFfTGRJRFpXTUk2OEd5ZC1UdUh2cGUzcVlFXzBVd0RtZW1xX0VDUUM?oc=5",
+      "publishedAt": 1783239285000
+    },
+    {
+      "id": "Google News Military-49-PROSECUTION, DEFENSE BUILDING TH",
+      "source": "WCCS AM1160 & 101.1FM",
+      "title": "PROSECUTION, DEFENSE BUILDING THEIR CASES IN WEISS RETRIAL - WCCS AM1160 & 101.1FM",
+      "link": "https://news.google.com/rss/articles/CBMimwFBVV95cUxQUG53N2c0bnVWaEREUFBPOHVFbG1TYkVZTmZVTXRaanFsVkxLeTQ0MEtiTEtuSnp0WWg5aFJGRU5odlVRUkRiUzdCblYyYnNFZk1DVDdYRHA4RjdFd3puT3VVQS1tVFY5ZmoyX3I0SU9kVnZlQmh2QTJzejF3NEJ3VjYzZVotN0RsSTFkSlFQMkIzRkdWT2FzeVQyWQ?oc=5",
+      "publishedAt": 1783239278000
+    },
+    {
+      "id": "Google News Energy-86-Iran promises 'friendly fares fo",
+      "source": "The Brussels Times",
+      "title": "Iran promises 'friendly fares for friendly nations' at Strait of Hormuz - The Brussels Times",
+      "link": "https://news.google.com/rss/articles/CBMiugFBVV95cUxPUGhVZ1JlWU8xek85QWRqV0tTLUxkNG1fNlRqNVlyYm5YcjhEaFV5SUpRQ2gzS1VacUVHR1pFdHg0ZTl0M1RxZmUzc3BESWRvekx2Z2Z0OGVXcnNqcnl2MVg1WGFKZWo3YVdRX0NkTWRkU2FlVUxhaHA4T2tYcjI2RWJrb1NncHNaY2Jwamxqa2RtRnJTUEpCcTh6Xzh3SVF6el9YNTB4NVdTRTM0UnQ5ak5fV3kzcUVKOVE?oc=5",
+      "publishedAt": 1783239152000
+    },
+    {
+      "id": "Google News Military-5-How Maine’s economy benefits fro",
+      "source": "Portland Press Herald - Maine Sunday Telegram",
+      "title": "How Maine’s economy benefits from billion-dollar defense contracts - Portland Press Herald - Maine Sunday Telegram",
+      "link": "https://news.google.com/rss/articles/CBMiT0FVX3lxTE1LbHNmWHo1Z2YtdnNzM25XSkllc0FwYm5femJwd1l1Sjg5VjhSQVpZdnlYUy1iRV9FNUFXb0IydF95YUJGWjczdGpZU2RxNGs?oc=5",
+      "publishedAt": 1783238400000
+    },
+    {
+      "id": "Google News Military-18-7 defense contractors in Maine y",
+      "source": "Portland Press Herald - Maine Sunday Telegram",
+      "title": "7 defense contractors in Maine you probably don’t know about - Portland Press Herald - Maine Sunday Telegram",
+      "link": "https://news.google.com/rss/articles/CBMioAFBVV95cUxNTnhWd192bERoU3FhancxeXNhY2xxeF9CSFlaeGRCSEFLbjBxS2RoSzhRdFd5aXVaSzdKeXhpYUt0bUtEOFJTY3BaMmZ3RnFJZXlMaHFwUXo0MlZRcng0Qk5VVlE5SUJFQXNTS19IU0RtU00wTHdBRkhQbWQ0ekpCYVV0R2FjQUkzTWxGczN1N3Fob0w2c2ZZOS1qY2RlenJf?oc=5",
+      "publishedAt": 1783238400000
+    },
+    {
+      "id": "Google News Military-52-Zelensky Outlines Plans for Mari",
+      "source": "Kyiv Post",
+      "title": "Zelensky Outlines Plans for Maritime Drone Defense Line to Protect Odesa - Kyiv Post",
+      "link": "https://news.google.com/rss/articles/CBMiS0FVX3lxTE9Dc2NPbDQzV1lKM3dJcTFtQXl1dHA4RmhTTDh5MmNRaGQ0UEQtd3AxU1B2UTV3aFFxZE8xSl9vVFRVVHViaVFIWWhLaw?oc=5",
+      "publishedAt": 1783237438000
+    },
+    {
+      "id": "Google News Military-73-Saab Stock Tops 3 Defense Picks ",
+      "source": "simplywall.st",
+      "title": "Saab Stock Tops 3 Defense Picks Backed By Long Term Government Spending - simplywall.st",
+      "link": "https://news.google.com/rss/articles/CBMizwFBVV95cUxNMzlIZ182TWw5VVgtVTdJcmRVVlRPMWYtTTF6OHNISGM1ZlN4aEFKOHVvaTRzTTh6d2NQTUo3ZFFRM2hseU5ZanJKcTV0dXZmaG9vM19DVXVtdGtEQ0VhVWMxNEdXRnh4RzFrV0E2YUYwTHFtR01RQ2pyZV85a0p2eGxyZWRuaGNKeVM1dTBmXzhJZlFRZEV2SjBIX2NqVVhVX3V1ZEVGWnVrNWJ0NUw0MTNQclNBTks0OWFmMVdfSUkzSzd5U0xYQzdHVElER2PSAdQBQVVfeXFMTUpxbG9weTBHV0tNeTdCLXRsaU1WNWlETEJQb2w4QUt0aHNYcXQ4NnM0QTlKdG10S3BSeE9lMFZQU0NwMWlKS1hKalpSRHZQaXpDRnJCb2JBcjdRcWtMT00xZUNlTTRZR2xrU2pUV1NkZHF4bmFHTWNWV1I4QTdPMG5lNnF2em9KWnhOUTlGWWEzeWpyaUxNOXNydmwtaXZYZjZmREJVM2RiTm5kRlhKREdJcjNYYXdKVFo1ZFFwMThDT0N3OG91MFpZQ2toS29obUxSQmo?oc=5",
+      "publishedAt": 1783237284000
+    },
+    {
+      "id": "Google News Military-43-Japanese citizens protest milita",
+      "source": "news.cgtn.com",
+      "title": "Japanese citizens protest military expansion, voice deep concerns - news.cgtn.com",
+      "link": "https://news.google.com/rss/articles/CBMivgFBVV95cUxPWjNTSXZ4MVpmaU1GSnl4ejIteHFSMVREMU1VMmpRZEtrdVhnSURfcUF4TVFHLUt6R19DRHN3VHVIbGNDM1JzaEY0TC1pTGJqMzhwM3lRSG9CbjJPYVQ4eVNBQ2RHTVREX2FzQndDLXVMbmRCS2RMeVNUcTJUd0tGXzhlcXA3aFlUYmRvdXpsWEZmaFBaakRLTlJHLTRfNmttUF9GNml4U0pINVpDRk9SNDJTbWRSV3VsaGl3RHJn?oc=5",
+      "publishedAt": 1783236065000
+    },
+    {
+      "id": "BBC World-19-Scorching heat and delays: How W",
+      "source": "BBC World",
+      "title": "Scorching heat and delays: How Washington DC marked America 250",
+      "link": "https://www.bbc.co.uk/news/videos/cwyk2ypj014o?at_medium=RSS&at_campaign=rss",
+      "publishedAt": 1783235948000
+    },
+    {
+      "id": "Google News Energy-61-Africa’s largest refinery explai",
+      "source": "Business Insider Africa",
+      "title": "Africa’s largest refinery explains why falling oil prices don’t immediately translate to cheaper petrol after $4.5 billion crude spend - Business Insider Africa",
+      "link": "https://news.google.com/rss/articles/CBMi1wFBVV95cUxNaTk5dWZUWU1kc2ZjMk1YSWowcVN2VTNERFJoclVRWHdSMkQ0ZWtvOGVWX3FYTGxDUktYUVRvanFlbVVDcV9SNDJRaC1mU3JwSmd6c09NZlJHM2xvallLSktidW5mUG9RRFJYN21HXzZkVU9VWWhUcnpzdlNfSXM2MXhYTUR0cXFUVWpMdzhSd0JIQ3cxcVQwcHNJNVd5S08yZTdkck9wZ1dydGRDb1ZVLWZUSE1CZTVrcFlQSkVCaDNqSXR5bG4xdVlydEtFWHAtY2lKSENsVQ?oc=5",
+      "publishedAt": 1783235892000
+    },
+    {
+      "id": "Google News Military-99-Israeli military says killed arm",
+      "source": "Al Arabiya English",
+      "title": "Israeli military says killed armed militant in south Lebanon - Al Arabiya English",
+      "link": "https://news.google.com/rss/articles/CBMiugFBVV95cUxPZmRiNE40em9oendyLV80c29TbDYzdk80Q3Z3WGNSc25tMWI4TUh0Y2llRUtKNy1fZ0FXTE4tZGtVU0xaYjhHMl9wU18ybG4yREozZlp4WXk0LUVQMTlfNDN1TFVfSnozS0R0MjBid25RSzRqV2RUNkQ3d0piMmVTTnhuNlpzbGZwWDJSVkpHek90SUNqaGRhY0JSUUJ0UG5iTHUwYVVlVUdjM1h1TWlaeUNqZzVzRlEwNFHSAb8BQVVfeXFMTmptNzJXMWpfMXRqVW1jbks0dENXMTRTWjhpampJRVY3SWExYzZhYjNVMlFhQnFIVW5QemxDX0R4dm85aTBwdGtJaC1qZEd5cFdmbUtKLVBHQXpXdjV3dGFtOU1rLWs1djBOMnpfZHdHM2N6QWh4VFBIdlB3NDhkMk14WEtFbVlSYUpDUnZFQWp6Q2xYOTU1eFNQRmpUWGRXNEgtQzJxNG9vdjJDdkE2UklqUFZLTzFmald6N2hKclk?oc=5",
+      "publishedAt": 1783235820000
+    },
+    {
+      "id": "Google News Military-77-Taiwan restores anti communist p",
+      "source": "Межа. Новини України.",
+      "title": "Taiwan restores anti communist patriotic training for military academy graduates - Межа. Новини України.",
+      "link": "https://news.google.com/rss/articles/CBMiakFVX3lxTE9WOU5McHVENkZCUkJ0amlwaFB6LUFKOXVyLXRDRnhkWElrY1VCclBhQlNTR21MRjJEb3JZblpiZnpfSnNzYmtpcmlQb2p5WnF1S1pMYkRUbTlTamJlY0RseFFfN2VWbGdxMEE?oc=5",
+      "publishedAt": 1783235411000
+    },
+    {
+      "id": "Google News Energy-78-Iraq raises its oil production d",
+      "source": "IraqiNews",
+      "title": "Iraq raises its oil production during June - IraqiNews",
+      "link": "https://news.google.com/rss/articles/CBMif0FVX3lxTE1OTjlwUV9nVFI4WHRKQ0lCeGM2NGczWmh3aVA2SmstNWhLTG81MURjXzd3QTJvVkc0cTRaMlFMODRZcWJOZ1VtT1hKbV82R3ZqM1FzVXFOZVVIM3dNOHpvR05WVFQ1UmpjUk83cFRvaElHcDhQOXFManJ2SnNnOU0?oc=5",
+      "publishedAt": 1783235383000
+    },
+    {
+      "id": "Google News Energy-76-Oil’s crashed from $124 to $71 —",
+      "source": "The Twelfth Magpie",
+      "title": "Oil’s crashed from $124 to $71 — so is it time to buy BP shares? - The Twelfth Magpie",
+      "link": "https://news.google.com/rss/articles/CBMipgFBVV95cUxNbGd4cXVCeWQ0cXE0UWc5ZkV3VWV4TmRETkhtSUFWZXNOaFhkS19yTElOeHpXY25FT29nalQ0dm50dndxYzRhWFA5OXhIWS1BT1dBeVBYUEpJcTg0THlzeTQxSTdIaG95RnVOUjBNcWZkSkhKMi1LQ2xoelFwM09PbjNjaWw0SnAteEt5U1d3NENLWm1MUDZnVUkzbjBIbjg3bGlKdmRR?oc=5",
+      "publishedAt": 1783235160000
+    },
+    {
+      "id": "Google News Energy-67-After years of failed refinery r",
+      "source": "Business Insider Africa",
+      "title": "After years of failed refinery repairs, Africa’s largest crude oil producer bets on Chinese partners to revive key oil assets - Business Insider Africa",
+      "link": "https://news.google.com/rss/articles/CBMi1AFBVV95cUxQQ2JQU0RkYjh6VmgxWmxwQjMtU3EtQ1JFWnBxYlpWcVB2Ykc3NGZrajBXS1JGcHl5Rm5rV3NUWWw5UmNPWnZnTHFmb25LRGFxZFdRLXM4ejBiYU0wdGh5ZXJWb29rdEprTVd6bnpEM25xVWlJdmlaTnE1aXVwZjQ0VEU4N0x3bWU1T1RVYzFnNGtFejhPV1U5aFh5YnJSUzdYYjNQOEJqNkhYVGhkSVlJLTU1Ulpha1diMnFuUUdNMzNmcV9RWV9tMHc2MHp4WTBUZjgwcw?oc=5",
+      "publishedAt": 1783234768000
+    },
+    {
+      "id": "Google News Energy-84-Kuwait’s Crude Oil Output Climbs",
+      "source": "Egypt Oil & Gas",
+      "title": "Kuwait’s Crude Oil Output Climbs 184.5% - Egypt Oil & Gas",
+      "link": "https://news.google.com/rss/articles/CBMid0FVX3lxTE5SeTdpSGJKeHZEQUtXMzFSX3V6WTZNWHUycTd2dDhEVm9FVHpsQ3NMSWhod3B3OUZKU1J1WV9Xd2w1LUtWQ1lGa0JLTk1WREF2UENDVVROTlgyNGxDQVRrY1NCSm5aZGFOQW1EMDRGb3VLYW1MbHZ3?oc=5",
+      "publishedAt": 1783234324000
+    },
+    {
+      "id": "Google News World-10-8 shot, including 4 kids, while ",
+      "source": "New York Post",
+      "title": "8 shot, including 4 kids, while watching fireworks in Brooklyn: sources - New York Post",
+      "link": "https://news.google.com/rss/articles/CBMizwFBVV95cUxOY2hWejhKbWRaSnlSRnEyTXpqVjBLUFp1SEZVY0swODFVN1dBZzBicGpkWG00VWJvTy00Q21PdFcyZm53dXNJdVpYSlQzRWVGWThRdkZwWFBxcjFkeTV1Vk1heEJPRnZRV1E3TndfY211OWxkdGlrYkh4Ry0xRkZodXVmTE1WX0g1VTk0SUJZVi1uQVRSVnFZWUpfa1I5SmZGZjlXZTlFMVBxalgtUXo0cDRMXzdxdEJMbDhQcWFUdzItbzdGZGFmd0xwMllYcWs?oc=5",
+      "publishedAt": 1783234113000
+    },
+    {
+      "id": "Google News Energy-62-Iran To Impose Service Fees On S",
+      "source": "NDTV Profit",
+      "title": "Iran To Impose Service Fees On Strait of Hormuz Transit, Offers 'Special Treatment' To Allies - NDTV Profit",
+      "link": "https://news.google.com/rss/articles/CBMizAFBVV95cUxPMUJ2THhYX1ptUmZHSEdxNENhS2pKV1JkYjJVaXpiYXc3NTBENXg0aElNQUZLNlY4WTY4RVJsRkRzckVEajFlSnB0amgxNE5uTlk1ZVF0Q3VLc3dQYXBjejFqZ0sxMWJCN3pZbzVLNDJ0UmFvRlFHbTFnZEh5R20xLS1DdGUyaU1TQ1VfdWx6YVc0akRaemVNd3lDUWtHYVVMUFJmd3dYN3JmQldzanhMNG5uWi00U2FpbVZBRzFHOUZqVnhWTUNaS1FFTE7SAdQBQVVfeXFMUEFrMW85SGJKVEFfdG1iME91SnE4Z1E5TGRSUmZOQzJ4aVJrcnlOSVNnNEx2OVdjS0t4ODUwcHFEelByOE1tYUhiUXJUUVB0UVcySTVwck42emQtcnBEQWtxX0I1cGVtSzBtd1l3ZjJpR1dmQ1lHclVXdmpHaWUxbl93VmRMbk9vQkVZNzB4czIyd0pDcHBXSmxGNG1rM3hYZURGb25zOXJkaGQ5UDJSMDJtNnM5VmhJeG4waXBTWU44MUF1WjV5SnZPbW5XQWhvNWNFbU4?oc=5",
+      "publishedAt": 1783233717000
+    },
+    {
+      "id": "Google News Energy-55-US Waiver Sparks Iran, Japan Oil",
+      "source": "Egypt Oil & Gas",
+      "title": "US Waiver Sparks Iran, Japan Oil Resumption Talks - Egypt Oil & Gas",
+      "link": "https://news.google.com/rss/articles/CBMihgFBVV95cUxQYW5QTXdsYlJ4THZpRXlSSTJ4cVZlLVYzNk5VM2FfOUkwZ3JkaEc3MkQ0aEViMUFxYWZGaVZsZVMxYW4wbGM2MWJnRGx5VVB2bDAyd0x4QUNpOGFoT3BYejlQSkJtaFBfYldqdXpMYUdZUDhvZWExX2NobGVyRmhIUG9sbEpNUQ?oc=5",
+      "publishedAt": 1783233601000
+    },
+    {
+      "id": "Google News Military-38-WATCH: Celebrating America's mil",
+      "source": "KVNU",
+      "title": "WATCH: Celebrating America's military families - KVNU",
+      "link": "https://news.google.com/rss/articles/CBMidEFVX3lxTE9zRGtIWWFUNnNSVTFYUHF6dnA1MlVJa3NhTUZYUkNYSUt4N0psZFdydEVIME1DZXlfOVFrcTZZLUVrUWxDU1pxYlFoMFQyaHZVWFBJNS15dnVCTjA4WENEZmcyOHdybVdHRVJGRFdVdEp2RWhN?oc=5",
+      "publishedAt": 1783231526000
+    },
+    {
+      "id": "Google News Military-64-Trump blends history, military, ",
+      "source": "USA Today",
+      "title": "Trump blends history, military, politics: 7 takeaways from the 250th - USA Today",
+      "link": "https://news.google.com/rss/articles/CBMinAFBVV95cUxPUFJ3dnROWjc1R1pucm9Kd3NnQm9GLXh3VHBMOVhsSGFhaGl0LS1LamxlazNETGZoT3BZS0dKQTl4dmFLUW16bzNXaElWLWFiSnVvb0dMUW1oemNsNFlHbUFHNDQ5Smg0S0JSeUR6dk83MjExeTVyQXNkWXQtdkVvT3Z0YmN5aGxTSWhSaFRVU1M4OXZPM3g2Qm5aUDI?oc=5",
+      "publishedAt": 1783231500000
+    },
+    {
+      "id": "Google News Military-10-Colorado Springs area military e",
+      "source": "Colorado Springs Gazette",
+      "title": "Colorado Springs area military events starting July 5 - Colorado Springs Gazette",
+      "link": "https://news.google.com/rss/articles/CBMijgFBVV95cUxQWmJiS1lmUm1NbkNYdHVUNkNlZWdKaUZLSGpMVWhucXA0bFRlZXR6V3hGd2IwYWhfRUp5RGpBWkllYkdTbHJ6RUxGaHNjWlg4ckZmcWVRWE90SlN4dGpQbFAtVDZ6aDJhbWhzaDhmWm45VEdrcEg1dVBiS2lBVWNINHVGMVhWWXFZbVBGYUJ3?oc=5",
+      "publishedAt": 1783231202000
+    },
+    {
+      "id": "BBC World-2-Chinese underground church figur",
+      "source": "BBC World",
+      "title": "Chinese underground church figure Jin Mingri freed from prison",
+      "link": "https://www.bbc.co.uk/news/articles/c4gy51ky75vo?at_medium=RSS&at_campaign=rss",
+      "publishedAt": 1783231101000
+    },
+    {
+      "id": "Google News Energy-50-Iran confirms new service fees f",
+      "source": "Firstpost",
+      "title": "Iran confirms new service fees for Strait of Hormuz, promises special treatment for allies - Firstpost",
+      "link": "https://news.google.com/rss/articles/CBMizAFBVV95cUxNdU9tVklLVENSVS1wVTlWZUpJalRQVGROdFFVYVBkQ1hZSHpmblN3c3lRUF83ZkRGNEgzQjNBdEh4NDFqbmhPNlpOcDZXaXRoV1haT0xjenlzOG4zaDBFT0IwSUxITkRaUl9GS0M3dC1zck1tdnJMNVFna1R2YU4zV2t4MmtkeGxtTV9PaHlELTMwV1o3Q1pIWDFfaHNNbUx3SXItbkFoR0xCYWF5NGduc1cwMTZHYk9sU1dLVW9RWnc0cVV0TEZaYmJIbXTSAdIBQVVfeXFMT1EwaU5Fek1qN1AwMXN5ajlvVUV1QTc5czNVN2dkR3FyZEdWYUdVZFZBQWxDSlNIX1Z1QUc3cTlhWGRCRjV0NFB5a3VlUGFJS01nSnR2VlhnQVp4RHVaX2N1dElJdGtiTHRaYXRzUk01YkRPWEdnWEYzSGZFbFZzb1BTLU9lYUhuai1lRXVZLTlyajlqNC1LVXB0TlYwX1B0eFJoZXhKaTNpTXFUQzBwVm0zVmRmREJoZWdTYl9qTjQtX3M0MGFJZEdmdHB1dVZ0S3J3?oc=5",
+      "publishedAt": 1783230969000
+    },
+    {
+      "id": "Google News Military-9-Big Bay Boom celebrates military",
+      "source": "fox5sandiego.com",
+      "title": "Big Bay Boom celebrates military lineage by honoring families with history of service - fox5sandiego.com",
+      "link": "https://news.google.com/rss/articles/CBMie0FVX3lxTE1PdVZCaEpPVFhyMUdDWHpCUjAwbmNSRWM1ZmROR0ZtdFBNWjBLNFF6RGtQR1hiMkl3WDFsa0lKNEJ3MF82cFl4SGpiYWllTk9wZmZaUlQ5N3hpbFBudDZCQVNTYloxbjhxblp6R1FwSzVZbjRQTUktLXBVc9IBgAFBVV95cUxQMUstS1JmZnhrSkY2NTJsVjdiQTg5Mm9ic2dMR3FnaFFtdGZ4Mzh2ZkZPelFZU3lDV21iejNkVnVxZWNrb2JjSGlGS0x3d3J1UjhqSXl5SmRnVW1YeEFnMW1OVGN1VjgxUUdldTFXU3JyV09aNlEzS3BvTnd0SmgxNg?oc=5",
+      "publishedAt": 1783230903000
+    },
+    {
+      "id": "Google News Energy-4-Minefields, stalled talks keep S",
+      "source": "South China Morning Post",
+      "title": "Minefields, stalled talks keep Strait of Hormuz in strategic limbo - South China Morning Post",
+      "link": "https://news.google.com/rss/articles/CBMitgFBVV95cUxNLUl6cUtOaGdpb091eWp0VkVmWlRWRGUwQmp6MlRhQzJJcUM1UlRvd1h1bnVublZoenhwMkRKTDBIcklwdjFkM0RKRkxvLXFyb20zRnZrOHdhX1M5cnA5ZnJnZVlwbV8yaC1KcHZnWUxHNEszX1VqOUJZWHROcVNqRi12MFJSdEkxdFpoNTIzRVhQYU11T0JPT3RKQUt6SzB1b2ZET1kzQ3YwY2lhNEJqal9OVlZNd9IBtgFBVV95cUxPYzI3bEdrbWxhaW5OSC0yOGd3a0pvenVCeWV3dHhYY0hwMkIzcHlDdkUtNDhBejFIc0ZtNFRMeElLaFNYMV9vM3lkdXBwajdzejhaVVlfeWVnWlhhak1vRmNFcWFKMExFMXkyRWVyWTl4VGhncFAzeXpoT3F3cWt3M295M1pId3djX1lsUXJSSlRVOE5yWTdacVVBaHU1cHpFR1RpU1k4UWtrZzh3aG95SU1FVUdNUQ?oc=5",
+      "publishedAt": 1783229406000
+    },
+    {
+      "id": "Google News World-5-Taiwan military resumes 'anti-co",
       "source": "Reuters",
-      "title": "Goldman Sachs says global oil demand takes big hit, sees risks to price forecast - Reuters",
-      "link": "https://news.google.com/rss/articles/CBMixwFBVV95cUxQV0toMGFvcW1NeUg0a2M2cFdtTVdLd19jV0ZhaHBLa2xyZllKTXdLY3JadXlNekNUeFJURUJNdHVZWVBISjVNcVNnOVc1aF9fNnNvMloyRVpITlZsWFJEM1FnMGJ2SGVoR1llQWpFQ1dMdklXNEdfUDlhamdBd3lWQ0RjZzZjaFhELU4tNVdidWtFNTdYaWUzdWJuLS1BY0hGTWt0V2wtY0kzNnRZWmtlNWNTNEhaaDNEREZ6ai03QTU3ZlNyd1hr?oc=5",
-      "publishedAt": 1780694983000
+      "title": "Taiwan military resumes 'anti-communist' classes for graduates, citing Chinese threat - Reuters",
+      "link": "https://news.google.com/rss/articles/CBMixAFBVV95cUxPYmdzSWJNOFN5azlMdy04dlIyOWVRQVBaQ2llMzg2Y0lkSHFSTDkzaXF2MC1EUlIxLUZSQjJhVGxLUWpqUkRhbkNkajk5S2VVNTZYWXdfQ0dsWmhFclQ0dkFQbjNpdUFNTFNVdzVWdUwzNzZPQlpoMmlDNm5hS2h1Tk5WQmtuV0hBcnhQVW1mMGZvYjZZTUJ5RFpfbzV4MjZacnNwc0VQUTlPMXVsZnF6elIzREJKbmtkQkFxSl85eVhKSkRX?oc=5",
+      "publishedAt": 1783229280000
     },
     {
-      "id": "Google News Energy-4-ANWR lease sale draws $3.7M in w",
-      "source": "Alaska Public Media",
-      "title": "ANWR lease sale draws $3.7M in winning bids, but major oil and gas players stay home - Alaska Public Media",
-      "link": "https://news.google.com/rss/articles/CBMi1AFBVV95cUxQZkRuRF96anpIb0ZPSGhwX2JkaXVybWVjX2gwV3RqOFpZQVpnb1FxbHozTE1nRXRuMmFpdXhwa3EzM19MalgzY09PT1I3X1dVZURMdHlCVFV0bUxfQkVpZ29OUHF1VkJieFdlRGZpbTZUTTRqV3lHTTEzODlkWklpTGd0RzVWaTNqbndXcWNMYzFfdk5xU2VXWU9USUw3QkIwZDZqYnFRLTVHQk9QTWcyVldtVnJSX3ZoekZyQ0lZLVd5UERocGtoS01jU2hDVVR6Mmd6aQ?oc=5",
-      "publishedAt": 1780694940000
+      "id": "Google News Military-24-Trump takes aim at ‘communists’ ",
+      "source": "Anadolu Ajansı",
+      "title": "Trump takes aim at ‘communists’ in Independence Day speech, touts US military strength - Anadolu Ajansı",
+      "link": "https://news.google.com/rss/articles/CBMiwwFBVV95cUxOQ2c3elZMNVFaYThPeURyU2M1Njl2UUgyV0RDTnhXdENaZkFmZHpGMmVfcllXNFJlVUxyOTBiQWJTWUc0M3FRajFNZFBxZXdIU09ubTBpUEtaMU11RFgtMy1FWk5ESVpNVGR0c1o0OXlXZEpPaWFxcWZMY0NjQ2R3bU1LMkR3eHhiT2ZQNzUwcm94bnBBQ1laYW5nRGpnT2tTSnJtRERQbXZ6SDR2cVpmb3A4UHJFNTltU1hvSlpoWF9zaTQ?oc=5",
+      "publishedAt": 1783229138000
     },
     {
-      "id": "Google News World-35-USAF Scrambling To Buy What Few ",
-      "source": "The War Zone",
-      "title": "USAF Scrambling To Buy What Few MQ-9 Reapers It Can Find After Epic Fury Losses - The War Zone",
-      "link": "https://news.google.com/rss/articles/CBMipgFBVV95cUxPSDlwX0pkdnZic3k5eFptcXZ0NFd1YklKd2NKVU8zQTVybDJDOXdsZkpQSGh6T21aZGYzeHREekROX3BjRzUyRmJ2QVJZZnN4ci1jaTVZazB0cnRYNG1nVmpIMFRYR1MtelpFYlR1anRsUGFfRXRIVVRLdGRvZE1wYURRaDJxSXJlWXVkLUlvdEQtcHIwNC0zNjQ1Qjhtb1JoazZYdXB3?oc=5",
-      "publishedAt": 1780694354000
+      "id": "Google News Energy-16-Fewer Ships Transiting Hormuz Al",
+      "source": "Bloomberg.com",
+      "title": "Fewer Ships Transiting Hormuz Along Oman Coast After U-Turns - Bloomberg.com",
+      "link": "https://news.google.com/rss/articles/CBMisAFBVV95cUxQbEg3SWFmQkZyUHlla2tBaURsTnh1bUN2aDF2bTNSUThfUkRnYTlNcmFOMXpycmZVdE8ycmthYjNPelFsQ2k5bFdmVlVkWHRwZFVLTl8yVkxhcVBOXy01LVJSNzB6ZHp2LVprZDBZeVRzTGVuZ3hKYngtZWMtd2x3cEJmN2szU2h4WGZYY3lOZGwtSkpZMlZlV3ktcWtqc0szclk0c0pCRjc4eDNiaU5GUg?oc=5",
+      "publishedAt": 1783229040000
+    },
+    {
+      "id": "Google News Energy-82-Oil prices hold steady as trader",
+      "source": "Межа. Новини України.",
+      "title": "Oil prices hold steady as traders await US Iran peace talks - Межа. Новини України.",
+      "link": "https://news.google.com/rss/articles/CBMiY0FVX3lxTE4yWVB0MnRDNEFib1VNbmNUXzUyRUF5c1RiRXllNUpyeXlwa1QzMGs1Zk9DbG5hdi1IWHBQYjczWldJcEV6LXRoUjlKaHJxSE41bWJMVzJybjYyZE9jeDZKd2k0NA?oc=5",
+      "publishedAt": 1783228470000
+    },
+    {
+      "id": "Google News World-7-NATO chief may have to match his",
+      "source": "AP News",
+      "title": "NATO chief may have to match his made-for-Trump sales pitch to keep a summit on the rails - AP News",
+      "link": "https://news.google.com/rss/articles/CBMirwFBVV95cUxOeTZHUDdWLUd3UnJha291NEVncUFKaEotUFFjaV9iVFlTTFRnMlpEU0NmdnFVa3p3VWEyVHlvTjctUm1hYWtSaURwdXloTS1YZmFZeS1TN0lMeFhrUVdnc29OZzBSWmhoR0tFZjFpN182dlktME50NDZhUkI2aVhicFJWSFZldVdsNUg2ckdBNnpyOXlBcXQ0RWJZaHRDUm1KT0lrNFdBSS1NeUJuUEIw?oc=5",
+      "publishedAt": 1783228020000
+    },
+    {
+      "id": "Google News Energy-43-Gulf oil exports jump in June on",
+      "source": "The Arab Weekly",
+      "title": "Gulf oil exports jump in June on record UAE flows - The Arab Weekly",
+      "link": "https://news.google.com/rss/articles/CBMieEFVX3lxTFB2NXlUMlNIdUh6U0syMG12WW1KZzRfcXhIU21DaktYaThhTE5IbFE3OXQyZ044RENZNEhxbDhVdjdGYWFVMWVoZ1JWclBNR2x0cFJ1aTdsZm52bTFqd1VraWVPclhFMzNZX1hIMFg1M3lWc0pIWFREdA?oc=5",
+      "publishedAt": 1783227643000
+    },
+    {
+      "id": "Google News Military-12-Resilient supply chains for the ",
+      "source": "Today's Medical Developments",
+      "title": "Resilient supply chains for the defense industrial base - Today's Medical Developments",
+      "link": "https://news.google.com/rss/articles/CBMimwFBVV95cUxQTFZQME1vb2lhX1d1aThRQjI2b2V2ckM0cjJiajlLanhSYndGb1J4SHdWRzlXOWdnUXl5R2VpYWV1VEhaaUc1UWZJUmZqejJCS19ZWUxkX01Ea2VQcWdHeERNRXhfQUxLOFplUWUyNkhkaGpJd0VkS3MzelFza3FDQUkzRHBVSFc1OTlCYy16U3JfUjlsWE10UTRWMA?oc=5",
+      "publishedAt": 1783227600000
+    },
+    {
+      "id": "Google News Energy-10-Voices from the Arab press: Hand",
+      "source": "The Jerusalem Post",
+      "title": "Voices from the Arab press: Handing the Strait of Hormuz to Iran and the Gulf - The Jerusalem Post",
+      "link": "https://news.google.com/rss/articles/CBMiXEFVX3lxTFBaSHBfMEw1dHJjZm0zU0pHbzQwci05Ulg3UG1mMHlLNHVpZ3ByYjM1a0xxWDE4REpEa1VwVUkyTUp6SUlvTEFKd0M4N1NsT2swcXVzTFRjMkRIc3h6?oc=5",
+      "publishedAt": 1783226616000
+    },
+    {
+      "id": "Google News Military-22-Giants’ pitching, hitting, defen",
+      "source": "San Francisco Chronicle",
+      "title": "Giants’ pitching, hitting, defense coalesce for victory over Rockies - San Francisco Chronicle",
+      "link": "https://news.google.com/rss/articles/CBMiqwFBVV95cUxPZ0YzMFpLVWhwLXpNejZYUjIxS1VkdXNibUloUGxnRlNZSzJSZldrZy1LSXJsaWZNVkJfN3Q2eDBqblhFNW4tWHBiSS1xSXExYWpZTVdhUmJ3YkRsMXhyLUZSVFZUQUp1MmxjSDJkNVBoYlZsN2NBcnRnV2JJMFNkcE40RmxmeTM0dTJubVNBOTc4WGRwNzJZM3ZyenE4RWo2c3o4SmMtWUxmUjQ?oc=5",
+      "publishedAt": 1783226588000
+    },
+    {
+      "id": "Google News Military-89-Israeli Military Says Killed Arm",
+      "source": "Asharq Al-Awsat English",
+      "title": "Israeli Military Says Killed Armed Militant in South Lebanon - Asharq Al-Awsat English",
+      "link": "https://news.google.com/rss/articles/CBMipgFBVV95cUxOeVJQeU5BVy1aTlpEWHhhVkRSNjRUeEg3Y1daQlNWVE9YWV9wVEk3YlhndmVaUUlQYlUyQm5SSUZsUXgxOVFDT01nVEZPQ2RaeWpJVTRFNS11ZEo0MHlrOXFzM0hQZXJZTkVUcU9FQUJaRXFkb0FEN21STm9EcElScmdnNzZ0WHpTMVVyMjR0ZHlhLWZFaTBXaFZSdHFrRndTdnZkOUl3?oc=5",
+      "publishedAt": 1783226267000
+    },
+    {
+      "id": "Google News Military-90-Laser Dazzler Market Forecast Po",
+      "source": "IndexBox",
+      "title": "Laser Dazzler Market Forecast Points Higher Toward 2035, Driven by Military C-UAS Procurement and Critical Infrastructure Protection - IndexBox",
+      "link": "https://news.google.com/rss/articles/CBMi8wFBVV95cUxQREJEcHpjVlYzMGJkSHRRUzRXVTlnNll2bUlSb1UyOUl6ejJKWldEN2c4Y1RTaFptUEJILWdTRHlqdVR3aTFqMkk4RlIxMmtqMFhQSGhJS1ZiNW5fZ3MtM19rSFFDQXlzWlliT3gzc01FdlhXcVJLdnFReWZRUnJWc1duSGVDNFFLUkwwalJIOVdHVE4zUDEtanJWU3VPMU5hbFRJRWc5dWR6ZmNZeEtGN2QxTVVXLW9PLTlVQmZCT3BJZGplSGtxV1JSMmtuOW11UkhFUkNsSjNyVlA0U25hRnQ2RExQelRvYnZTVkM4blJwX2M?oc=5",
+      "publishedAt": 1783226165000
+    },
+    {
+      "id": "Google News Energy-31-Your Sunday, July 5 Guide: Three",
+      "source": "Oil City News",
+      "title": "Your Sunday, July 5 Guide: Three things to do in the Oil City - Oil City News",
+      "link": "https://news.google.com/rss/articles/CBMirgFBVV95cUxOTmlSUFd0bVdycUM3Y3lMWGNpam1tVnZDbjI2M21aMXJORjQ5WURJd29WbXNHczF0dm8zUTVGbE16cVpNNUxXdU9QR3lRRlY2UkZ4VkhELVlIYXFXOTFTU0JDME5FaFRsMllkblJjNGhOVTBsdmloaXdmdEJqRnN2RWVSV0FrRE10ZlRtbHh6TW5IekVXZlpOYkh6MW1JTGdRSm10VUNTWFBkd0ZISVE?oc=5",
+      "publishedAt": 1783226039000
+    },
+    {
+      "id": "Google News Military-16-Trump uses America’s 250 speech ",
+      "source": "NBC News",
+      "title": "Trump uses America’s 250 speech to honor military heroes and also push political agendas - NBC News",
+      "link": "https://news.google.com/rss/articles/CBMiywFBVV95cUxQTmVZT3ZvZlJQTHBpWjRvam9zOEZvVUI1RnhGMWNKRmNoN1Jfc3B6TkdLZ1ZqVGkydUdGZkVfTHA4M0Q0bk82UVZhZkZJb0lDSEZ4cVo5VEVFNUNBVjFFMnpoZ1ppYUZDRWFDSE5MaDB1Z25jUV9FQk5rdjU2QkU3d0ZORTNTWjI2UXVBcVMyazZtS0JPVkdjY1hSTGVjQWYzRmNsckZMUHo3RjJESnphMjczcmZsdV9NV21ybHRlcGp0MFJISU5KM0lBVQ?oc=5",
+      "publishedAt": 1783225460000
+    },
+    {
+      "id": "Google News Energy-87-Iran warns Hormuz Strait not \"th",
+      "source": "bastillepost.com",
+      "title": "Iran warns Hormuz Strait not \"theater\" for transregional powers' military display - bastillepost.com",
+      "link": "https://news.google.com/rss/articles/CBMiygFBVV95cUxQdzJGb1BMVkN2a3ZESUlTcmdyZkVYaVlRcnV3WWczTVNReS1JTTR5NUpoTjdPeHlRaUxDbU9Nelp4QzEzNTBlRkxRc2xqTHhXek04UVlrS0FZaE5JZVA0VUpJbmZ4akwwanNVQmY3c1MwRmJmQkZTdWZ2Mmw5Ulc1WDlsYU5xN25lNUUxVkFvSVVvVmtOLTVNdlZHWEtJbm5vYXd5eEc1dWlHYXc1M0MzNmlRV1pJWVhoemxMdTJIMzc0LXFMRjRWbVdn?oc=5",
+      "publishedAt": 1783225028000
+    },
+    {
+      "id": "Google News Energy-95-Saudi non-oil sector growth acce",
+      "source": "TradingView",
+      "title": "Saudi non-oil sector growth accelerates in June as new orders hit four-month high, PMI shows - TradingView",
+      "link": "https://news.google.com/rss/articles/CBMi8wFBVV95cUxQMzdXS2xuN1NHcmxmeEgxQXRwOHMyUF9CT1A1TVpIUW1wVExnVzJSblJoOUdJR3NuYlBFcTI1VWZvOFE4SE5YLUV6Y1FTdVRSaE11TktxZjN5RlFfMEhaem9SUXBJN2E5Zlh0ajg2d21xVndaNVpyNzJSQndPb0lmOHBnaUt2dkR0Tk5wdUhLZGM4WmFyNGozUV9KWFhRUWxTMU1nM0cwd0dtLTBVRHBNWEM5eGI5TUxnTFpJN1VXdXEtcG4zOGhjSXNOckpDUlF6R0hjT2ZCYzVQdC0zSUt2Mmh3amRocEtiYXVOMFpfb3JSdVE?oc=5",
+      "publishedAt": 1783224960000
+    },
+    {
+      "id": "Google News Military-17-A 9-hour procession of military ",
+      "source": "The Washington Post",
+      "title": "A 9-hour procession of military aircraft for America’s 250th takes off in D.C. - The Washington Post",
+      "link": "https://news.google.com/rss/articles/CBMitgFBVV95cUxQZ2wwcUtVSk1ZM0xTY0NzZS1qU2ZBalVzemw1NVJTMlI5b282bHc4SEFyYm5wdnBacHdUZ0hiYkxYN0RWaElCSTNPU2E0RUZkVk1MUUNVZTE1WkcxY3VNWEtTc05FYjczUGFCb0pYWGhLX1hadTRoTmVadzFrdWVTWDFVWUpyXzdGMUxBY0d4R3k1X1NUclM0OHJoTGRyVEFXT0F4THF6MGRCWjI1ampaZlZDTWNZdw?oc=5",
+      "publishedAt": 1783224720000
+    },
+    {
+      "id": "Google News Military-15-Wausau veterans groups host Amer",
+      "source": "WSAW",
+      "title": "Wausau veterans groups host America 250 celebration with military honors ceremony - WSAW",
+      "link": "https://news.google.com/rss/articles/CBMivAFBVV95cUxPcjhyV2JkX2ZZeW9mOEVNUjhMb1BQT1l2WHpzVGVvVmN4anJqbTlSc0hGVlhodWg3LW5OVFp3UDVOSktEX09JSnhNdGR6OGl0RG1wdDM2RzFEUWJlN0h5blQxTHYtZldVdk80bDctc1Q0Z2RBWGpITnM4UHd5UFFuV0RWTXlwMmJfOXc0R1Q1Y0dzcjhxY3BzbjZjLXB0R1JfZ2IxZ0dHTWE3UjJZNENKMzNWUy1HLWxpTHZ3bw?oc=5",
+      "publishedAt": 1783224240000
+    },
+    {
+      "id": "Google News Energy-30-Oil market opens up as retail tr",
+      "source": "Financial Times",
+      "title": "Oil market opens up as retail traders pour in - Financial Times",
+      "link": "https://news.google.com/rss/articles/CBMihAFBVV95cUxOTHZYWXd1TzVYdlBEU3FUNXBTc2NyUkZzS1Y4NTM3eEhhenN5X3ZVX1ZFYlgzcjlwcnd5WVNNUkt2LUpwVi16QnV6RFdPbS1ETVBpWG1EbFUxT1pYSjRLRHVTSkZqY2JMZ1VKVUVWdFA4WEMwbEZCRWoxNDVJZDYwSzJ5MUw?oc=5",
+      "publishedAt": 1783224138000
+    },
+    {
+      "id": "Google News World-2-As Xi Looks to Extend His Rule, ",
+      "source": "The New York Times",
+      "title": "As Xi Looks to Extend His Rule, He Leans on a Longtime Ally - The New York Times",
+      "link": "https://news.google.com/rss/articles/CBMigwFBVV95cUxQU180Smw3ODRvWnVWbWRuU2VkTmpMRnRIZmtITVBNaEVVaURoWjM2OHl5ZE1LQUtrYkQtT19lVXRId0d1cGZqYkpqZll3XzJJajNYUWcyb2w5RUxtLWNlNlJXVkNtRk9rQUU2MEk4MERseFY3QThxbU5oTjdlTFF5MnNyZw?oc=5",
+      "publishedAt": 1783224066000
+    },
+    {
+      "id": "Google News World-24-China cools on overseas publicat",
+      "source": "Financial Times",
+      "title": "China cools on overseas publication of scientific research - Financial Times",
+      "link": "https://news.google.com/rss/articles/CBMihAFBVV95cUxQSVEtSV9XMnF3cjNYR1hUN2M1MWh5QXAwWXdLX0lma1p6X1RRenNtRl8zdHJ3cWtKdmsyaVdLczcyMjNNRnNGUkZmU2o3Q25uR1JKVUZBelZUbHhQalFlZjJyRWl2OHpuX2RTYTI2eW9reDhmdVk4YjNxMGpEb1NGTGNmUjU?oc=5",
+      "publishedAt": 1783224002000
+    },
+    {
+      "id": "Google News Military-45-UK defense shifting to new schem",
+      "source": "paxtonmedia.com",
+      "title": "UK defense shifting to new scheme - paxtonmedia.com",
+      "link": "https://news.google.com/rss/articles/CBMi4AFBVV95cUxQX2Fka2gyRElmNjlwNmQ2N2U1QlUyUG1PQ3FMdXNYa2p5cmtSdXh2ZHg5eFZDdmtpUy1UY1M5YXJPS2p3MUVtWE9VcVMxRmZLQ1VOcGJHTzN1Qi11UDd3b2U2bmJUV19KMlZsb19xQk1NTU9BZVUwUFpDTXlMYldPXzh6T2lsWUVSZVlfS2lNekF5QW9GUHoxeS1UZHFMTGx6eTcxdzFfSGR0Y01SWG5RLV9adUdyeXVEYlhEaGN3UWxoVFZwR2tpSi1tX3hUVkVLdXZVUkl1QW9uU1lJNl96SQ?oc=5",
+      "publishedAt": 1783224000000
+    },
+    {
+      "id": "Google News Military-93-China Says It Will Hold Naval Dr",
+      "source": "Bloomberg.com",
+      "title": "China Says It Will Hold Naval Drill With Russia This Month - Bloomberg.com",
+      "link": "https://news.google.com/rss/articles/CBMirgFBVV95cUxOWXZFZDlzRU1sYTJELXRUQmRJWmhYRkltamFMNU5FLXJpbGxzOEdSNW9DUTNwdTJOcEdUSlFGb01rRWUxYzdXRzVXQkV3MnRWN2g1NUVxaWo0VC1IMUtPaEV1bktmYnVRbGdVNHQ3MXhzd0ZJdmxlVjBNYko5YjVEOUo5TkhvYW1qd09Wa3hZQXpYT3Jja2J2czNfd0FIMkVDOU5iaWdTTmZrc2UxaHc?oc=5",
+      "publishedAt": 1783223820000
+    },
+    {
+      "id": "Google News Energy-71-OPEC+ to increase oil production",
+      "source": "Crypto Briefing",
+      "title": "OPEC+ to increase oil production quotas amid Middle East stabilization - Crypto Briefing",
+      "link": "https://news.google.com/rss/articles/CBMingFBVV95cUxOaGpXY1V5cHF5N3pIenlzZDlNX0RhQmhscDQtWTlyeUJmWnJoNTFlMk50M2gwQjg4amRWNjBSM3plSWRiWXNhd2paY1RxaVVSUlFuNGZPaHJEYmxxTmVfeHFNb2tHWTEwSUFTLWhTRW1Zd2t1SlA5bXFITnZGTWp2VFA2cFpfMHJHVi13bnR1bnZTU05qMHBlN09DYkg0dw?oc=5",
+      "publishedAt": 1783223480000
+    },
+    {
+      "id": "Google News World-28-Putin visits military installati",
+      "source": "The Washington Post",
+      "title": "Putin visits military installation, vowing to take more of Ukraine - The Washington Post",
+      "link": "https://news.google.com/rss/articles/CBMirAFBVV95cUxOZThNamVaZEVGTE0wbFoyVXJoOXZZbHBkaHNxcVZRR2Nwa1VfNkNYWFY3WVRmX19lMEhPY2pKVjU2dFhVWHFMOEVRdVJydWpKSVQ0cDZDM2thSm96VmRHZmZFLWpzWDJ0NU4xQUo5c0dNbjVxa2kyYm9BS0Q4cmF3SmFfUUpwVEtkZFVuOW9DNmZqRzNjOFAxWEJVUkhoWERaN0RTRUxwekJHTWpy?oc=5",
+      "publishedAt": 1783222293000
+    },
+    {
+      "id": "Google News Energy-49-Tehran asserts Hormuz transit fe",
+      "source": "Jewish Rhode Island",
+      "title": "Tehran asserts Hormuz transit fees while offering breaks to 'friendly' states - Jewish Rhode Island",
+      "link": "https://news.google.com/rss/articles/CBMiugFBVV95cUxNSUtxYkFuczFpQlJaa25DUXRzYzhxcDNSLTJkVUdCR093VXgyQ2pScU82T1B3RlN6akNzWldCMW50ekVZVHpJUW5qLXY2QktzdjdWZ3lyTVNsNlBIck9xOW9jcm1sXzdRUHM4akF3ZHJEWW9ESFpJQU5vblRBRE96cTZ2enRGd3gzQXVZSGZfajBRUmtrUkRCalVlNFdrLWpNVktZdVRCbFBoX01CNDM1WFVrdnE2cmYzTEE?oc=5",
+      "publishedAt": 1783221900000
+    },
+    {
+      "id": "Google News Military-78-Erdogan: Turkey and Pakistan to ",
+      "source": "8am.media",
+      "title": "Erdogan: Turkey and Pakistan to Expand Defense and Economic Cooperation - 8am.media",
+      "link": "https://news.google.com/rss/articles/CBMimAFBVV95cUxNaFp3MzJjaDZoSENIcEdCUDA3Y040TU51cl8xSk1qNmJwWldaRnRqM1V5QXJHc2F0ZmtNNkgtWjc1V0FLc3F6NHJRSTFOV3BmS2NPTUtuaVBrdXF0WkRpa0VMOEV3cjMtMmt3XzRaUERGeG1rSkFXcVQ1aTJTSHpzRXhRNllfNDM1ZURFZ3VoWG1oTTgwZDNyQg?oc=5",
+      "publishedAt": 1783221710000
+    },
+    {
+      "id": "Google News Military-83-Zelenskyy says he held phone cal",
+      "source": "news.cgtn.com",
+      "title": "Zelenskyy says he held phone call with Trump on Russia conflict - news.cgtn.com",
+      "link": "https://news.google.com/rss/articles/CBMivAFBVV95cUxNd2NwWUpYRWhucjVGQUlZQlpmZkZxYWh6NGFjS3NwdExlUkNoMXJsd3MxZVA4VTNkOWp1eHJkWXN4RWo4X1VKbXJtclFaMXNBekFSdUZDaWxuMHR4cnhrenY5RjJmOU53VTZEcnJKZlJ3Sld1a2FwSFlPT3RFUVV5TXZsU3FzRlBPTmt1aGNUUGlOUk94VmlsYXZyUFI0QzA1N0dkTDJSSHZzaE44MDc0OGRfeW1aWlRpSG9YaQ?oc=5",
+      "publishedAt": 1783221570000
+    },
+    {
+      "id": "Google News Military-27-Braves finally back Chris Sale, ",
+      "source": "Battery Power",
+      "title": "Braves finally back Chris Sale, as Mets’ defense provides an assist - Battery Power",
+      "link": "https://news.google.com/rss/articles/CBMi3AFBVV95cUxOT3BFaXN4NkdVVWRJUG1JYzhsQTBZTnBDMUFfYzQteDJDbkZxUXFhWTJWd0NTSHJWZkZRQ3kzbE9LRGJ1ZE1UWHB5MjdDTWptNkxfUHZoSVE0cmo2bHk2b05yLWRudXNObmpEb2hYVzduaXJ0a0tFQ0N2b3VGbl9Sa01NT1dqMWlRVVRVNzhiR3pXRUNKZlJBY29jMUtCTDB1d0h4YVppYklFUUhHT2Z6Z0YxVWdlekQ2MzlHU1FTOUtwMGhPQnk0OEFHSW5jelBtNFk4NGhwalFDTHdr?oc=5",
+      "publishedAt": 1783221360000
+    },
+    {
+      "id": "Google News Energy-90-Iran Confirms Strait Of Hormuz S",
+      "source": "News18",
+      "title": "Iran Confirms Strait Of Hormuz Service Fees, Friendly Nations To Get 'Special' Treatment - News18",
+      "link": "https://news.google.com/rss/articles/CBMizgFBVV95cUxQVmprOUd2cVlFTnlpbzljdDVBcHBoeTVERzlWNHh6bGo5VklBR1dsSG1yWFBDMksyWWtfT0Iwd2x5ZkFmWkdDTkN1bGhsRnItNWhDN3czTTVhT3dlTUZBLTJ6cmQtU00zVGlVVXFJOTNRWkdaelVhRFFzUFcwczREQ01vSk40RExuZlJsRlRIREhoUl92a0JpbWJ2dVVRaHNyT091TzM4Y3NicDJTWm5neU9JM3RZSDJCSEtUbXlnZFhUbUlFQ1RpTG10Tk9Kd9IB0wFBVV95cUxPVDlUR242a0dnZFNJaEFETmtNb29mdkNsQ3NlekhWWVBDYWFlc0lNTnZnTTg4LVFlY1dWbG03eF9hRlBZaU9hN2I2QXJ3NVktYXZNaEdud29QQXU2cVp3VFFJLUF6Q2syT2MyUlZKWl8zQm9KcVpGSnFDU05VU1lxcDRzYlBUQ2tsSDVvM1E4clV4eGxVLXNxM2ZQVFVHdGZKMWp6MXMwOWpjMzM5UXN2cWlkRWVuTGZuZTZnUE51ZDFNS25Ma1NsdGdJTklPdHEzQzVz?oc=5",
+      "publishedAt": 1783221353000
+    },
+    {
+      "id": "Google News Military-51-104-year-old World War II vetera",
+      "source": "Fox News",
+      "title": "104-year-old World War II veteran shares about his military service - Fox News",
+      "link": "https://news.google.com/rss/articles/CBMiVkFVX3lxTE5NaXBUcnJyaWM3eWxKZkhhZlRrUDR5eVdUSFN4TDRhMzVocU93Y21OU1RYTTBoNHZYSXVCQVRYUHl6ZnY3cHJVX3VDVU13a1QtZ2k1OGVn?oc=5",
+      "publishedAt": 1783220970000
+    },
+    {
+      "id": "Google News Energy-51-DOJ, FTC Urge States to Help Inv",
+      "source": "PYMNTS.com",
+      "title": "DOJ, FTC Urge States to Help Investigate Potential Oil Market Manipulation - PYMNTS.com",
+      "link": "https://news.google.com/rss/articles/CBMiqwFBVV95cUxOQWxkdElzQ0NpVmstYmhaRWNyZGR3bkw4LU5oMkRBbG8xSDlDVWFpeFAtdWNLdGtfN3F1ZlpYT0ZzclZJRDhpVGhtVlBOSVF5V2JMbjhINGFUMGpVRENmcnJHU054WVJUdWZFN29MRG4tdVRPemhIV1l5V3M1dHNpZTFRbnNub3VhNWxZdmdOV1VMYm00QVo4UGF3X1FrN0ZONDRxSDJXVEpKMVU?oc=5",
+      "publishedAt": 1783220690000
+    },
+    {
+      "id": "Google News Energy-57-Iranian diplomat says country wi",
+      "source": "The Times of Israel",
+      "title": "Iranian diplomat says country will ‘definitely’ collect Hormuz fees, defying US - The Times of Israel",
+      "link": "https://news.google.com/rss/articles/CBMiqwFBVV95cUxPZnM4c3Z0bXNvTWdmbVhPS0JpZ191RGp5UUduV3UwTm5vblhBQ2RTQ1doeHlCbXBJZnlGcm5XSWc1Sm1Wa29aX3pkRXA0d19GUl9jLWVGNVBjdjNGSU9nVC1fczNmQl9vOVJVOHVUM0Fvb1JFNGR4Y2VtUHB4dnZIXy1YZUtrOTZ1VjJ0OHlBQjJ4VGg5Tm9VZnhUMUxsbTlGSzJIRnpZMDRhOW_SAbABQVVfeXFMTUFjV1V0Ukc3ZnpUNXlSYmN1NmJUTlIzWGFIVGN5aEQ0WUxLWTl1MVFXeE5tU2k3M09Ya1RRMWhxNU9xWVppT1pQZGdWWG9PdXh4OGx5djlBaVcwQy1KRGZkZXhpb0ZfX3pFc09DWHdWWnMxR0ViS3BKOURIVUwzckVfSFEydFhxV3U4U19xQzdzSGpJa3Y3TUd6V3R4dDkwN3lMUFE0UjgtWE5sSnlFUks?oc=5",
+      "publishedAt": 1783220153000
+    },
+    {
+      "id": "Google News Energy-81-We Asked Pest Pros If Peppermint",
+      "source": "The Spruce",
+      "title": "We Asked Pest Pros If Peppermint Oil Keeps Bugs Out—And Their Answer Surprised Us - The Spruce",
+      "link": "https://news.google.com/rss/articles/CBMic0FVX3lxTE9pSFVlUnM2d3d5MzB2QUdWWk9mbDRKa3JVOWg1Qy1ZbFpackN3TFdHQ0t3VXFYUFN4TUNadE9pNk1PY0szTFRTZlllN2Rnc1JzUDlITVhRbmsyWC12UWtIZUl5MUgweXNQT2pjSlJ0eGlFb0E?oc=5",
+      "publishedAt": 1783218480000
+    },
+    {
+      "id": "Google News World-3-World Cup 2026: England head coa",
+      "source": "BBC",
+      "title": "World Cup 2026: England head coach Thomas Tuchel on Mexico match - BBC",
+      "link": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTE4zYnFtbVRYekJjRWgyb28yVnlrWGhhSWszdVYxdFNIdnExQ2wySHY0OWJucDd4NHFIaHgyczVndFRLazlqY1JYX0E3NWFtQlpEUVU3UmREUWxKbm80YUdxM0pnWDNHakk?oc=5",
+      "publishedAt": 1783217719000
+    },
+    {
+      "id": "Google News Energy-40-2026 Lucas Oil Late Model Dirt S",
+      "source": "FloRacing",
+      "title": "2026 Lucas Oil Late Model Dirt Series at Muskingum County Speedway - FloRacing",
+      "link": "https://news.google.com/rss/articles/CBMi2AFBVV95cUxOeEt5TERuOXRDbTdoUE5ubUdNbXNDdHJpM3dtaTNvMjNfclpseW1nSWRwb29uSlVPRU1WV1NYbXJtSWZ6eF9jTk9HQ005X1BUYnc1U0tkbTZ5b3RFNUZCS19pakJKc3ZXcldUMTRtOW1vQ3Q4cEk0Wnc5R1pkZE11NF8tVmk5ejVYVUMxTHU5ellhLUIteTF3SHNzcC0zTnd6aVBhbkROemxkdnFLVFRmeFlqbmdwTkxySEJlcWo0bG5oYVBDdEFWTWQ2b005R2I5ejZ4ejgyQWw?oc=5",
+      "publishedAt": 1783217416000
+    },
+    {
+      "id": "Google News Energy-33-Ship-tracking firm says four shi",
+      "source": "Middle East Eye",
+      "title": "Ship-tracking firm says four ships changed course in Hormuz - Middle East Eye",
+      "link": "https://news.google.com/rss/articles/CBMiswFBVV95cUxOU1RucFJZeWN0Q1Z3RnFOZ2c0bERUV1FseXZiLWQ2UXBQQ19iT2RJRnY3SE1PUUtHR2ZuNU9UV3A2cFRrQ3BHTnJyd0FFMmFxRXBic3V6SGltRXdWUmhHZzlPU0NrZEt4dDFDOENtM3Jaak5CVWswYVBaQlEzRmxGZ1p4bnE0aEM0dHM0Z2JYaWpmSjNaN2ZXRzJnMlRyMFJGSHkwMjRNZHVaTEh2a194VjJRMA?oc=5",
+      "publishedAt": 1783217220000
+    },
+    {
+      "id": "Google News Military-67-KAI Establishes Civil-Military H",
+      "source": "thelec.net",
+      "title": "KAI Establishes Civil-Military Helicopter Safety Cooperation Framework - thelec.net",
+      "link": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTE5wY2k1Zi1CMTJiOXdpamVqSTdyWVFZd1dXRDZleC16d2VhQlJqRjJKd0ZIQXJGdHFXdHRkTnBieTNZNGpheGtlREVzVU9NX2o0Y2pQVWVCYzZuUUVkSXVTZVdsZ1QxZTA?oc=5",
+      "publishedAt": 1783216442000
+    },
+    {
+      "id": "Google News Energy-26-Iraq approves preliminary agreem",
+      "source": "Reuters",
+      "title": "Iraq approves preliminary agreements to study strategic oil export pipeline projects - Reuters",
+      "link": "https://news.google.com/rss/articles/CBMiwgFBVV95cUxPanVDQU1kSjJIRXJsYkpBX1RPS2lZM1JZOERFMFVRdzloOG1YTUFSalBHMW9DTTA5d1NLWGpaUEVGRjlCZndKNUc1Q29taHNNWmxaSnNQZWx3cnZDc1BiNWJBUnNrM0kxTy1Zd19xLUVTdEM1TG53dE1valZMdHV6clphU0VIcGNYeDU2M3gtYWpyWXZ3YjJvaUYxX3VwUVNoUnVUak5pVzVvUzNqM19KVlRMZ2FqVlhralpCV1pvS1EwQQ?oc=5",
+      "publishedAt": 1783213980000
+    },
+    {
+      "id": "Google News World-1-Huge Crowds Mass in Tehran for A",
+      "source": "The New York Times",
+      "title": "Huge Crowds Mass in Tehran for Ayatollah’s State Funeral - The New York Times",
+      "link": "https://news.google.com/rss/articles/CBMihgFBVV95cUxPWWFMU2pUZHo3VDllY3N5RFkyYTRkWmx1bTRmSF9vbXQxNlB5cUFTTmZCMElrdWYtWkdoRDJrdXZJTl9fbHRZYlJocWhnUDFHVEl5WnVIOUtUQ0QzdTJIUG4yMzVzUXFKSFB5LWxzUkpKYlIzbmtScV9jN0hwZjAxa2xvUmtTZw?oc=5",
+      "publishedAt": 1783213429000
+    },
+    {
+      "id": "Google News Military-63-Latter-day Saint defense of reli",
+      "source": "Deseret News",
+      "title": "Latter-day Saint defense of religious freedom goes back to the beginning - Deseret News",
+      "link": "https://news.google.com/rss/articles/CBMingFBVV95cUxQNW9hR0VBOWZfZV9TQTVPSFpsNU41c1YxMkJZaGJJNzNlblNYMTZ3ZUlzSjJTcHUxNXVzcFdyNnBCZHp0VDFiZmNLVWVJM3FmS0thYXdydXc2M2s0czJQMmZTRjE3bTZ2QkcySVprRHlGYng2Mnc2a0RPNlJtd3J0MDBfWHExeG9iYnp5bjhxWkl5UGZEd2d2SVkwakZQUQ?oc=5",
+      "publishedAt": 1783213200000
+    },
+    {
+      "id": "Google News Military-2-This immigrant served in the US ",
+      "source": "Al Jazeera",
+      "title": "This immigrant served in the US military. Now he faces deportation - Al Jazeera",
+      "link": "https://news.google.com/rss/articles/CBMitAFBVV95cUxNcHFzWGFyaDFyOWs5VmRlQ2hZMXpOQTlFVXlwVFhsbjFMZ09EeWp6MmExeWJZRHdqQWxkYXRhM3g2c2c3NW9NWHo5RHc1cHV4NGEyRVl3Q0tuR0hwZU1rdXNzSDdpZDFRajUxYnJrNU1GdDRkNHI5UFhVLVY4SVJrQnNwb3BiaWw5NnVNRG9Del9pTVk3aDRNbk1DbTJILVJaQXlMcjhiSjhWUUpnekhaVjBEVk_SAboBQVVfeXFMUGJkUFVBNHB5aWV4WDU5ZWxFb0xiSElmdEsyNTd0MWFXWHpnRnBPOG1SbGVzc3RCM2xSYnhkcGZUMGhCY0FGTmtNTXpBUHlaNmstSm1wbkpsNmx1RXZ2OXRtdTl5TTBUZDdFYlZ2eDNXZFVXcjdEZUVISkVIazFlV2paMVBRNm0taDExWkduclBJT1U2NTB4TGRHOTY0dHdyLUU5ZThZRTZoc3QyZktBeFNiNnhEbFN5d1JR?oc=5",
+      "publishedAt": 1783213113000
+    },
+    {
+      "id": "Google News World-4-Ukraine strikes oil terminals ne",
+      "source": "DW.com",
+      "title": "Ukraine strikes oil terminals near St. Petersburg in Russia - DW.com",
+      "link": "https://news.google.com/rss/articles/CBMilgFBVV95cUxORHp1bXAxSGlUSjFDODZEMkxTcWpnYXhYSjBhTHBQdHItSDZMdmMxT0YyQzF6cWp2SmFVNEpMTWZkNjlwekU3eEt6cG4wX191WGpIclRidWZkc3FBOF9ibVFRdTlueHlJMHBRbVVOUDc2YzBiRDdQVlhmeUQydHFCTVZNSEhsZEFYdFlFMHl6ZDlwMnZhVWfSAZYBQVVfeXFMT21lOUVleE9wVHZBRHRZbnljMW5ieEZGMHlNNzlwNUtkc3BJSHpLZTZWdHpaUFp0YU4yOFJzTkMzQ0doUGQwWjFOcUN4REtiZkZLWGJjT2Y1Yy1zR3hfalRUU09VWFVDc0RZOUFhMlhMTktyV3d1bERlb2xzVEMyNHFianhZTVI0bXFXQ204UkxmSk1VNXdB?oc=5",
+      "publishedAt": 1783212691000
+    },
+    {
+      "id": "Google News Military-8-July 4th military flyover displa",
+      "source": "CBS News",
+      "title": "July 4th military flyover display halts D.C. airport operations - CBS News",
+      "link": "https://news.google.com/rss/articles/CBMilwFBVV95cUxNTFVPSUs0eGdMMW5wb1lqY0lxOFdJM0N5NkRfVVlJRDZ4NG1CanAyWlJlOXFLTzBqS1Z4ODNOTV9oTWlkRHE3TFNHMF8wSUk4a3JqR25vbVpRdG51TDlQT3ZhVnRHNWpFZVNCYXRmczNtaUFycWR2SUFzNU5jc1Rqa2RjR1ZDaTd4SFVOaVpmR2UxdG8xMEI4?oc=5",
+      "publishedAt": 1783211940000
+    },
+    {
+      "id": "Google News Military-72-US Task Force Selects Military S",
+      "source": "Eurasia Review",
+      "title": "US Task Force Selects Military Sites For Counter-Drone Systems - Eurasia Review",
+      "link": "https://news.google.com/rss/articles/CBMipAFBVV95cUxPOWlRSE45NU11X3pNbnNveUh5ZGdPem9BcDZPdE1kMzBGelU0LUR5WjdqT3NhSkxKWTk3M1ZtRzVTZFZvV3lUTy1JbEMxb3pMaDBjOTh3VXl1dDdJRHVxTW5udUw2enVMTlQtYVFFNGNMLXl2QzExZ1RlS3RfRVJhSi1OS3pKVFJVbHdUX0x5dVZyLXZBenZkODFySGl5V013cU84bw?oc=5",
+      "publishedAt": 1783211253000
+    },
+    {
+      "id": "Google News Military-71-Canada Bolsters Arctic Defense W",
+      "source": "Eurasia Review",
+      "title": "Canada Bolsters Arctic Defense With HIMARS Purchase - Eurasia Review",
+      "link": "https://news.google.com/rss/articles/CBMilgFBVV95cUxNZUFVR0FvVUhjOXZIYlBRc1VKX29JeWtBaUVjYWxESk40RDI1WEFKLVAzaTZOVXROZHdsWHVSdUtqTWJBX1NuczdyZFZzVlhTSHRYUEItMzN0YVhTSXZmQUZNN3VPWDV2aFZ2Y0l0X2Vwc1MxQnBzMF9Eb2NZOENKRU56NUQ2VnoxcEdmNzQ2OWlNRTRnWmc?oc=5",
+      "publishedAt": 1783210644000
+    },
+    {
+      "id": "Google News Energy-72-Ukrainian drones hit St. Petersb",
+      "source": "Times Leader",
+      "title": "Ukrainian drones hit St. Petersburg oil terminal in latest long-range attack on Russia - Times Leader",
+      "link": "https://news.google.com/rss/articles/CBMixAFBVV95cUxPVHBuSV9WVk12dWZxNXRvWjAtQWJicW1GZU9XaURwYzN4dVAxN0hEVEhseXpHZzJWaXBrWm5ZMS0xckRBd3MwTFdMWkxVSVR1bUc3ZDNtT2RPd2F1djRrSlg5VUtiekl3X0lwRDBBSUVQeTAyRlBKTlNDNzlrekw2anRTR3Q5Nm9RWEdiWTN3bmNCZExTQ0p4WFZ1Z0NDTHIxS2JIRmlOTndhR0ppUEJTb2c3MWZPM3hUWmN5Y1lDVUU4bDR5?oc=5",
+      "publishedAt": 1783210440000
+    },
+    {
+      "id": "Google News Military-58-Military Flyovers Honor America’",
+      "source": "wdwinfo.com",
+      "title": "Military Flyovers Honor America’s 250th at Walt Disney World - wdwinfo.com",
+      "link": "https://news.google.com/rss/articles/CBMipAFBVV95cUxQV3NJNk5Za3RKYWhyT2V2SXRmdERlUkdIcnhmTVlWVW9NV3ZvVWFSNWxNUDg4b05DUFJCQmx4dy1RTjQ3QzNnNllxMkhieUNQeERpblNHb3dkQi1hVl8yWGlCaXVyVWgyanROX2ZzMXlZZ1BLMmJKVVVXYzhfc290ZnlCNHZ5R1JtZGhBb2dUbkEwUGZQRk42WmRvcTdJdlFzOURYeg?oc=5",
+      "publishedAt": 1783209922000
+    },
+    {
+      "id": "Google News Energy-48-Iran envoy says friendly nations",
+      "source": "The Japan Times",
+      "title": "Iran envoy says friendly nations to get ‘special’ Hormuz fee treatment - The Japan Times",
+      "link": "https://news.google.com/rss/articles/CBMimAFBVV95cUxOYV9jSEMyTW1MZVc0ajdTMEw1aU9HV0VxYmN0bWlmUUpYMnFWalgyQloxbjFsV0J3UWJDU0xqdFY1bHptUlp5V2ZvaEpGWFRqQ0dGc24wY3B3UkxGQVNqdHM3dnpfUTY3M3F5U2taUy1aN2FIbVNJTWQxM0NCNFRIR3JTd2NhSWtKTG5XbWl3Z3UzUWNTVDB6Qg?oc=5",
+      "publishedAt": 1783208700000
+    },
+    {
+      "id": "Google News Military-96-How Sysco’s (SYY) Index Removal ",
+      "source": "simplywall.st",
+      "title": "How Sysco’s (SYY) Index Removal Amid New Military Contract May Impact Investors - simplywall.st",
+      "link": "https://news.google.com/rss/articles/CBMiygFBVV95cUxPMkVaWGlrTEdWUXpsN0FCM3ZsNWNGTEhIdU0zZDg3Z19HN3paVEVvWEctU0xnV2tLb3RYZm9GMVhIeVJCWUVHaW9MdGoyTENQRnNXYmVqRmpBMmlCdGtDdnlHRnlLMmxiWUp1Ujd1ZXdHbXdGb2dZLXgwOWR0d21abHpHSnlVOU83U0hKWXl5bVNFcnNSLTVELW1uS0R5TUhsMlN3NHR1b0VoQ3pjUGJuNlBxTVI2dTJuSzlxZVNwSnpCOVhJNTdHd0xR0gHPAUFVX3lxTE0wTjR1RjVjRVFqWWFQZjREMHR6ZFN2dmtKN0loMmJYdDZaZ1E4ZGN5ZUhNNUJoYW5wTmdRcmxQaGdtaGlKRUZsYkxNd1VoOG1TVUJnTUVGeVNONFJYZVlSZlo5RElER0ZEWE1PSEdoaW1zb2doVjBjNng5NzNwaTNZS201b0lWX2gxVG5DUVdERGlaaUZWQkJrTHdwTnlUd21qcDluWGl6SGstRkNHTGFpUk5MbmQyMXU1ZDhvUmN0TFROM2pVTUFDSGNmTHFJNA?oc=5",
+      "publishedAt": 1783207515000
+    },
+    {
+      "id": "BBC World-4-Moment of destiny for France's L",
+      "source": "BBC World",
+      "title": "Moment of destiny for France's Le Pen in verdict to decide her future in presidential race",
+      "link": "https://www.bbc.co.uk/news/articles/c5yzlwz34p7o?at_medium=RSS&at_campaign=rss",
+      "publishedAt": 1783207044000
+    },
+    {
+      "id": "Google News Energy-77-Letter: Ohio’s oil, natural gas ",
+      "source": "LimaOhio.com",
+      "title": "Letter: Ohio’s oil, natural gas keep meeting the world’s needs - LimaOhio.com",
+      "link": "https://news.google.com/rss/articles/CBMipgFBVV95cUxPU1RhdXJaR2U0NlVTWEFtbDU4UUVBRmUxbzlSRXpCWlVsSEU0S1JhR2dMY1hhR29PWGdobHJQYzJMdHFaVXJnU3hkTEJYdEFtLW9lX3F4bkFoR0ZVaGEwaU9OUWhhZ2tlbEhTaXotODhGQTI3am9MQzlkUWhyNVpLN1FneVc1YnNlMXlQZkdKX2wyeTlxdDZkOFhtRUhTbWdWcGxpejF3?oc=5",
+      "publishedAt": 1783206000000
     }
   ]
 }

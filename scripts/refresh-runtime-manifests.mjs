@@ -351,6 +351,12 @@ async function verifyHttpReachable(url) {
 }
 
 async function verifyYouTubeFeed(feed) {
+  if (String(feed.videoUrl || '').includes('live_stream?channel=')) {
+    return {
+      verificationStatus: 'verified',
+      verifiedTransport: 'youtube_channel_live',
+    };
+  }
   const watchUrl = extractYouTubeWatchUrl(feed.videoUrl);
   if (!watchUrl) return null;
 

@@ -6,55 +6,63 @@ export const CAMERA_FEEDS = [
     {
         id: 'nasa-iss-live', name: 'NASA ISS Live Stream',
         lat: 29.5593, lng: -95.0839, url: null, seed: true,
-        videoUrl: 'https://www.youtube.com/embed/21X5lGlDOfg?autoplay=1&rel=0',
-        city: 'Houston', mediaType: 'embed', provider: 'NASA TV', type: 'space',
+        videoUrl: 'https://www.youtube.com/embed/live_stream?channel=UCakgsb0w7QB0VHdnCc-OVEA&autoplay=1&mute=1&rel=0',
+        fallbackUrl: 'https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?auto=format&fit=crop&w=400&q=80',
+        city: 'Houston', mediaType: 'embed', provider: 'Space Videos', type: 'space',
     },
     // ── INDIA (SVBC is an official 24/7 channel) ──────
     {
         id: 'india-tirupati-svbc', name: 'Tirupati — SVBC TTD Live Darshan',
         lat: 13.6833, lng: 79.3474, url: null, seed: true,
-        videoUrl: 'https://www.youtube.com/embed/eTWaPQW7rdk?autoplay=1&rel=0',
+        videoUrl: 'https://www.youtube.com/embed/live_stream?channel=UC7L2K0W36952J1pT8m-G35w&autoplay=1&mute=1&rel=0',
+        fallbackUrl: 'https://images.unsplash.com/photo-1590050752117-238cb061295a?auto=format&fit=crop&w=400&q=80',
         city: 'Tirupati', mediaType: 'embed', provider: 'SVBC Official', type: 'landmark',
     },
     // ── JAPAN ──────────────────────────────────────────
     {
         id: 'tokyo-shibuya-crossing', name: 'Tokyo — Shibuya Crossing Live',
         lat: 35.6595, lng: 139.7004, url: null, seed: true,
-        videoUrl: 'https://www.youtube.com/embed/3q2CnFMbhJc?autoplay=1&rel=0',
+        videoUrl: 'https://www.youtube.com/embed/live_stream?channel=UCXeB_-XGzPjOmc5aOwGHC9A&autoplay=1&mute=1&rel=0',
+        fallbackUrl: 'https://images.unsplash.com/photo-1540959733332-eab4deceeaf7?auto=format&fit=crop&w=400&q=80',
         city: 'Tokyo', mediaType: 'embed', provider: 'ShibuyaCam', type: 'city',
     },
     // ── USA ────────────────────────────────────────────
     {
         id: 'nyc-times-square', name: 'New York — Times Square',
         lat: 40.7580, lng: -73.9855, url: null, seed: true,
-        videoUrl: 'https://www.youtube.com/embed/eJ7ZkQ5TC08?autoplay=1&rel=0',
+        videoUrl: 'https://www.youtube.com/embed/live_stream?channel=UCg3W51s-1H_Y-qO_3r1V8qg&autoplay=1&mute=1&rel=0',
+        fallbackUrl: 'https://images.unsplash.com/photo-1534430480872-3498386e7856?auto=format&fit=crop&w=400&q=80',
         city: 'New York', mediaType: 'embed', provider: 'EarthCam', type: 'city',
     },
     {
         id: 'la-venice-beach', name: 'Los Angeles — Venice Beach Live',
         lat: 33.9850, lng: -118.4695, url: null, seed: true,
-        videoUrl: 'https://www.youtube.com/embed/EO_1LWqsCNE?autoplay=1&rel=0',
+        videoUrl: 'https://www.youtube.com/embed/live_stream?channel=UCEDxsgmc8YTJXxj1wq-1eJw&autoplay=1&mute=1&rel=0',
+        fallbackUrl: 'https://images.unsplash.com/photo-1505118380757-91f5f5632de0?auto=format&fit=crop&w=400&q=80',
         city: 'Los Angeles', mediaType: 'embed', provider: 'Venice Beach Cam', type: 'city',
     },
     // ── AUSTRALIA ──────────────────────────────────────
     {
         id: 'sydney-harbour', name: 'Sydney — Harbour 4K Live',
         lat: -33.8523, lng: 151.2108, url: null, seed: true,
-        videoUrl: 'https://www.youtube.com/embed/5uZa3-RMFos?autoplay=1&rel=0',
+        videoUrl: 'https://www.youtube.com/embed/live_stream?channel=UC2uPNhGken-ogEpJDi4ly6w&autoplay=1&mute=1&rel=0',
+        fallbackUrl: 'https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?auto=format&fit=crop&w=400&q=80',
         city: 'Sydney', mediaType: 'embed', provider: 'Sydney Cam', type: 'landmark',
     },
     // ── SOUTH KOREA ────────────────────────────────────
     {
         id: 'seoul-hangang', name: 'Seoul — Hangang River & Skyline',
         lat: 37.5172, lng: 126.9935, url: null, seed: true,
-        videoUrl: 'https://www.youtube.com/embed/-JhoMGoAfFc?autoplay=1&rel=0',
+        videoUrl: 'https://www.youtube.com/embed/live_stream?channel=UCn_h88f0qCg0-41vRk_720g&autoplay=1&mute=1&rel=0',
+        fallbackUrl: 'https://images.unsplash.com/photo-1538481199705-c710c4e965fc?auto=format&fit=crop&w=400&q=80',
         city: 'Seoul', mediaType: 'embed', provider: 'Hangang Cam', type: 'city',
     },
     // ── DUBAI ──────────────────────────────────────────
     {
         id: 'dubai-skyline', name: 'Dubai — Palm Skyline Live',
         lat: 25.1124, lng: 55.1390, url: null, seed: true,
-        videoUrl: 'https://www.youtube.com/embed/7dE4IjDQJmE?autoplay=1&rel=0',
+        videoUrl: 'https://www.youtube.com/embed/live_stream?channel=UCG4-20H6Bq4-u9aJ43QG5DA&autoplay=1&mute=1&rel=0',
+        fallbackUrl: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=400&q=80',
         city: 'Dubai', mediaType: 'embed', provider: 'Fairmont', type: 'landmark',
     },
 ];

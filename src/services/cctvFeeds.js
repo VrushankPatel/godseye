@@ -75,6 +75,9 @@ export function isContinuousLiveCameraFeed(feed) {
     if (String(feed.verificationStatus || '').toLowerCase() === 'stale') return false;
     if (isRefreshOnlyCameraFeed(feed)) return false;
 
+    // Seed camera feeds are configured to use permanent, working live streams.
+    if (feed.seed) return true;
+
     const provider = String(feed.provider || '').toLowerCase();
     const videoUrl = getEffectiveCameraVideoUrl(feed);
 

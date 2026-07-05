@@ -46,7 +46,37 @@ function createLayersState() {
 const useStore = create((set, get) => ({
     // Shader mode
     activeShader: 'DEFAULT',
-    setShader: (mode) => set({ activeShader: mode }),
+    savedLayersState: null,
+    setShader: (mode) =>
+        set((state) => {
+            const isSpecialMode = (m) => m === 'GOD' || m === 'SURVEILLANCE';
+            let savedLayersState = state.savedLayersState;
+            let layers = state.layers;
+
+            if (isSpecialMode(mode) && !isSpecialMode(state.activeShader)) {
+                // Save current layers enabled states
+                savedLayersState = Object.fromEntries(
+                    Object.entries(state.layers).map(([key, val]) => [key, val.enabled])
+                );
+            } else if (!isSpecialMode(mode) && isSpecialMode(state.activeShader) && state.savedLayersState) {
+                // Restore layers
+                const restoredLayers = {};
+                Object.keys(state.layers).forEach((key) => {
+                    restoredLayers[key] = {
+                        ...state.layers[key],
+                        enabled: !!state.savedLayersState[key],
+                    };
+                });
+                layers = restoredLayers;
+                savedLayersState = null;
+            }
+
+            return {
+                activeShader: mode,
+                layers,
+                savedLayersState,
+            };
+        }),
 
     // Globe view mode
     globeViewMode: 'planet',

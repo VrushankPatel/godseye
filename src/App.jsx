@@ -64,9 +64,13 @@ export default function App() {
             if (keyNum >= 1 && keyNum <= SHADER_MODES.length) {
                 const mode = SHADER_MODES[keyNum - 1];
                 if (mode) {
-                    setShader(mode.id);
-                    if (mode.id === 'GOD') enableAllLayers();
-                    else if (mode.id === 'SURVEILLANCE') enableSurveillanceLayers();
+                    if (activeShader === mode.id) {
+                        setShader('DEFAULT');
+                    } else {
+                        setShader(mode.id);
+                        if (mode.id === 'GOD') enableAllLayers();
+                        else if (mode.id === 'SURVEILLANCE') enableSurveillanceLayers();
+                    }
                 }
             } else if (e.key === '7') {
                 toggleFocusMode();
@@ -82,7 +86,7 @@ export default function App() {
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [setShader, setAppIsActive, enableAllLayers, enableSurveillanceLayers, clearInspector, clearTrackedTarget, toggleFocusMode, focusHideEntities, setFocusHideEntities]);
+    }, [activeShader, setShader, setAppIsActive, enableAllLayers, enableSurveillanceLayers, clearInspector, clearTrackedTarget, toggleFocusMode, focusHideEntities, setFocusHideEntities]);
 
     const getGlobeModeClass = () => {
         switch (activeShader) {

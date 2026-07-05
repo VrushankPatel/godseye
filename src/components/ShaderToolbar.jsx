@@ -16,11 +16,15 @@ export default function ShaderToolbar() {
     const setFocusHideEntities = useStore((s) => s.setFocusHideEntities);
 
     const handleModeClick = (modeId) => {
-        setShader(modeId);
-        if (modeId === 'GOD') {
-            enableAllLayers();
-        } else if (modeId === 'SURVEILLANCE') {
-            enableSurveillanceLayers();
+        if (activeShader === modeId) {
+            setShader('DEFAULT');
+        } else {
+            setShader(modeId);
+            if (modeId === 'GOD') {
+                enableAllLayers();
+            } else if (modeId === 'SURVEILLANCE') {
+                enableSurveillanceLayers();
+            }
         }
     };
 
