@@ -194,8 +194,7 @@ function createPlaneIconDataUri() {
 }
 
 const BASE_AIRCRAFT_SOURCES = [
-    { url: API_URLS.ADSB_ONE_GLOBAL, parser: (payload) => parseAdsbPayload(payload, 'ADSB.one') },
-    { url: API_URLS.AIRPLANES_GLOBAL, parser: (payload) => parseAdsbPayload(payload, 'Airplanes.live') },
+    { url: API_URLS.ADSB_LOL_GLOBAL, parser: (payload) => parseAdsbPayload(payload, 'ADS-B.lol') },
 ];
 
 const CORE_REGIONAL_AIR_ZONES = [
@@ -224,15 +223,16 @@ const ROTATING_REGIONAL_AIR_ZONES = [
 
 function buildRegionalPointSources(zones) {
     return zones.flatMap((zone) => {
-        const suffix = `${zone.lat}/${zone.lon}/${zone.radiusNm}`;
+        const queryRadius = Math.min(250, zone.radiusNm);
+        const suffix = `${zone.lat}/${zone.lon}/${queryRadius}`;
         return [
-            {
-                url: `https://api.adsb.one/v2/point/${suffix}`,
-                parser: (payload) => parseAdsbPayload(payload, `ADSB.one ${zone.id}`),
-            },
             {
                 url: `https://api.airplanes.live/v2/point/${suffix}`,
                 parser: (payload) => parseAdsbPayload(payload, `Airplanes.live ${zone.id}`),
+            },
+            {
+                url: `https://api.adsb.lol/v2/point/${suffix}`,
+                parser: (payload) => parseAdsbPayload(payload, `ADS-B.lol ${zone.id}`),
             },
         ];
     });

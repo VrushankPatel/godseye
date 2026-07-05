@@ -7,7 +7,7 @@ mkdir -p "$TMP_DIR"
 fetch_json() {
   local url="$1"
   local out="$2"
-  if curl -s --retry 3 --retry-delay 1 --max-time 45 "$url" -o "$out"; then
+  if curl -s -H "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" --retry 3 --retry-delay 1 --max-time 45 "$url" -o "$out"; then
     return 0
   fi
   echo "{}" > "$out"
@@ -23,8 +23,10 @@ safe_jq_number() {
 
 echo "== Flight Coverage =="
 
-fetch_json "https://api.adsb.one/v2/point/0/0/10000" "$TMP_DIR/adsb_one.json" || echo "WARN adsb.one global fetch failed"
-fetch_json "https://api.airplanes.live/v2/point/0/0/10000" "$TMP_DIR/airplanes_live.json" || echo "WARN airplanes.live global fetch failed"
+# Query regional point (radius <= 250) for adsb.one and airplanes.live to avoid 403 Forbidden rejections.
+# Query adsb.lol with 10000 NM for global coverage.
+fetch_json "https://api.adsb.one/v2/point/28.6/77.2/250" "$TMP_DIR/adsb_one.json" || echo "WARN adsb.one fetch failed"
+fetch_json "https://api.airplanes.live/v2/point/28.6/77.2/250" "$TMP_DIR/airplanes_live.json" || echo "WARN airplanes.live fetch failed"
 fetch_json "https://api.adsb.lol/v2/point/0/0/10000" "$TMP_DIR/adsb_lol.json" || echo "WARN adsb.lol global fetch failed"
 fetch_json "https://opensky-network.org/api/states/all" "$TMP_DIR/opensky_global.json" || echo "WARN opensky global fetch failed"
 fetch_json "https://opensky-network.org/api/states/all?lamin=6&lomin=68&lamax=36&lomax=98" "$TMP_DIR/opensky_india.json" || echo "WARN opensky india bbox fetch failed"
