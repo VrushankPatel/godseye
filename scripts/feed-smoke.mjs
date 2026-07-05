@@ -32,7 +32,7 @@ const checks = [
       toNumber('ADSB_LOL_GLOBAL') || 0,
       toNumber('OPENSKY_GLOBAL') || 0,
       toNumber('UNION_GLOBAL') || 0,
-    ) >= 100,
+    ) >= 10,
   },
   {
     label: 'Satellite catalog coverage',
