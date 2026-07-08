@@ -464,6 +464,74 @@ export default function MissionHud() {
     const visualTheaterRef = useRef(null);
     const rafRef = useRef(null);
 
+    // Gemini API states
+    const [geminiApiKey, setGeminiApiKey] = useState(() => {
+        return import.meta.env.VITE_GEMINI_API_KEY || localStorage.getItem('godseye:gemini-api-key') || '';
+    });
+    const [tempKeyInput, setTempKeyInput] = useState('');
+    const [aiBriefing, setAiBriefing] = useState(null);
+    const [aiBriefingLoading, setAiBriefingLoading] = useState(false);
+    const [aiBriefingError, setAiBriefingError] = useState(null);
+
+    const handleAcquireAiBriefing = async () => {
+        if (!inspector) return;
+        setAiBriefingLoading(true);
+        setAiBriefingError(null);
+        setAiBriefing(null);
+
+        try {
+            const prompt = `You are the Godseye Situational Intelligence AI, a tactical co-pilot providing military/situational reports.
+Analyze the following inspected asset from our surveillance system and provide a classified intelligence report:
+Asset Details:
+${JSON.stringify(inspector, null, 2)}
+
+You must respond with a strictly formatted JSON object matching this schema:
+{
+  "summary": "2-3 sentence overview of this asset's strategic/geopolitical/operational role, current situation, and local significance.",
+  "riskLevel": "LOW" | "ELEVATED" | "CRITICAL",
+  "riskJustification": "A short 1-sentence reason for this risk level.",
+  "bulletPoints": [
+    "Context/intelligence point 1",
+    "Context/intelligence point 2",
+    "Context/intelligence point 3"
+  ],
+  "sources": [
+    { "label": "Source/Agency Name (e.g., ADSB, GDACS, USGS, Copernicus)", "url": "https://url-if-applicable-otherwise-empty" }
+  ]
+}
+
+DO NOT wrap the JSON in markdown code blocks like \`\`\`json. Return ONLY the raw JSON string. Do not include conversational remarks. Make it sound highly professional, tactical, and classified.`;
+
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`;
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: { responseMimeType: 'application/json' }
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (!text) {
+                throw new Error('Empty response payload');
+            }
+
+            const parsed = JSON.parse(text);
+            setAiBriefing(parsed);
+        } catch (err) {
+            console.error('[GeminiBriefing] Error:', err);
+            setAiBriefingError(err.message || 'Briefing acquisition failed');
+        } finally {
+            setAiBriefingLoading(false);
+        }
+    };
+
     const effectiveVideoUrl = (() => {
         const rawVideoUrl = inspector?.resolvedVideoUrl || inspector?.videoUrl;
         if (!rawVideoUrl) return '';
@@ -504,6 +572,9 @@ export default function MissionHud() {
         setInspectorVisuals([]);
         setInspectorVisualsLoading(false);
         setSelectedVisualIndex(0);
+        setAiBriefing(null);
+        setAiBriefingLoading(false);
+        setAiBriefingError(null);
     }, [inspector]);
 
     useEffect(() => {
@@ -932,6 +1003,129 @@ export default function MissionHud() {
                                     </div>
                                 </div>
                             )}
+
+                            {/* Gemini AI Briefing Widget */}
+                            <div className="rcp-ai-briefing">
+                                <div className="rcp-ai-title">
+                                     <span>🤖</span>
+                                     <span>CO-PILOT INTEL REPORT</span>
+                                </div>
+
+                                {!geminiApiKey ? (
+                                    <div className="rcp-ai-key-input-container">
+                                        <div className="rcp-ai-key-label">
+                                            CLASSIFIED ACCESS RESTRICTED. INPUT GEMINI API KEY TO ACTIVATE SATELLITE BRIEFING.
+                                        </div>
+                                        <div className="rcp-ai-key-actions">
+                                            <input
+                                                type="password"
+                                                placeholder="Gemini API Key"
+                                                value={tempKeyInput}
+                                                onChange={(e) => setTempKeyInput(e.target.value)}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter' && tempKeyInput.trim()) {
+                                                         setGeminiApiKey(tempKeyInput.trim());
+                                                         localStorage.setItem('godseye:gemini-api-key', tempKeyInput.trim());
+                                                    }
+                                                }}
+                                                className="rcp-search"
+                                                style={{ flex: 1 }}
+                                            />
+                                            <button
+                                                onClick={() => {
+                                                    if (tempKeyInput.trim()) {
+                                                        setGeminiApiKey(tempKeyInput.trim());
+                                                        localStorage.setItem('godseye:gemini-api-key', tempKeyInput.trim());
+                                                    }
+                                                }}
+                                                className="rcp-action"
+                                            >
+                                                SAVE
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : aiBriefingLoading ? (
+                                    <div className="rcp-ai-loading">
+                                        <span>ACQUIRING DIRECT SATELLITE COMMUNICATIONS...</span>
+                                        <div className="rcp-ai-loading-bar">
+                                            <div className="rcp-ai-loading-bar-fill" />
+                                        </div>
+                                    </div>
+                                ) : aiBriefingError ? (
+                                    <div className="flex flex-col gap-2">
+                                        <div className="text-red-300 text-[10px] leading-tight font-bold uppercase">
+                                            Briefing Offline: {aiBriefingError}
+                                        </div>
+                                        <button onClick={handleAcquireAiBriefing} className="rcp-ai-button">
+                                            RETRY UPLINK
+                                        </button>
+                                    </div>
+                                ) : aiBriefing ? (
+                                    <div className="rcp-ai-briefing-body animate-fade-in">
+                                         <div className="rcp-ai-badge-row">
+                                             <span className="rcp-entity-key">Threat assessment</span>
+                                             <span className={`rcp-ai-badge rcp-ai-badge--${String(aiBriefing.riskLevel || 'low').toLowerCase()}`}>
+                                                 {aiBriefing.riskLevel || 'LOW'}
+                                             </span>
+                                         </div>
+                                         {aiBriefing.riskJustification && (
+                                             <div className="text-[9px] uppercase text-text-dim leading-snug tracking-wider">
+                                                 Reason: {aiBriefing.riskJustification}
+                                             </div>
+                                         )}
+                                         <div className="text-[10px] text-white leading-relaxed tracking-wide">
+                                             {aiBriefing.summary}
+                                         </div>
+                                         {Array.isArray(aiBriefing.bulletPoints) && aiBriefing.bulletPoints.length > 0 && (
+                                             <ul className="rcp-ai-list">
+                                                 {aiBriefing.bulletPoints.map((point, index) => (
+                                                     <li key={index} className="rcp-ai-list-item text-[10px] leading-normal tracking-wide text-text-primary">
+                                                         {point}
+                                                     </li>
+                                                 ))}
+                                             </ul>
+                                         )}
+                                         {Array.isArray(aiBriefing.sources) && aiBriefing.sources.length > 0 && (
+                                             <div className="rcp-ai-sources">
+                                                 {aiBriefing.sources.map((source, index) => {
+                                                     if (!source.url) return null;
+                                                     return (
+                                                         <a
+                                                             key={index}
+                                                             href={source.url}
+                                                             target="_blank"
+                                                             rel="noopener noreferrer"
+                                                             className="rcp-ai-source-link"
+                                                         >
+                                                             {source.label || 'LINK'}
+                                                         </a>
+                                                     );
+                                                 })}
+                                             </div>
+                                         )}
+                                         <div className="flex gap-2 mt-1">
+                                             <button onClick={handleAcquireAiBriefing} className="rcp-ai-button" style={{ flex: 1 }}>
+                                                 REFRESH INTEL
+                                             </button>
+                                             <button
+                                                 onClick={() => {
+                                                     setGeminiApiKey('');
+                                                     setAiBriefing(null);
+                                                     localStorage.removeItem('godseye:gemini-api-key');
+                                                 }}
+                                                 className="rcp-action"
+                                                 title="Clear API key"
+                                             >
+                                                 LOGOUT
+                                             </button>
+                                         </div>
+                                    </div>
+                                ) : (
+                                    <button onClick={handleAcquireAiBriefing} className="rcp-ai-button">
+                                         ACQUIRE AI BRIEFING
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     )}
                     {/* Flight Filters — only when an aircraft is selected */}

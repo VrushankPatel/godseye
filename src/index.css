@@ -1727,3 +1727,180 @@ body {
   background: rgba(0, 180, 255, 0.16);
   box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.24), 0 0 12px rgba(0, 180, 255, 0.08);
 }
+
+/* ── Gemini AI Briefing styles ── */
+.rcp-ai-briefing {
+  border-top: 1px solid rgba(0, 180, 255, 0.15);
+  padding: 8px 10px;
+}
+
+.rcp-ai-title {
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  color: #a3e635;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rcp-ai-button {
+  width: 100%;
+  padding: 6px 10px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  border: 1px solid rgba(163, 230, 53, 0.4);
+  background: rgba(163, 230, 53, 0.06);
+  color: #a3e635;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-radius: 2px;
+  font-weight: bold;
+}
+
+.rcp-ai-button:hover {
+  background: rgba(163, 230, 53, 0.14);
+  box-shadow: 0 0 8px rgba(163, 230, 53, 0.2);
+}
+
+.rcp-ai-loading {
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  color: #a3e635;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 0;
+  text-align: center;
+}
+
+.rcp-ai-loading-bar {
+  width: 100%;
+  height: 3px;
+  background: rgba(163, 230, 53, 0.15);
+  border-radius: 2px;
+  overflow: hidden;
+  position: relative;
+}
+
+.rcp-ai-loading-bar-fill {
+  width: 35%;
+  height: 100%;
+  background: #a3e635;
+  position: absolute;
+  left: 0;
+  animation: loading-bar-slide 1.2s ease-in-out infinite;
+}
+
+@keyframes loading-bar-slide {
+  0% { left: -35%; }
+  100% { left: 100%; }
+}
+
+.rcp-ai-briefing-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 10px;
+  line-height: 1.45;
+  color: #c8d0ef;
+  padding: 4px 0;
+}
+
+.rcp-ai-badge-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2px;
+}
+
+.rcp-ai-badge {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  padding: 2px 6px;
+  border-radius: 2px;
+  text-transform: uppercase;
+}
+
+.rcp-ai-badge--critical {
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  background: rgba(239, 68, 68, 0.14);
+  color: #fca5a5;
+}
+
+.rcp-ai-badge--elevated {
+  border: 1px solid rgba(245, 158, 11, 0.5);
+  background: rgba(245, 158, 11, 0.14);
+  color: #fde047;
+}
+
+.rcp-ai-badge--low {
+  border: 1px solid rgba(34, 197, 94, 0.5);
+  background: rgba(34, 197, 94, 0.14);
+  color: #86efac;
+}
+
+.rcp-ai-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 4px 0 2px;
+  padding-left: 12px;
+}
+
+.rcp-ai-list-item {
+  list-style-type: square;
+  color: rgba(200, 208, 239, 0.88);
+}
+
+.rcp-ai-sources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.rcp-ai-source-link {
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  background: rgba(56, 189, 248, 0.05);
+  padding: 2px 6px;
+  text-decoration: none;
+  border-radius: 2px;
+  transition: all 0.2s;
+}
+
+.rcp-ai-source-link:hover {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: #38bdf8;
+  color: #fff;
+}
+
+.rcp-ai-key-input-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 4px 0;
+}
+
+.rcp-ai-key-label {
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  color: rgba(200, 208, 239, 0.5);
+  text-transform: uppercase;
+  line-height: 1.35;
+}
+
+.rcp-ai-key-actions {
+  display: flex;
+  gap: 4px;
+}
