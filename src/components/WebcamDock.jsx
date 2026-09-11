@@ -110,16 +110,46 @@ function addPreviewPlaybackParams(url) {
     if (!url) return '';
     try {
         const parsed = new URL(url);
-        if (parsed.hostname.includes('youtube.com')) {
+        if (parsed.hostname.includes('youtube.com') || parsed.hostname.includes('youtu.be')) {
             parsed.searchParams.set('autoplay', '1');
             parsed.searchParams.set('mute', '1');
             parsed.searchParams.set('controls', '0');
             parsed.searchParams.set('playsinline', '1');
+            parsed.searchParams.set('enablejsapi', '1');
+            parsed.searchParams.set('rel', '0');
+            parsed.searchParams.set('modestbranding', '1');
+            parsed.searchParams.set('fs', '1');
         }
         return parsed.toString();
     } catch (err) {
         return url;
     }
+}
+
+function formatEmbedVideoUrl(url, { isExpanded = false } = {}) {
+    if (!url) return '';
+    try {
+        const lower = String(url).toLowerCase();
+        if (lower.includes('youtube.com') || lower.includes('youtu.be')) {
+            const parsed = new URL(url);
+            parsed.searchParams.set('autoplay', '1');
+            parsed.searchParams.set('mute', isExpanded ? '0' : '1');
+            parsed.searchParams.set('enablejsapi', '1');
+            parsed.searchParams.set('rel', '0');
+            parsed.searchParams.set('modestbranding', '1');
+            parsed.searchParams.set('playsinline', '1');
+            parsed.searchParams.set('fs', '1');
+            if (!isExpanded) {
+                parsed.searchParams.set('controls', '0');
+            } else {
+                parsed.searchParams.set('controls', '1');
+            }
+            return parsed.toString();
+        }
+    } catch (err) {
+        // ignore
+    }
+    return url;
 }
 
 function LiveFeedPreview({ feed, previewNonce }) {
@@ -336,10 +366,11 @@ export default function WebcamDock() {
         if (expandedMediaKind === 'embed' && expandedVideoUrl) {
             return (
                 <iframe
-                    src={expandedVideoUrl}
+                    src={formatEmbedVideoUrl(expandedVideoUrl, { isExpanded: true })}
                     title={`${expandedFeed.name || 'Webcam'} live feed`}
                     className={className}
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+                    allowFullScreen
                     referrerPolicy="strict-origin-when-cross-origin"
                 />
             );

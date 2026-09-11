@@ -333,6 +333,47 @@ function unwrapWorldcamsPlayer(url) {
     }
 }
 
+function formatEmbedVideoUrl(url, { isExpanded = false } = {}) {
+    if (!url) return '';
+    try {
+        const lower = String(url).toLowerCase();
+        if (lower.includes('youtube.com') || lower.includes('youtu.be')) {
+            const parsed = new URL(url);
+            parsed.searchParams.set('autoplay', '1');
+            parsed.searchParams.set('mute', isExpanded ? '0' : '1');
+            parsed.searchParams.set('enablejsapi', '1');
+            parsed.searchParams.set('rel', '0');
+            parsed.searchParams.set('modestbranding', '1');
+            parsed.searchParams.set('playsinline', '1');
+            parsed.searchParams.set('fs', '1');
+            if (!isExpanded) {
+                parsed.searchParams.set('controls', '0');
+            } else {
+                parsed.searchParams.set('controls', '1');
+            }
+            return parsed.toString();
+        }
+    } catch (err) {
+        // Return raw if invalid URL constructor
+    }
+    return url;
+}
+
+function getCanonicalOpenUrl(url) {
+    if (!url) return '';
+    try {
+        if (url.includes('youtube.com/embed/')) {
+            const videoId = url.split('youtube.com/embed/')[1]?.split('?')[0];
+            if (videoId && !videoId.includes('/')) {
+                return `https://www.youtube.com/watch?v=${videoId}`;
+            }
+        }
+    } catch (err) {
+        // ignore
+    }
+    return url;
+}
+
 function isHlsUrl(url) {
     return /\.m3u8(\?|$)/i.test(String(url || ''));
 }
@@ -680,7 +721,8 @@ DO NOT wrap the JSON in markdown code blocks like \`\`\`json. Return ONLY the ra
         return () => window.removeEventListener('keydown', onKeyDown);
     }, [isVisualExpanded]);
 
-    const panelMediaOpenUrl = inspector?.detailsUrl || effectiveVideoUrl || inspector?.url || inspector?.fallbackUrl || panelMediaSrc;
+    const rawOpenUrl = inspector?.detailsUrl || effectiveVideoUrl || inspector?.url || inspector?.fallbackUrl || panelMediaSrc;
+    const panelMediaOpenUrl = getCanonicalOpenUrl(rawOpenUrl);
 
     const requestMediaFullscreen = useCallback(async () => {
         const node = mediaTheaterRef.current;
@@ -708,14 +750,16 @@ DO NOT wrap the JSON in markdown code blocks like \`\`\`json. Return ONLY the ra
         }
 
         const mediaClassName = `rcp-media-frame ${expanded ? 'rcp-media-frame--theater' : ''}`.trim();
+        const formattedUrl = formatEmbedVideoUrl(effectiveVideoUrl, { isExpanded: expanded });
 
-        if (panelMediaKind === 'embed' && effectiveVideoUrl) {
+        if (panelMediaKind === 'embed' && formattedUrl) {
             return (
                 <iframe
-                    src={effectiveVideoUrl}
+                    src={formattedUrl}
                     title="Surveillance media feed"
                     className={mediaClassName}
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+                    allowFullScreen
                     referrerPolicy="strict-origin-when-cross-origin"
                 />
             );
@@ -905,7 +949,18 @@ DO NOT wrap the JSON in markdown code blocks like \`\`\`json. Return ONLY the ra
                                             FEED IN THEATER MODE
                                         </button>
                                     ) : (
-                                        renderInspectorMedia(false)
+                                        <div
+                                            className="relative group cursor-pointer overflow-hidden rounded border border-cyan-500/20"
+                                            onClick={() => setIsMediaExpanded(true)}
+                                            title="Click to expand feed in theater mode"
+                                        >
+                                            {renderInspectorMedia(false)}
+                                            <div className="absolute inset-0 z-10 bg-black/10 group-hover:bg-black/50 transition-colors flex items-center justify-center pointer-events-auto">
+                                                <span className="opacity-0 group-hover:opacity-100 transition-opacity bg-black/90 text-cyan-200 border border-cyan-400/60 px-3 py-1.5 text-[10px] tracking-widest uppercase font-bold flex items-center gap-1.5 shadow-lg backdrop-blur-sm">
+                                                    <span>⤢</span> MAXIMIZE FEED
+                                                </span>
+                                            </div>
+                                        </div>
                                     )}
                                 </div>
                             )}
