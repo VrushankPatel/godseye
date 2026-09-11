@@ -194,7 +194,11 @@ function createPlaneIconDataUri() {
 }
 
 const BASE_AIRCRAFT_SOURCES = [
-    { url: API_URLS.ADSB_LOL_GLOBAL, parser: (payload) => parseAdsbPayload(payload, 'ADS-B.lol') },
+    { url: API_URLS.ADSB_LOL_GLOBAL, parser: (payload) => parseAdsbPayload(payload, 'ADS-B.lol Global') },
+    { url: 'https://api.adsb.lol/v2/mil', parser: (payload) => parseAdsbPayload(payload, 'ADS-B.lol Mil') },
+    { url: API_URLS.AIRPLANES_GLOBAL, parser: (payload) => parseAdsbPayload(payload, 'Airplanes.live Global') },
+    { url: 'https://api.airplanes.live/v2/mil', parser: (payload) => parseAdsbPayload(payload, 'Airplanes.live Mil') },
+    { url: API_URLS.ADSB_ONE_GLOBAL, parser: (payload) => parseAdsbPayload(payload, 'ADS-B.one Global') },
 ];
 
 const CORE_REGIONAL_AIR_ZONES = [
@@ -564,6 +568,15 @@ export default function AircraftLayer({ viewer }) {
         setAircraftFeedData(flights);
 
         if (!flights.length) {
+            if (rawFlightsRef.current && rawFlightsRef.current.length > 0 && aircraftEnabled) {
+                setStatus('aircraft', 'active', {
+                    sourceName: 'ADS-B (cached fallback)',
+                    isCached: true,
+                    health: 'live',
+                });
+                return;
+            }
+
             clearEntities();
             if (aircraftEnabled) {
                 updateData('aircraft', [], {

@@ -85,7 +85,7 @@ export default function CityTiltControl({ panelHeight = 124 }) {
         viewerRef.scene.requestRender();
     };
 
-    if (!city3DActive || globeViewMode !== 'planet') return null;
+    if (globeViewMode !== 'planet') return null;
 
     return (
         <div

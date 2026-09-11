@@ -93,6 +93,8 @@ export default function App() {
             case 'NVG': return 'mode-nvg';
             case 'FLIR': return 'mode-flir';
             case 'CRT': return 'mode-crt';
+            case 'GOD': return 'mode-god';
+            case 'SURVEILLANCE': return 'mode-surveillance';
             default: return '';
         }
     };

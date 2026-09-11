@@ -328,6 +328,28 @@ body {
   background: linear-gradient(135deg, rgba(255, 100, 200, 0.03) 0%, transparent 50%, rgba(100, 200, 255, 0.03) 100%);
 }
 
+/* GOD mode - Holographic Cyan Panoptic Grid */
+.shader-god::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at center, transparent 40%, rgba(0, 255, 255, 0.06) 80%, rgba(0, 200, 255, 0.18) 100%),
+    repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 255, 255, 0.03) 2px, rgba(0, 255, 255, 0.03) 4px);
+  pointer-events: none;
+}
+
+/* SURVEILLANCE mode - Tactical Blue Radar Vignette */
+.shader-surveillance::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at center, transparent 35%, rgba(14, 165, 233, 0.08) 75%, rgba(2, 132, 199, 0.25) 100%),
+    repeating-linear-gradient(90deg, transparent, transparent 4px, rgba(56, 189, 248, 0.02) 4px, rgba(56, 189, 248, 0.02) 5px);
+  pointer-events: none;
+}
+
 @keyframes nvg-scan {
   0% {
     transform: translateY(0);
@@ -379,6 +401,14 @@ body {
 
 .globe-container.mode-anime {
   filter: saturate(1.8) contrast(1.5) brightness(1.1);
+}
+
+.globe-container.mode-god {
+  filter: saturate(1.35) contrast(1.2) brightness(1.08) hue-rotate(5deg);
+}
+
+.globe-container.mode-surveillance {
+  filter: saturate(0.9) contrast(1.25) brightness(0.98) sepia(0.15) hue-rotate(-15deg);
 }
 
 .layer-panel-shell {
