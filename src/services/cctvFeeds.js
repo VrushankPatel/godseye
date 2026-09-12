@@ -264,3 +264,12 @@ export function extractCaltransStreamUrl(html) {
     const match = String(html).match(/var\s+videoStreamURL\s*=\s*"([^"]+)"/i);
     return match?.[1] || '';
 }
+
+export function getProxiedCameraFrameUrl(url, id = 'CAM') {
+    if (!url) return '';
+    const str = String(url).trim();
+    if (str.startsWith('/api/')) return str;
+    if (str.includes('img.youtube.com') || str.includes('youtube.com') || str.includes('youtu.be')) return str;
+    return `/api/cctv/frame?id=${encodeURIComponent(id)}&url=${encodeURIComponent(str)}`;
+}
+

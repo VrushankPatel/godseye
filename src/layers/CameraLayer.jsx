@@ -191,11 +191,15 @@ export default function CameraLayer({ viewer }) {
             }
 
             const [manifestRes, caltransRes, ontarioRes, albertaRes, tflRes] = await Promise.allSettled([
-                fetchJsonWithPolicy(API_URLS.VERIFIED_CCTV_MANIFEST, {
+                fetchJsonWithPolicy('/api/cctv/sources', {
+                    timeoutMs: 6000,
+                    retries: 1,
+                    circuitKey: 'cctv:backend-sources',
+                }).catch(() => fetchJsonWithPolicy(API_URLS.VERIFIED_CCTV_MANIFEST, {
                     timeoutMs: REQUEST_TIMEOUT_MS,
                     retries: 1,
                     circuitKey: 'cctv:manifest',
-                }),
+                })),
                 fetchTextWithPolicy(API_URLS.CAMERA_CALTRANS_CATALOG, {
                     timeoutMs: REQUEST_TIMEOUT_MS,
                     retries: 1,

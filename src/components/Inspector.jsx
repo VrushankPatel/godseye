@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import useStore from '../store/useStore';
 import { LAYER_DEFS } from '../constants/dataSources';
-import { isContinuousLiveCameraFeed } from '../services/cctvFeeds';
+import { isContinuousLiveCameraFeed, getProxiedCameraFrameUrl } from '../services/cctvFeeds';
 
 const TRACKABLE_LAYER_TYPES = new Set(['aircraft', 'satellites', 'militaryActivity']);
 const DEFAULT_REFRESH_SECONDS = 5;
@@ -113,7 +113,9 @@ export default function Inspector() {
 
     useEffect(() => {
         setIsMaximized(false);
-        setImageSrc(appendCacheBuster(inspector?.url || inspector?.fallbackUrl || ''));
+        const rawUrl = inspector?.url || inspector?.fallbackUrl || '';
+        const resolved = getProxiedCameraFrameUrl(rawUrl, inspector?.id);
+        setImageSrc(appendCacheBuster(resolved));
         setImageFailed(false);
         setVideoFailed(false);
         setResolvedStreamUrl('');
@@ -130,7 +132,8 @@ export default function Inspector() {
         );
 
         const timer = setInterval(() => {
-            setImageSrc(appendCacheBuster(inspector.url));
+            const resolved = getProxiedCameraFrameUrl(inspector.url, inspector.id);
+            setImageSrc(appendCacheBuster(resolved));
             setImageFailed(false);
         }, refreshSeconds * 1000);
 

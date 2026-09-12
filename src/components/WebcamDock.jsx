@@ -5,6 +5,7 @@ import {
     getEffectiveCameraVideoUrl,
     isContinuousLiveCameraFeed,
     isHlsStreamUrl,
+    getProxiedCameraFrameUrl,
 } from '../services/cctvFeeds';
 
 const PREVIEW_REFRESH_MS = 9000;
@@ -239,9 +240,9 @@ function LiveFeedPreview({ feed, previewNonce }) {
     }
 
     const previewUrl = isImageUrl(feed?.fallbackUrl)
-        ? withCacheBuster(feed.fallbackUrl, previewNonce)
+        ? getProxiedCameraFrameUrl(withCacheBuster(feed.fallbackUrl, previewNonce), feed?.id)
         : isImageUrl(feed?.url)
-            ? withCacheBuster(feed.url, previewNonce)
+            ? getProxiedCameraFrameUrl(withCacheBuster(feed.url, previewNonce), feed?.id)
             : (() => {
                 const ytId = extractYoutubeId(feed?.videoUrl);
                 return ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : '';
@@ -395,7 +396,8 @@ export default function WebcamDock() {
             return <div className="rcp-media-fallback">LIVE STREAM UNAVAILABLE</div>;
         }
 
-        const imageUrl = expandedFeed.fallbackUrl || expandedFeed.url;
+        const rawImageUrl = expandedFeed.fallbackUrl || expandedFeed.url;
+        const imageUrl = getProxiedCameraFrameUrl(rawImageUrl, expandedFeed.id);
         if (imageUrl && !expandedMediaFailed) {
             return (
                 <img

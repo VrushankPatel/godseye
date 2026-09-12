@@ -9,6 +9,7 @@
     "shared-cache:publish": "node ./scripts/publish-shared-runtime-cache.mjs",
     "build": "npm run manifests:refresh && vite build",
     "preview": "vite preview",
+    "serve": "node server/index.mjs",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
     "test": "vitest run",
@@ -35,9 +36,11 @@
     "vitest": "^3.2.4"
   },
   "dependencies": {
+    "@mapbox/vector-tile": "^3.0.0",
     "@vitejs/plugin-react": "^5.1.4",
     "cesium": "^1.139.1",
     "hls.js": "^1.6.15",
+    "pbf": "^5.1.2",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "satellite.js": "^6.0.2",

@@ -1,272 +1,597 @@
-import React, { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import * as Cesium from 'cesium';
 import useStore from '../store/useStore';
 import { WORLDCAMS_FEEDS } from '../constants/worldcamsFeeds';
 import { isContinuousLiveCameraFeed } from '../services/cctvFeeds';
+import { deriveFetchCenter, clampBoundsAroundCenter, greatCircleKm } from '../utils/trafficBounds';
+import { matchFlowToRoads } from '../utils/flowMatch';
+import { fetchFlowForBounds } from '../utils/flowTiles';
 
-const TRAFFIC_PATHS = [
-    // North America
-    [[-74.02, 40.70], [-73.99, 40.74], [-73.96, 40.77], [-73.92, 40.80]], // NYC
-    [[-118.29, 34.04], [-118.25, 34.06], [-118.20, 34.08], [-118.14, 34.10]], // LA
-    [[-87.70, 41.86], [-87.66, 41.88], [-87.63, 41.89], [-87.60, 41.90]], // Chicago
-    [[-122.52, 37.76], [-122.46, 37.77], [-122.42, 37.78], [-122.37, 37.79]], // SF
-    [[-79.42, 43.64], [-79.39, 43.66], [-79.36, 43.68], [-79.33, 43.69]], // Toronto
+const ACTIVATION_ALTITUDE_METERS = 8000;
+const FETCH_DEBOUNCE_MS = 320;
+const MAX_DOTS_BUDGET = 5000;
+const MAX_WAYPOINTS_PER_ROAD = 75;
+const MIN_VIEW_SHIFT_KM = 0.35;
+const DOT_HEIGHT_OFFSET = 3.0;
 
-    // Europe
-    [[-0.20, 51.49], [-0.14, 51.50], [-0.10, 51.51], [-0.05, 51.52]], // London
-    [[2.27, 48.84], [2.31, 48.86], [2.35, 48.87], [2.40, 48.88]], // Paris
-    [[13.34, 52.48], [13.38, 52.50], [13.42, 52.52], [13.47, 52.53]], // Berlin
-    [[12.46, 41.88], [12.49, 41.89], [12.52, 41.90], [12.56, 41.91]], // Rome
+const SPEED_MPS = {
+  motorway: 25,
+  trunk: 20,
+  primary: 14,
+  secondary: 11,
+  tertiary: 8,
+  residential: 5,
+  unclassified: 5,
+};
 
-    // Asia
-    [[139.67, 35.64], [139.70, 35.66], [139.74, 35.68], [139.78, 35.70]], // Tokyo
-    [[126.96, 37.53], [127.00, 37.54], [127.03, 37.55], [127.06, 37.56]], // Seoul
-    [[116.34, 39.89], [116.38, 39.90], [116.42, 39.91], [116.46, 39.92]], // Beijing
-    [[77.19, 28.60], [77.22, 28.62], [77.25, 28.64], [77.29, 28.66]], // Delhi
-    [[72.82, 18.95], [72.85, 18.97], [72.88, 18.99], [72.91, 19.01]], // Mumbai
+const DENSITY_MULT = {
+  motorway: 3.0,
+  trunk: 2.5,
+  primary: 2.0,
+  secondary: 1.5,
+  tertiary: 1.0,
+  residential: 0.5,
+  unclassified: 0.4,
+};
 
-    // Middle East / Africa
-    [[55.24, 25.19], [55.27, 25.21], [55.30, 25.23], [55.34, 25.25]], // Dubai
-    [[31.20, 30.01], [31.23, 30.03], [31.26, 30.05], [31.30, 30.06]], // Cairo
-    [[18.41, -33.94], [18.44, -33.93], [18.47, -33.92], [18.50, -33.91]], // Cape Town
+const FLOW_COLORS = {
+  free: Cesium.Color.fromCssColorString('#2ecc71').withAlpha(0.92),
+  slow: Cesium.Color.fromCssColorString('#f0b23e').withAlpha(0.92),
+  jam: Cesium.Color.fromCssColorString('#e05252').withAlpha(0.95),
+};
 
-    // South America / Oceania
-    [[-46.67, -23.58], [-46.64, -23.56], [-46.61, -23.54], [-46.57, -23.52]], // Sao Paulo
-    [[-58.47, -34.65], [-58.43, -34.63], [-58.39, -34.61], [-58.35, -34.59]], // Buenos Aires
-    [[151.15, -33.90], [151.19, -33.88], [151.23, -33.86], [151.27, -33.84]], // Sydney
-];
-
-const VEHICLES_PER_PATH = 34;
-const MAX_TRAFFIC_FEEDS = 700;
-const NORMAL_TRAFFIC_ANIMATION_INTERVAL_MS = 90;
-const GOD_MODE_TRAFFIC_ANIMATION_INTERVAL_MS = 180;
 const TRAFFIC_KEYWORDS = [
-    'traffic', 'road', 'highway', 'street', 'bridge', 'airport', 'train', 'station', 'port',
+  'traffic', 'road', 'highway', 'street', 'bridge', 'airport', 'train', 'station', 'port',
 ];
-
-function getPointAlongPath(path, segmentIndex, progress) {
-    const start = path[segmentIndex];
-    const end = path[Math.min(segmentIndex + 1, path.length - 1)];
-    const lng = start[0] + (end[0] - start[0]) * progress;
-    const lat = start[1] + (end[1] - start[1]) * progress;
-    return [lng, lat];
-}
 
 function looksTrafficRelated(feed) {
-    const haystack = `${feed.name || ''} ${feed.detailsUrl || ''}`.toLowerCase();
-    return TRAFFIC_KEYWORDS.some((keyword) => haystack.includes(keyword));
+  const haystack = `${feed.name || ''} ${feed.detailsUrl || ''}`.toLowerCase();
+  return TRAFFIC_KEYWORDS.some((k) => haystack.includes(k));
+}
+
+function estimateRoadLengthDeg(coords) {
+  let len = 0;
+  for (let i = 0; i < coords.length - 1; i++) {
+    const dx = coords[i + 1][0] - coords[i][0];
+    const dy = coords[i + 1][1] - coords[i][1];
+    len += Math.sqrt(dx * dx + dy * dy);
+  }
+  return len * 111000;
+}
+
+function parseOverpassRoads(overpassData) {
+  if (!overpassData || !Array.isArray(overpassData.elements)) return [];
+  const roads = [];
+
+  for (const el of overpassData.elements) {
+    if (el.type !== 'way' || !Array.isArray(el.geometry) || el.geometry.length < 2) continue;
+
+    const rawCoords = el.geometry.map((g) => [g.lon, g.lat]);
+    const simplifyStep = rawCoords.length > MAX_WAYPOINTS_PER_ROAD
+      ? Math.ceil(rawCoords.length / MAX_WAYPOINTS_PER_ROAD)
+      : 1;
+
+    const coords = [];
+    for (let i = 0; i < rawCoords.length; i += simplifyStep) {
+      coords.push(rawCoords[i]);
+    }
+    const last = rawCoords[rawCoords.length - 1];
+    const tail = coords[coords.length - 1];
+    if (!tail || tail[0] !== last[0] || tail[1] !== last[1]) {
+      coords.push(last);
+    }
+    if (coords.length < 2) continue;
+
+    const type = el.tags?.highway || 'unclassified';
+    const onewayTag = el.tags?.oneway;
+    const oneway = (onewayTag === 'yes' || onewayTag === '1' || onewayTag === 'true' || el.tags?.junction === 'roundabout')
+      ? 1
+      : (onewayTag === '-1' ? -1 : 0);
+
+    const waypoints = coords.map(([lng, lat]) =>
+      Cesium.Cartesian3.fromDegrees(lng, lat, DOT_HEIGHT_OFFSET)
+    );
+
+    const segmentDist = [];
+    for (let i = 0; i < waypoints.length - 1; i++) {
+      segmentDist.push(Cesium.Cartesian3.distance(waypoints[i], waypoints[i + 1]));
+    }
+
+    roads.push({ coords, type, oneway, waypoints, segmentDist });
+  }
+
+  return roads;
+}
+
+function buildSyntheticRoadsAround(lat, lon) {
+  const roads = [];
+  const span = 0.02;
+  const steps = 6;
+  const types = ['motorway', 'primary', 'secondary', 'residential'];
+
+  for (let i = -steps; i <= steps; i++) {
+    const rLat = lat + (i * span) / steps;
+    const type = types[Math.abs(i) % types.length];
+    const coords = [
+      [lon - span, rLat],
+      [lon - span * 0.3, rLat + (Math.sin(i) * 0.002)],
+      [lon + span * 0.3, rLat - (Math.cos(i) * 0.002)],
+      [lon + span, rLat],
+    ];
+    const waypoints = coords.map(([cLon, cLat]) => Cesium.Cartesian3.fromDegrees(cLon, cLat, DOT_HEIGHT_OFFSET));
+    const segmentDist = [];
+    for (let j = 0; j < waypoints.length - 1; j++) {
+      segmentDist.push(Cesium.Cartesian3.distance(waypoints[j], waypoints[j + 1]));
+    }
+    roads.push({ coords, type, oneway: i % 2 === 0 ? 1 : 0, waypoints, segmentDist });
+  }
+
+  for (let i = -steps; i <= steps; i++) {
+    const rLon = lon + (i * span) / steps;
+    const type = types[(Math.abs(i) + 1) % types.length];
+    const coords = [
+      [rLon, lat - span],
+      [rLon + (Math.cos(i) * 0.002), lat - span * 0.3],
+      [rLon - (Math.sin(i) * 0.002), lat + span * 0.3],
+      [rLon, lat + span],
+    ];
+    const waypoints = coords.map(([cLon, cLat]) => Cesium.Cartesian3.fromDegrees(cLon, cLat, DOT_HEIGHT_OFFSET));
+    const segmentDist = [];
+    for (let j = 0; j < waypoints.length - 1; j++) {
+      segmentDist.push(Cesium.Cartesian3.distance(waypoints[j], waypoints[j + 1]));
+    }
+    roads.push({ coords, type, oneway: i % 2 === 0 ? 1 : 0, waypoints, segmentDist });
+  }
+
+  return roads;
+}
+
+function simulateRoadFlow(roads) {
+  return roads.map((road, idx) => {
+    if (road.flow) return road;
+    const first = road.coords[0] || [0, 0];
+    const seed = Math.abs(Math.sin(first[0] * 12.9898 + first[1] * 78.233 + (idx + 1) * 43.12)) % 1;
+
+    let simulatedLevel = 0.88; // Free flow by default
+    if (road.type === 'motorway' || road.type === 'trunk') {
+      simulatedLevel = seed > 0.85 ? 0.45 : (seed > 0.70 ? 0.65 : 0.95);
+    } else if (road.type === 'primary' || road.type === 'secondary') {
+      simulatedLevel = seed > 0.82 ? 0.22 : (seed > 0.50 ? 0.52 : 0.88);
+    } else {
+      simulatedLevel = seed > 0.88 ? 0.24 : (seed > 0.55 ? 0.55 : 0.85);
+    }
+
+    return {
+      ...road,
+      flow: {
+        level: simulatedLevel,
+        simulated: true,
+        closure: false,
+      },
+    };
+  });
 }
 
 export default function TrafficLayer({ viewer }) {
-    const isEnabled = useStore((s) => s.layers.traffic.enabled);
-    const activeShader = useStore((s) => s.activeShader);
-    const updateData = useStore((s) => s.updateLayerData);
-    const setStatus = useStore((s) => s.setLayerStatus);
+  const isEnabled = useStore((s) => s.layers.traffic.enabled);
+  const activeShader = useStore((s) => s.activeShader);
+  const updateData = useStore((s) => s.updateLayerData);
+  const setStatus = useStore((s) => s.setLayerStatus);
+  const markLayerFetchStart = useStore((s) => s.markLayerFetchStart);
 
-    const entitiesRef = useRef([]);
-    const roadsRef = useRef([]);
-    const vehiclesRef = useRef([]);
-    const animationTimerRef = useRef(null);
-    const lastAnimationTickRef = useRef(0);
+  const pointCollectionRef = useRef(null);
+  const roadsRef = useRef([]);
+  const dotsRef = useRef([]);
+  const corridorsRef = useRef([]);
+  const feedEntitiesRef = useRef([]);
+  const scratchLerpRef = useRef(new Cesium.Cartesian3());
 
-    const clearLayer = useCallback(() => {
-        clearInterval(animationTimerRef.current);
-        animationTimerRef.current = null;
-        entitiesRef.current.forEach((entity) => viewer.entities.remove(entity));
-        roadsRef.current.forEach((entity) => viewer.entities.remove(entity));
-        entitiesRef.current = [];
-        roadsRef.current = [];
-        vehiclesRef.current = [];
-    }, [viewer]);
+  const lastAnimTimeRef = useRef(0);
+  const debounceTimerRef = useRef(null);
+  const lastFetchCenterRef = useRef(null);
+  const isFetchingRef = useRef(false);
+  const preRenderDisposerRef = useRef(null);
+  const cameraDisposerRef = useRef(null);
+  const liveModeRef = useRef(false);
 
-    const setLayerVisible = useCallback((visible) => {
-        entitiesRef.current.forEach((entity) => {
-            entity.show = visible;
-        });
-        roadsRef.current.forEach((entity) => {
-            entity.show = visible;
-        });
-    }, []);
+  // Clear all rendered visual artifacts
+  const clearVisuals = useCallback(() => {
+    if (pointCollectionRef.current && viewer && !viewer.isDestroyed()) {
+      viewer.scene.primitives.remove(pointCollectionRef.current);
+      pointCollectionRef.current = null;
+    }
+    corridorsRef.current.forEach((entity) => {
+      if (viewer && !viewer.isDestroyed()) viewer.entities.remove(entity);
+    });
+    corridorsRef.current = [];
+    feedEntitiesRef.current.forEach((entity) => {
+      if (viewer && !viewer.isDestroyed()) viewer.entities.remove(entity);
+    });
+    feedEntitiesRef.current = [];
+    dotsRef.current = [];
+    roadsRef.current = [];
+  }, [viewer]);
 
-    const advanceVehicles = useCallback(() => {
-        if (!viewer || viewer.isDestroyed()) return;
+  // Advance vehicles on each Cesium preRender tick
+  const advanceVehicles = useCallback(() => {
+    if (!viewer || viewer.isDestroyed() || !dotsRef.current.length) return;
 
-        const now = performance.now();
-        const previous = lastAnimationTickRef.current || now;
-        const dtSeconds = Math.max(0.016, Math.min((now - previous) / 1000, 0.33));
-        lastAnimationTickRef.current = now;
+    const now = Date.now();
+    const prev = lastAnimTimeRef.current || now;
+    const dt = Math.min((now - prev) / 1000, 0.1);
+    lastAnimTimeRef.current = now;
 
-        for (const vehicle of vehiclesRef.current) {
-            const curPath = TRAFFIC_PATHS[vehicle.pathIndex];
-            const maxSegment = curPath.length - 2;
+    const scratch = scratchLerpRef.current;
+    const dots = dotsRef.current;
 
-            vehicle.progress += vehicle.speed * dtSeconds;
+    for (let i = 0; i < dots.length; i++) {
+      const dot = dots[i];
+      const segLen = dot.segmentDist[dot.segIdx] || 1;
+      const tDelta = (dot.mps * dt) / segLen;
 
-            while (vehicle.progress >= 1) {
-                vehicle.progress -= 1;
-                vehicle.segmentIndex += vehicle.direction;
+      dot.t += tDelta * dot.direction;
 
-                if (vehicle.segmentIndex >= maxSegment || vehicle.segmentIndex <= 0) {
-                    vehicle.segmentIndex = Math.max(0, Math.min(maxSegment, vehicle.segmentIndex));
-                    vehicle.direction *= -1;
-                }
-            }
-
-            const [curLng, curLat] = getPointAlongPath(curPath, vehicle.segmentIndex, vehicle.progress);
-            if (vehicle.entity) {
-                vehicle.entity.position = Cesium.Cartesian3.fromDegrees(curLng, curLat, 30);
-            }
+      if (dot.t >= 1.0) {
+        dot.t -= 1.0;
+        dot.segIdx++;
+        if (dot.segIdx >= dot.numSegments) {
+          dot.segIdx = 0;
+          dot.t = Math.random() * 0.2;
         }
-
-        viewer.scene.requestRender();
-    }, [viewer]);
-
-    useEffect(() => {
-        if (!isEnabled) {
-            clearInterval(animationTimerRef.current);
-            animationTimerRef.current = null;
-            setLayerVisible(false);
-            setStatus('traffic', 'idle');
-            return;
+      } else if (dot.t <= 0.0) {
+        dot.t += 1.0;
+        dot.segIdx--;
+        if (dot.segIdx < 0) {
+          dot.segIdx = dot.numSegments - 1;
+          dot.t = 1.0 - Math.random() * 0.2;
         }
+      }
 
-        if (entitiesRef.current.length || roadsRef.current.length) {
-            setLayerVisible(true);
-            setStatus('traffic', 'active');
-            lastAnimationTickRef.current = performance.now();
-            animationTimerRef.current = setInterval(
-                advanceVehicles,
-                activeShader === 'GOD' ? GOD_MODE_TRAFFIC_ANIMATION_INTERVAL_MS : NORMAL_TRAFFIC_ANIMATION_INTERVAL_MS
-            );
-            return () => {
-                clearInterval(animationTimerRef.current);
-                animationTimerRef.current = null;
-            };
+      Cesium.Cartesian3.lerp(
+        dot.waypoints[dot.segIdx],
+        dot.waypoints[dot.segIdx + 1],
+        dot.t,
+        scratch
+      );
+      dot.point.position = scratch;
+    }
+  }, [viewer]);
+
+  // Check TomTom status once
+  useEffect(() => {
+    fetch('/api/traffic/status')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.hasKey && data?.mode === 'live') {
+          liveModeRef.current = true;
         }
+      })
+      .catch(() => {
+        liveModeRef.current = false;
+      });
+  }, []);
 
-        setStatus('traffic', 'loading');
-        clearLayer();
+  // Re-color or spawn dots on parsed roads
+  const spawnDots = useCallback((roads, _altitude) => {
+    if (!viewer || viewer.isDestroyed()) return;
 
-        // Render route skeletons so traffic is always visible even when zoomed out.
-        TRAFFIC_PATHS.forEach((path, idx) => {
-            const roadEntity = viewer.entities.add({
-                id: `traffic-road-${idx}`,
-                polyline: {
-                    positions: path.map(([lng, lat]) => Cesium.Cartesian3.fromDegrees(lng, lat, 20)),
-                    width: 4,
-                    material: new Cesium.PolylineGlowMaterialProperty({
-                        glowPower: 0.55,
-                        taperPower: 0.35,
-                        color: Cesium.Color.fromCssColorString('#00ff95').withAlpha(0.72),
-                    }),
-                    clampToGround: false,
-                },
-            });
-            roadsRef.current.push(roadEntity);
+    if (!pointCollectionRef.current) {
+      pointCollectionRef.current = new Cesium.PointPrimitiveCollection();
+      viewer.scene.primitives.add(pointCollectionRef.current);
+    }
+    pointCollectionRef.current.removeAll();
+    dotsRef.current = [];
+
+    const shaderMode = activeShader;
+    let defaultColor = Cesium.Color.fromCssColorString('#00ffc8').withAlpha(0.92);
+    if (shaderMode === 'GOD') {
+      defaultColor = Cesium.Color.fromCssColorString('#ffd700').withAlpha(0.95);
+    } else if (shaderMode === 'SURVEILLANCE') {
+      defaultColor = Cesium.Color.fromCssColorString('#ff9900').withAlpha(0.95);
+    }
+
+    const dotCap = MAX_DOTS_BUDGET;
+    let spawned = 0;
+
+    for (const road of roads) {
+      if (spawned >= dotCap) break;
+      const numSegments = road.waypoints.length - 1;
+      if (numSegments < 1) continue;
+
+      const lenM = estimateRoadLengthDeg(road.coords);
+      const mult = (DENSITY_MULT[road.type] || 1);
+      const count = Math.max(1, Math.min(25, Math.floor((lenM / 100) * mult)));
+      const baseMps = SPEED_MPS[road.type] || 6;
+
+      let dotColor = defaultColor;
+      if (road.flow) {
+        if (road.flow.level >= 0.7) dotColor = FLOW_COLORS.free;
+        else if (road.flow.level >= 0.3) dotColor = FLOW_COLORS.slow;
+        else dotColor = FLOW_COLORS.jam;
+      }
+
+      for (let i = 0; i < count && spawned < dotCap; i++) {
+        const segIdx = Math.floor(Math.random() * numSegments);
+        const t = Math.random();
+        const flowScale = road.flow ? Math.max(0.2, road.flow.level) : 1.0;
+        const speed = baseMps * flowScale * (0.8 + Math.random() * 0.4);
+        const direction = road.oneway ? road.oneway : (i % 2 === 0 ? 1 : -1);
+
+        const point = pointCollectionRef.current.add({
+          position: Cesium.Cartesian3.clone(road.waypoints[segIdx]),
+          pixelSize: road.type === 'motorway' ? 5.5 : 4.5,
+          color: dotColor,
+          outlineColor: Cesium.Color.WHITE.withAlpha(0.7),
+          outlineWidth: 1.0,
+          disableDepthTestDistance: 50000,
         });
 
-        // Spawn animated traffic particles along all major corridors.
-        const vehicles = [];
-        let counter = 0;
-        TRAFFIC_PATHS.forEach((path, pathIndex) => {
-            for (let i = 0; i < VEHICLES_PER_PATH; i++) {
-                const segmentIndex = Math.floor(Math.random() * (path.length - 1));
-                vehicles.push({
-                    id: `traffic-veh-${counter++}`,
-                    pathIndex,
-                    segmentIndex,
-                    progress: Math.random(),
-                    speed: 0.18 + Math.random() * 0.42,
-                    direction: Math.random() > 0.5 ? 1 : -1,
-                });
+        dotsRef.current.push({
+          point,
+          waypoints: road.waypoints,
+          segmentDist: road.segmentDist,
+          numSegments,
+          segIdx,
+          t,
+          mps: speed,
+          direction,
+        });
+
+        spawned++;
+      }
+    }
+
+    viewer.scene.requestRender();
+  }, [viewer, activeShader]);
+
+  // Fetch real roads for the given bounds
+  const fetchRoadsForBounds = useCallback(async (center, bounds) => {
+    if (!viewer || viewer.isDestroyed() || isFetchingRef.current) return;
+    isFetchingRef.current = true;
+    markLayerFetchStart('traffic', { sourceName: 'OpenStreetMap Overpass + TomTom Flow' });
+    setStatus('traffic', 'loading');
+
+    const query = `[out:json][timeout:25];(way["highway"~"^(motorway|trunk|primary|secondary|tertiary|residential|unclassified)"](${bounds.south},${bounds.west},${bounds.north},${bounds.east}););out geom qt;`;
+
+    let overpassData = null;
+    try {
+      // 1. Fetch from local backend proxy
+      const res = await fetch('/api/overpass', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `data=${encodeURIComponent(query)}`,
+      });
+      if (res.ok) {
+        overpassData = await res.json();
+      }
+    } catch {
+      // Fallback
+    }
+
+    // 2. If proxy failed, try direct mirror (CORS-friendly public mirror)
+    if (!overpassData || !Array.isArray(overpassData.elements)) {
+      try {
+        const directRes = await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`);
+        if (directRes.ok) {
+          overpassData = await directRes.json();
+        }
+      } catch {
+        // Fall back to synthetic city grid
+      }
+    }
+
+    let parsedRoads = parseOverpassRoads(overpassData);
+    if (!parsedRoads.length) {
+      // Synthesize realistic local grid around camera center if Overpass was offline
+      parsedRoads = buildSyntheticRoadsAround(center.lat, center.lon);
+    }
+
+    // Match TomTom flow if live mode active
+    if (liveModeRef.current) {
+      try {
+        const flowSegments = await fetchFlowForBounds(bounds);
+        if (flowSegments && flowSegments.length) {
+          const matchResult = matchFlowToRoads(parsedRoads, flowSegments);
+          matchResult.matches.forEach((m, idx) => {
+            if (m && parsedRoads[idx]) {
+              parsedRoads[idx].flow = m;
             }
-        });
-        vehiclesRef.current = vehicles;
+          });
+        }
+      } catch {
+        // Fall back to simulation
+      }
+    }
 
-        vehicles.forEach((vehicle) => {
-            const path = TRAFFIC_PATHS[vehicle.pathIndex];
-            const [lng, lat] = getPointAlongPath(path, vehicle.segmentIndex, vehicle.progress);
+    // Apply simulated congestion dynamics to any roads without live flow
+    parsedRoads = simulateRoadFlow(parsedRoads);
+    roadsRef.current = parsedRoads;
 
-            const entity = viewer.entities.add({
-                id: vehicle.id,
-                position: Cesium.Cartesian3.fromDegrees(lng, lat, 30),
-                point: {
-                    pixelSize: 6,
-                    color: Cesium.Color.fromCssColorString('#00ff95').withAlpha(0.96),
-                    outlineColor: Cesium.Color.WHITE.withAlpha(0.8),
-                    outlineWidth: 1.5,
-                    disableDepthTestDistance: 7000000,
-                },
-                properties: {
-                    _layerType: 'traffic',
-                    id: vehicle.id,
-                    status: 'FLOWING',
-                },
-            });
+    // Render polyline skeletons for major corridors
+    corridorsRef.current.forEach((c) => viewer.entities.remove(c));
+    corridorsRef.current = [];
 
-            vehicle.entity = entity;
-            entitiesRef.current.push(entity);
-        });
-
-        // Add real traffic-oriented live feed points to this layer.
-        const trafficFeeds = WORLDCAMS_FEEDS
-            .filter((feed) => looksTrafficRelated(feed) && (feed.videoUrl || feed.url))
-            .slice(0, MAX_TRAFFIC_FEEDS);
-
-        trafficFeeds.forEach((feed) => {
-            const continuousLive = isContinuousLiveCameraFeed(feed);
-            const entity = viewer.entities.add({
-                id: `traffic-feed-${feed.id}`,
-                position: Cesium.Cartesian3.fromDegrees(feed.lng, feed.lat, 160),
-                name: feed.name,
-                point: {
-                    pixelSize: 5,
-                    color: Cesium.Color.fromCssColorString('#00ff95').withAlpha(0.92),
-                    outlineColor: Cesium.Color.WHITE.withAlpha(0.75),
-                    outlineWidth: 1,
-                    disableDepthTestDistance: 9000000,
-                },
-                properties: {
-                    _layerType: 'traffic',
-                    id: feed.id,
-                    provider: feed.provider,
-                    city: feed.city || 'Unknown',
-                    latitude: feed.lat.toFixed(4),
-                    longitude: feed.lng.toFixed(4),
-                    url: feed.url || null,
-                    videoUrl: feed.videoUrl || null,
-                    fallbackUrl: feed.fallbackUrl || feed.url || null,
-                    mediaType: feed.mediaType || 'embed',
-                    mediaEnabled: true,
-                    refreshSeconds: feed.refreshSeconds || 12,
-                    continuousLive,
-                    status: continuousLive ? 'LIVE STREAM' : 'REFRESH FEED',
-                },
-            });
-            entitiesRef.current.push(entity);
-        });
-
-        updateData('traffic', [...vehicles, ...trafficFeeds]);
-        setStatus('traffic', 'active');
-
-        lastAnimationTickRef.current = performance.now();
-        animationTimerRef.current = setInterval(
-            advanceVehicles,
-            activeShader === 'GOD' ? GOD_MODE_TRAFFIC_ANIMATION_INTERVAL_MS : NORMAL_TRAFFIC_ANIMATION_INTERVAL_MS
-        );
-
-        return () => {
-            clearInterval(animationTimerRef.current);
-            animationTimerRef.current = null;
-        };
-    }, [activeShader, advanceVehicles, isEnabled, viewer, updateData, setStatus, clearLayer, setLayerVisible]);
-
-    useEffect(
-        () => () => {
-            clearLayer();
+    const majorRoads = parsedRoads.filter((r) => r.type === 'motorway' || r.type === 'trunk' || r.type === 'primary').slice(0, 120);
+    majorRoads.forEach((r, idx) => {
+      let corridorColor = Cesium.Color.fromCssColorString('#00ff95').withAlpha(0.55);
+      if (r.flow) {
+        if (r.flow.level < 0.3) corridorColor = Cesium.Color.fromCssColorString('#e05252').withAlpha(0.65);
+        else if (r.flow.level < 0.7) corridorColor = Cesium.Color.fromCssColorString('#f0b23e').withAlpha(0.55);
+      }
+      const entity = viewer.entities.add({
+        id: `traffic-corridor-${idx}`,
+        polyline: {
+          positions: r.waypoints,
+          width: 3,
+          material: new Cesium.PolylineGlowMaterialProperty({
+            glowPower: 0.45,
+            taperPower: 0.4,
+            color: corridorColor,
+          }),
         },
-        [clearLayer]
-    );
+      });
+      corridorsRef.current.push(entity);
+    });
 
-    return null;
+    const alt = viewer.camera.positionCartographic.height;
+    spawnDots(parsedRoads, alt);
+
+    // Update store data
+    const trafficPayload = parsedRoads.slice(0, 150).map((r, i) => ({
+      id: `road-${i}`,
+      type: r.type,
+      lengthMeters: Math.round(estimateRoadLengthDeg(r.coords)),
+      flowStatus: r.flow ? (r.flow.level >= 0.7 ? 'FREE FLOW' : (r.flow.level >= 0.3 ? 'SLOW' : 'JAMMED')) : 'FLOWING',
+    }));
+
+    updateData('traffic', trafficPayload, {
+      sourceName: liveModeRef.current ? 'OSM Roads + TomTom Live Flow' : 'OSM Roads + Simulated Congestion Flow',
+      isCached: false,
+      health: 'live',
+    });
+    setStatus('traffic', 'active');
+    isFetchingRef.current = false;
+  }, [viewer, markLayerFetchStart, setStatus, spawnDots, updateData]);
+
+  // Main camera listener and debounced viewport evaluation
+  const evaluateViewport = useCallback(() => {
+    if (!viewer || viewer.isDestroyed() || !isEnabled) return;
+
+    const alt = viewer.camera.positionCartographic.height;
+    if (alt > ACTIVATION_ALTITUDE_METERS) {
+      if (pointCollectionRef.current) {
+        pointCollectionRef.current.show = false;
+      }
+      corridorsRef.current.forEach((c) => { c.show = false; });
+      setStatus('traffic', 'idle', { sourceName: 'Zoom in (<8km) to activate street traffic' });
+      return;
+    }
+
+    if (pointCollectionRef.current) {
+      pointCollectionRef.current.show = true;
+    }
+    corridorsRef.current.forEach((c) => { c.show = true; });
+
+    clearTimeout(debounceTimerRef.current);
+    debounceTimerRef.current = setTimeout(() => {
+      const canvas = viewer.scene.canvas;
+      const canvasCenter = new Cesium.Cartesian2(canvas.clientWidth / 2, canvas.clientHeight / 2);
+      const hit = viewer.camera.pickEllipsoid(canvasCenter, viewer.scene.globe.ellipsoid);
+      let hitLat, hitLon;
+      if (hit) {
+        const carto = Cesium.Cartographic.fromCartesian(hit);
+        hitLat = Cesium.Math.toDegrees(carto.latitude);
+        hitLon = Cesium.Math.toDegrees(carto.longitude);
+      }
+
+      const nadir = viewer.camera.positionCartographic;
+      const nadirLat = Cesium.Math.toDegrees(nadir.latitude);
+      const nadirLon = Cesium.Math.toDegrees(nadir.longitude);
+
+      const center = deriveFetchCenter({ nadirLat, nadirLon, hitLat, hitLon, maxPullKm: 12 });
+
+      if (lastFetchCenterRef.current) {
+        const distKm = greatCircleKm(
+          lastFetchCenterRef.current.lat,
+          lastFetchCenterRef.current.lon,
+          center.lat,
+          center.lon
+        );
+        if (distKm < MIN_VIEW_SHIFT_KM && roadsRef.current.length > 0) {
+          return; // Still in same area
+        }
+      }
+
+      lastFetchCenterRef.current = center;
+      const bounds = clampBoundsAroundCenter(
+        { south: center.lat - 0.02, north: center.lat + 0.02, west: center.lon - 0.02, east: center.lon + 0.02 },
+        center,
+        0.045
+      );
+
+      fetchRoadsForBounds(center, bounds);
+    }, FETCH_DEBOUNCE_MS);
+  }, [viewer, isEnabled, setStatus, fetchRoadsForBounds]);
+
+  // Mount CCTV traffic feeds
+  useEffect(() => {
+    if (!isEnabled || !viewer || viewer.isDestroyed()) return;
+
+    // Add traffic-related CCTV feeds as interactive map entities
+    const trafficFeeds = WORLDCAMS_FEEDS
+      .filter((feed) => looksTrafficRelated(feed) && (feed.videoUrl || feed.url))
+      .slice(0, 400);
+
+    const entities = [];
+    trafficFeeds.forEach((feed) => {
+      const continuousLive = isContinuousLiveCameraFeed(feed);
+      const entity = viewer.entities.add({
+        id: `traffic-cctv-${feed.id}`,
+        position: Cesium.Cartesian3.fromDegrees(feed.lng, feed.lat, 60),
+        name: feed.name,
+        point: {
+          pixelSize: 5,
+          color: Cesium.Color.fromCssColorString('#00ff95').withAlpha(0.9),
+          outlineColor: Cesium.Color.WHITE.withAlpha(0.8),
+          outlineWidth: 1,
+          disableDepthTestDistance: 9000000,
+        },
+        properties: {
+          _layerType: 'traffic',
+          id: feed.id,
+          provider: feed.provider,
+          city: feed.city || 'Unknown',
+          latitude: feed.lat.toFixed(4),
+          longitude: feed.lng.toFixed(4),
+          url: feed.url || null,
+          videoUrl: feed.videoUrl || null,
+          fallbackUrl: feed.fallbackUrl || feed.url || null,
+          continuousLive,
+          status: continuousLive ? 'LIVE STREAM' : 'REFRESH FEED',
+        },
+      });
+      entities.push(entity);
+    });
+
+    feedEntitiesRef.current = entities;
+    return () => {
+      entities.forEach((ent) => {
+        if (viewer && !viewer.isDestroyed()) viewer.entities.remove(ent);
+      });
+      feedEntitiesRef.current = [];
+    };
+  }, [isEnabled, viewer]);
+
+  // Main lifecycle
+  useEffect(() => {
+    if (!isEnabled || !viewer || viewer.isDestroyed()) {
+      clearVisuals();
+      setStatus('traffic', 'idle');
+      return;
+    }
+
+    // Register preRender animation
+    preRenderDisposerRef.current = viewer.scene.preRender.addEventListener(advanceVehicles);
+
+    // Register camera changed listener
+    cameraDisposerRef.current = viewer.camera.changed.addEventListener(evaluateViewport);
+
+    // Initial evaluation
+    evaluateViewport();
+
+    return () => {
+      if (preRenderDisposerRef.current) {
+        preRenderDisposerRef.current();
+        preRenderDisposerRef.current = null;
+      }
+      if (cameraDisposerRef.current) {
+        cameraDisposerRef.current();
+        cameraDisposerRef.current = null;
+      }
+      clearTimeout(debounceTimerRef.current);
+      clearVisuals();
+    };
+  }, [isEnabled, viewer, advanceVehicles, evaluateViewport, clearVisuals, setStatus]);
+
+  return null;
 }
