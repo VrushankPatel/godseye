@@ -17,6 +17,16 @@ export default function VehicleDashboard({ vehicle }) {
   const canvasRef = useRef(null);
   const [liveSpeed, setLiveSpeed] = useState(vehicle.speedKmh || 50);
   const [liveHeading, setLiveHeading] = useState(vehicle.headingDeg || 0);
+  const [signalInfo, setSignalInfo] = useState({
+    status: 'ACTIVE TRANSIT',
+    color: null,
+    isStopped: false,
+  });
+  const signalInfoRef = useRef(signalInfo);
+
+  useEffect(() => {
+    signalInfoRef.current = signalInfo;
+  }, [signalInfo]);
 
   const isTracked = trackedTarget?.entityId === vehicle._entityId;
 
@@ -27,6 +37,13 @@ export default function VehicleDashboard({ vehicle }) {
       if (data && data.id === vehicle._entityId) {
         if (Number.isFinite(data.speedKmh)) setLiveSpeed(data.speedKmh);
         if (Number.isFinite(data.headingDeg)) setLiveHeading(data.headingDeg);
+        if (data.signalStatus) {
+          setSignalInfo({
+            status: data.signalStatus,
+            color: data.signalColor,
+            isStopped: !!data.isStopped,
+          });
+        }
       }
     };
     window.addEventListener('godseye:vehicle-telemetry', handleVehicleUpdate);
@@ -82,6 +99,52 @@ export default function VehicleDashboard({ vehicle }) {
       ctx.stroke();
       ctx.setLineDash([]);
 
+      // Forward signal stop line rendering on LiDAR scanner
+      const currentSignal = signalInfoRef.current;
+      const isRedSignal = currentSignal.color === 'red' || currentSignal.isStopped || currentSignal.status?.includes('RED') || currentSignal.status?.includes('QUEUED');
+      const isAmberSignal = currentSignal.color === 'amber' || currentSignal.status?.includes('AMBER');
+
+      if (isRedSignal) {
+        const stopLineY = horizonY + (h - horizonY) * 0.48;
+        const progress = 0.48;
+        const leftX = (centerX - 15) + ((w * 0.1) - (centerX - 15)) * progress;
+        const rightX = (centerX + 15) + ((w * 0.9) - (centerX + 15)) * progress;
+
+        ctx.strokeStyle = 'rgba(255, 50, 70, 0.95)';
+        ctx.lineWidth = 3.5;
+        ctx.beginPath();
+        ctx.moveTo(leftX, stopLineY);
+        ctx.lineTo(rightX, stopLineY);
+        ctx.stroke();
+
+        ctx.fillStyle = 'rgba(255, 50, 70, 0.2)';
+        ctx.fillRect(leftX, stopLineY - 5, rightX - leftX, 10);
+
+        ctx.fillStyle = '#ff4455';
+        ctx.font = 'bold 8px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('STOP LINE · RED LIGHT', centerX, stopLineY - 7);
+        ctx.textAlign = 'start';
+      } else if (isAmberSignal) {
+        const stopLineY = horizonY + (h - horizonY) * 0.48;
+        const progress = 0.48;
+        const leftX = (centerX - 15) + ((w * 0.1) - (centerX - 15)) * progress;
+        const rightX = (centerX + 15) + ((w * 0.9) - (centerX + 15)) * progress;
+
+        ctx.strokeStyle = 'rgba(255, 190, 0, 0.9)';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(leftX, stopLineY);
+        ctx.lineTo(rightX, stopLineY);
+        ctx.stroke();
+
+        ctx.fillStyle = '#ffbb00';
+        ctx.font = 'bold 8px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('AMBER SIGNAL · PREPARE TO STOP', centerX, stopLineY - 7);
+        ctx.textAlign = 'start';
+      }
+
       // Radar sweep fan
       ctx.beginPath();
       ctx.moveTo(centerX, h - 5);
@@ -131,6 +194,32 @@ export default function VehicleDashboard({ vehicle }) {
   const speedMph = Math.round(liveSpeed * 0.621371);
   const flowColor = liveSpeed > 45 ? 'text-emerald-400' : (liveSpeed > 20 ? 'text-amber-400' : 'text-red-400');
   const flowBg = liveSpeed > 45 ? 'bg-emerald-500/10 border-emerald-500/30' : (liveSpeed > 20 ? 'bg-amber-500/10 border-amber-500/30' : 'bg-red-500/10 border-red-500/30');
+
+  const isRed = signalInfo.color === 'red' || signalInfo.isStopped || signalInfo.status?.includes('RED') || signalInfo.status?.includes('QUEUED');
+  const isAmber = signalInfo.color === 'amber' || signalInfo.status?.includes('AMBER');
+  const isGreen = signalInfo.color === 'green' || signalInfo.status?.includes('GREEN');
+
+  let signalBadgeClass = 'bg-white/5 border-white/10 text-white/70';
+  let signalDotClass = 'bg-white/40';
+  let signalLabel = 'ACTIVE TRANSIT';
+  let signalSub = 'FREE ROADWAY';
+
+  if (isRed) {
+    signalBadgeClass = 'bg-red-500/15 border-red-500/40 text-red-300 shadow-[0_0_12px_rgba(255,50,70,0.25)]';
+    signalDotClass = 'bg-red-500 animate-pulse';
+    signalLabel = signalInfo.status || 'SIGNAL STOP · RED LIGHT';
+    signalSub = signalInfo.isStopped ? 'HOLDING AT STOP LINE' : 'DECELERATING TO 0 KM/H';
+  } else if (isAmber) {
+    signalBadgeClass = 'bg-amber-500/15 border-amber-500/40 text-amber-300 shadow-[0_0_12px_rgba(255,180,0,0.2)]';
+    signalDotClass = 'bg-amber-400 animate-pulse';
+    signalLabel = signalInfo.status || 'AMBER LIGHT · CAUTION';
+    signalSub = 'CROSSROAD CLEARANCE';
+  } else if (isGreen) {
+    signalBadgeClass = 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300 shadow-[0_0_12px_rgba(0,255,150,0.2)]';
+    signalDotClass = 'bg-emerald-400';
+    signalLabel = signalInfo.status || 'SIGNAL GREEN · PROCEEDING';
+    signalSub = 'INTERSECTION CLEAR';
+  }
 
   return (
     <div className="flex flex-col gap-3 font-mono">
@@ -224,6 +313,15 @@ export default function VehicleDashboard({ vehicle }) {
             INDEX: {vehicle.flowLevel}% RATING
           </div>
         </div>
+      </div>
+
+      {/* Traffic Signal Intersection Control Status */}
+      <div className={`px-2.5 py-1.5 rounded border flex items-center justify-between text-[10px] ${signalBadgeClass}`}>
+        <div className="flex items-center gap-2">
+          <span className={`w-2 h-2 rounded-full ${signalDotClass}`} />
+          <span className="font-bold tracking-wider">{signalLabel}</span>
+        </div>
+        <span className="text-[9px] font-mono opacity-75 uppercase">{signalSub}</span>
       </div>
 
       {/* 4. Full Telemetry Attributes */}

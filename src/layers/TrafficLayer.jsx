@@ -7,18 +7,12 @@ import { deriveFetchCenter, clampBoundsAroundCenter, greatCircleKm } from '../ut
 import { matchFlowToRoads } from '../utils/flowMatch';
 import { fetchFlowForBounds } from '../utils/flowTiles';
 import { generateVehicleData } from '../utils/vehicleGenerator';
-
-function computeBearingDeg(lon1, lat1, lon2, lat2) {
-  const toRad = Math.PI / 180;
-  const toDeg = 180 / Math.PI;
-  const dLon = (lon2 - lon1) * toRad;
-  const phi1 = lat1 * toRad;
-  const phi2 = lat2 * toRad;
-  const y = Math.sin(dLon) * Math.cos(phi2);
-  const x = Math.cos(phi1) * Math.sin(phi2) - Math.sin(phi1) * Math.cos(phi2) * Math.cos(dLon);
-  const brng = Math.atan2(y, x) * toDeg;
-  return Math.round((brng + 360) % 360);
-}
+import {
+  computeBearingDeg,
+  getSignalColor,
+  buildCrossroads,
+  SIGNAL_COLORS,
+} from '../utils/trafficSignals';
 
 const ACTIVATION_ALTITUDE_METERS = 8000;
 const FETCH_DEBOUNCE_MS = 320;
@@ -194,6 +188,8 @@ export default function TrafficLayer({ viewer }) {
   const trackedTarget = useStore((s) => s.trackedTarget);
 
   const pointCollectionRef = useRef(null);
+  const signalsCollectionRef = useRef(null);
+  const crossroadsRef = useRef([]);
   const roadsRef = useRef([]);
   const dotsRef = useRef([]);
   const corridorsRef = useRef([]);
@@ -209,6 +205,7 @@ export default function TrafficLayer({ viewer }) {
   const cameraDisposerRef = useRef(null);
   const liveModeRef = useRef(false);
   const lastTelemetryDispatchRef = useRef(0);
+  const lastSignalUpdateRef = useRef(0);
   const trackedTargetRef = useRef(trackedTarget);
 
   useEffect(() => {
@@ -220,6 +217,10 @@ export default function TrafficLayer({ viewer }) {
     if (pointCollectionRef.current && viewer && !viewer.isDestroyed()) {
       viewer.scene.primitives.remove(pointCollectionRef.current);
       pointCollectionRef.current = null;
+    }
+    if (signalsCollectionRef.current && viewer && !viewer.isDestroyed()) {
+      viewer.scene.primitives.remove(signalsCollectionRef.current);
+      signalsCollectionRef.current = null;
     }
     corridorsRef.current.forEach((entity) => {
       if (viewer && !viewer.isDestroyed()) viewer.entities.remove(entity);
@@ -237,14 +238,16 @@ export default function TrafficLayer({ viewer }) {
     });
     vehicleEntitiesRef.current.clear();
     dotsRef.current = [];
+    crossroadsRef.current = [];
     roadsRef.current = [];
   }, [viewer]);
 
-  // Advance vehicles on each Cesium preRender tick
+  // Advance vehicles on each Cesium preRender tick with crossroad signal stopping
   const advanceVehicles = useCallback(() => {
     if (!viewer || viewer.isDestroyed() || !dotsRef.current.length) return;
 
     const now = Date.now();
+    const nowSec = now / 1000;
     const prev = lastAnimTimeRef.current || now;
     const dt = Math.min((now - prev) / 1000, 0.1);
     lastAnimTimeRef.current = now;
@@ -255,28 +258,155 @@ export default function TrafficLayer({ viewer }) {
 
     let trackedDot = null;
 
+    // 1. Update visual traffic signal points every ~150ms
+    if (now - lastSignalUpdateRef.current > 150) {
+      lastSignalUpdateRef.current = now;
+      const crossroads = crossroadsRef.current;
+      for (let c = 0; c < crossroads.length; c++) {
+        const cr = crossroads[c];
+        if (cr.point) {
+          const ewColor = getSignalColor(cr, 'EW', nowSec);
+          const colorHex = SIGNAL_COLORS[ewColor] || '#00ff88';
+          cr.point.color = Cesium.Color.fromCssColorString(colorHex);
+        }
+      }
+    }
+
+    // 2. Index dots by segment for anti-collision queue following (O(N) performance)
+    const segMap = new Map();
+    for (let i = 0; i < dots.length; i++) {
+      const d = dots[i];
+      const key = d.roadIdx * 1000 + d.segIdx;
+      let list = segMap.get(key);
+      if (!list) {
+        list = [];
+        segMap.set(key, list);
+      }
+      list.push(d);
+    }
+
+    // 3. Evaluate each vehicle's target velocity, signal stopping, and movement
     for (let i = 0; i < dots.length; i++) {
       const dot = dots[i];
       const segLen = dot.segmentDist[dot.segIdx] || 1;
-      const tDelta = (dot.mps * dt) / segLen;
 
-      dot.t += tDelta * dot.direction;
+      let targetMps = dot.cruiseMps;
+      let sigStatus = 'ACTIVE TRANSIT';
+      let sigColor = null;
 
-      if (dot.t >= 1.0) {
-        dot.t -= 1.0;
-        dot.segIdx++;
-        if (dot.segIdx >= dot.numSegments) {
-          dot.segIdx = 0;
-          dot.t = Math.random() * 0.2;
-        }
-      } else if (dot.t <= 0.0) {
-        dot.t += 1.0;
-        dot.segIdx--;
-        if (dot.segIdx < 0) {
-          dot.segIdx = dot.numSegments - 1;
-          dot.t = 1.0 - Math.random() * 0.2;
+      // Check upcoming crossroad signal
+      const nextWp = dot.direction > 0 ? dot.segIdx + 1 : dot.segIdx;
+      const signalInfo = dot.road?.signals?.get(nextWp);
+
+      if (signalInfo) {
+        const light = getSignalColor(signalInfo.crossroad, signalInfo.axis, nowSec);
+        sigColor = light;
+
+        const distToWp = dot.direction > 0 ? (1.0 - dot.t) * segLen : dot.t * segLen;
+
+        if (light === 'red') {
+          // Stop line buffer: ~3.5 meters before the crossroad intersection
+          const stopBufferFrac = Math.min(0.12, 3.5 / segLen);
+          const stopT = dot.direction > 0 ? (1.0 - stopBufferFrac) : stopBufferFrac;
+          const isAtOrPastStop = dot.direction > 0 ? (dot.t >= stopT) : (dot.t <= stopT);
+
+          if (isAtOrPastStop) {
+            targetMps = 0;
+            dot.t = stopT; // Hold precisely at the stop line
+            sigStatus = 'SIGNAL STOP · RED LIGHT';
+          } else if (distToWp < 32) {
+            // Decelerate smoothly towards crossroad red light
+            targetMps = 0;
+            sigStatus = 'DECELERATING · RED LIGHT';
+          }
+        } else if (light === 'amber') {
+          if (distToWp < 9) {
+            // Too close to stop smoothly, proceed through intersection
+            targetMps = dot.cruiseMps;
+            sigStatus = 'CLEARING INTERSECTION';
+          } else if (distToWp < 28) {
+            targetMps = 0;
+            sigStatus = 'DECELERATING · AMBER LIGHT';
+          }
+        } else if (light === 'green') {
+          targetMps = dot.cruiseMps;
+          sigStatus = 'SIGNAL GREEN · PROCEEDING';
         }
       }
+
+      // Anti-collision car-following queue check (safe following headway behind stopped cars)
+      const sameSegDots = segMap.get(dot.roadIdx * 1000 + dot.segIdx);
+      if (sameSegDots && sameSegDots.length > 1) {
+        for (let j = 0; j < sameSegDots.length; j++) {
+          const other = sameSegDots[j];
+          if (other === dot || other.direction !== dot.direction) continue;
+
+          if (dot.direction > 0 && other.t > dot.t) {
+            const distAhead = (other.t - dot.t) * segLen;
+            if (distAhead < 14) {
+              targetMps = Math.min(targetMps, other.currentMps);
+              if (distAhead < 7) {
+                dot.t = Math.max(0, other.t - (7 / segLen));
+                if (other.currentMps < 0.2) {
+                  targetMps = 0;
+                  sigStatus = 'QUEUED AT SIGNAL';
+                  sigColor = 'red';
+                }
+              }
+            }
+          } else if (dot.direction < 0 && other.t < dot.t) {
+            const distAhead = (dot.t - other.t) * segLen;
+            if (distAhead < 14) {
+              targetMps = Math.min(targetMps, other.currentMps);
+              if (distAhead < 7) {
+                dot.t = Math.min(1, other.t + (7 / segLen));
+                if (other.currentMps < 0.2) {
+                  targetMps = 0;
+                  sigStatus = 'QUEUED AT SIGNAL';
+                  sigColor = 'red';
+                }
+              }
+            }
+          }
+        }
+      }
+
+      // Smooth realistic acceleration and braking
+      const maxAccel = 3.5; // m/s²
+      const maxDecel = 6.5; // m/s²
+      if (targetMps < dot.currentMps) {
+        dot.currentMps = Math.max(targetMps, dot.currentMps - maxDecel * dt);
+      } else if (targetMps > dot.currentMps) {
+        dot.currentMps = Math.min(targetMps, dot.currentMps + maxAccel * dt);
+      }
+      if (dot.currentMps < 0.05 && targetMps === 0) {
+        dot.currentMps = 0;
+      }
+
+      // Advance position along segment if velocity is positive
+      if (dot.currentMps > 0) {
+        const tDelta = (dot.currentMps * dt) / segLen;
+        dot.t += tDelta * dot.direction;
+
+        if (dot.t >= 1.0) {
+          dot.t -= 1.0;
+          dot.segIdx++;
+          if (dot.segIdx >= dot.numSegments) {
+            dot.segIdx = 0;
+            dot.t = Math.random() * 0.15;
+          }
+        } else if (dot.t <= 0.0) {
+          dot.t += 1.0;
+          dot.segIdx--;
+          if (dot.segIdx < 0) {
+            dot.segIdx = dot.numSegments - 1;
+            dot.t = 1.0 - Math.random() * 0.15;
+          }
+        }
+      }
+
+      dot.signalStatus = sigStatus;
+      dot.signalColor = sigColor;
 
       Cesium.Cartesian3.lerp(
         dot.waypoints[dot.segIdx],
@@ -315,13 +445,18 @@ export default function TrafficLayer({ viewer }) {
       // Broadcast live telemetry updates for VehicleDashboard
       if (now - lastTelemetryDispatchRef.current > 75) {
         lastTelemetryDispatchRef.current = now;
-        const speedKmh = Math.round(trackedDot.mps * 3.6);
+        const speedKmh = Math.round(trackedDot.currentMps * 3.6);
+        const isStoppedAtSignal = trackedDot.currentMps === 0 && (trackedDot.signalColor === 'red' || trackedDot.signalStatus.includes('SIGNAL') || trackedDot.signalStatus.includes('QUEUED'));
+
         window.dispatchEvent(
           new CustomEvent('godseye:vehicle-telemetry', {
             detail: {
               id: trackedId,
               speedKmh,
               headingDeg,
+              signalStatus: trackedDot.signalStatus || 'ACTIVE TRANSIT',
+              signalColor: trackedDot.signalColor || null,
+              isStopped: isStoppedAtSignal,
             },
           })
         );
@@ -412,7 +547,8 @@ export default function TrafficLayer({ viewer }) {
     const dotCap = MAX_DOTS_BUDGET;
     let spawned = 0;
 
-    for (const road of roads) {
+    for (let rIdx = 0; rIdx < roads.length; rIdx++) {
+      const road = roads[rIdx];
       if (spawned >= dotCap) break;
       const numSegments = road.waypoints.length - 1;
       if (numSegments < 1) continue;
@@ -463,7 +599,11 @@ export default function TrafficLayer({ viewer }) {
           segIdx,
           t,
           mps: speed,
+          cruiseMps: speed,
+          currentMps: speed,
           direction,
+          road,
+          roadIdx: rIdx,
         });
 
         spawned++;
@@ -536,6 +676,43 @@ export default function TrafficLayer({ viewer }) {
     parsedRoads = simulateRoadFlow(parsedRoads);
     roadsRef.current = parsedRoads;
 
+    // Build crossroads and initialize traffic signal points
+    const crossroads = buildCrossroads(parsedRoads);
+    crossroadsRef.current = crossroads;
+
+    if (!signalsCollectionRef.current) {
+      signalsCollectionRef.current = new Cesium.PointPrimitiveCollection();
+      viewer.scene.primitives.add(signalsCollectionRef.current);
+    }
+    signalsCollectionRef.current.removeAll();
+
+    for (let c = 0; c < crossroads.length; c++) {
+      const cr = crossroads[c];
+      const pos = Cesium.Cartesian3.fromDegrees(cr.coord[0], cr.coord[1], DOT_HEIGHT_OFFSET + 0.8);
+      const pt = signalsCollectionRef.current.add({
+        position: pos,
+        pixelSize: 8,
+        color: Cesium.Color.fromCssColorString(SIGNAL_COLORS.green),
+        outlineColor: Cesium.Color.WHITE.withAlpha(0.9),
+        outlineWidth: 1.5,
+        disableDepthTestDistance: 50000,
+        id: {
+          id: cr.id,
+          name: `TRAFFIC SIGNAL: ${cr.id.toUpperCase()}`,
+          type: 'traffic',
+          _layerType: 'traffic',
+          isSignal: true,
+          latitude: Number(cr.coord[1]).toFixed(4),
+          longitude: Number(cr.coord[0]).toFixed(4),
+          cycleDuration: `${cr.cycleDuration}s`,
+          greenDuration: `${cr.greenDuration}s`,
+          amberDuration: `${cr.amberDuration}s`,
+          status: 'DUAL-PHASE SIGNAL CONTROLLER',
+        },
+      });
+      cr.point = pt;
+    }
+
     // Render polyline skeletons for major corridors
     corridorsRef.current.forEach((c) => viewer.entities.remove(c));
     corridorsRef.current = [];
@@ -563,6 +740,9 @@ export default function TrafficLayer({ viewer }) {
     });
 
     const alt = viewer.camera.positionCartographic.height;
+    if (signalsCollectionRef.current) {
+      signalsCollectionRef.current.show = alt <= ACTIVATION_ALTITUDE_METERS;
+    }
     spawnDots(parsedRoads, alt);
 
     // Update store data
@@ -591,6 +771,9 @@ export default function TrafficLayer({ viewer }) {
       if (pointCollectionRef.current) {
         pointCollectionRef.current.show = false;
       }
+      if (signalsCollectionRef.current) {
+        signalsCollectionRef.current.show = false;
+      }
       corridorsRef.current.forEach((c) => { c.show = false; });
       setStatus('traffic', 'idle', { sourceName: 'Zoom in (<8km) to activate street traffic' });
       return;
@@ -598,6 +781,9 @@ export default function TrafficLayer({ viewer }) {
 
     if (pointCollectionRef.current) {
       pointCollectionRef.current.show = true;
+    }
+    if (signalsCollectionRef.current) {
+      signalsCollectionRef.current.show = true;
     }
     corridorsRef.current.forEach((c) => { c.show = true; });
 
