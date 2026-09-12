@@ -134,19 +134,24 @@ export async function handleCctvFrame(req, res, searchParams) {
 
 export function handleCctvSources(req, res) {
   // Load verified manifest if present
-  const manifestPath = path.resolve(process.cwd(), 'public/data/verified-cctv-manifest.json');
-  try {
-    if (fs.existsSync(manifestPath)) {
-      const data = fs.readFileSync(manifestPath, 'utf8');
-      res.writeHead(200, {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      });
-      res.end(data);
-      return;
+  const manifestPaths = [
+    path.resolve(process.cwd(), 'public/manifests/cctv-verified.json'),
+    path.resolve(process.cwd(), 'public/data/verified-cctv-manifest.json'),
+  ];
+  for (const manifestPath of manifestPaths) {
+    try {
+      if (fs.existsSync(manifestPath)) {
+        const data = fs.readFileSync(manifestPath, 'utf8');
+        res.writeHead(200, {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        });
+        res.end(data);
+        return;
+      }
+    } catch {
+      // Try next
     }
-  } catch {
-    // Fall through
   }
 
   res.writeHead(200, {

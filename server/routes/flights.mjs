@@ -1,16 +1,17 @@
 import { MemoryCache } from '../cache.mjs';
 
-const flightCache = new MemoryCache(20);
+const flightCache = new MemoryCache(40);
 const CACHE_TTL_MS = 8000; // 8 seconds
 
-const FLIGHT_SOURCES = [
-  'https://api.airplanes.live/v2/mil',
-  'https://opendata.adsb.lol/v2/mil',
-];
+const USER_AGENT = 'GodsEyeTactical/2.0 (https://github.com/VrushankPatel/godseye; contact: ops@godseye.internal)';
 
 export async function handleFlights(req, res, searchParams) {
-  const mode = searchParams.get('mode') || 'mil';
-  const cacheKey = `flights:${mode}`;
+  const mode = (searchParams.get('mode') || 'all').toLowerCase();
+  const lat = searchParams.get('lat');
+  const lon = searchParams.get('lon');
+  const radius = searchParams.get('radius');
+
+  const cacheKey = lat && lon && radius ? `flights:point:${lat}:${lon}:${radius}` : `flights:${mode}`;
 
   const cached = flightCache.get(cacheKey);
   if (cached) {
@@ -23,16 +24,35 @@ export async function handleFlights(req, res, searchParams) {
     return;
   }
 
+  let urls = [];
+  if (lat && lon && radius) {
+    urls = [
+      `https://api.adsb.lol/v2/point/${lat}/${lon}/${radius}`,
+      `https://api.adsb.one/v2/point/${lat}/${lon}/${radius}`,
+    ];
+  } else if (mode === 'mil') {
+    urls = [
+      'https://api.adsb.lol/v2/mil',
+      'https://api.airplanes.live/v2/mil',
+    ];
+  } else {
+    // global / all
+    urls = [
+      'https://api.adsb.lol/v2/point/0/0/10000',
+      'https://api.adsb.lol/v2/mil',
+    ];
+  }
+
   let result = null;
-  for (const url of FLIGHT_SOURCES) {
+  for (const url of urls) {
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 6000);
+      const timeout = setTimeout(() => controller.abort(), 7000);
 
       const resp = await fetch(url, {
         headers: {
           'Accept': 'application/json',
-          'User-Agent': 'GodsEye-Console/1.0',
+          'User-Agent': USER_AGENT,
         },
         signal: controller.signal,
       });
@@ -79,3 +99,4 @@ export async function handleFlights(req, res, searchParams) {
     res.end(JSON.stringify({ error: 'All flight data upstreams failed' }));
   }
 }
+

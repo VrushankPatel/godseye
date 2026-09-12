@@ -194,7 +194,8 @@ function createPlaneIconDataUri() {
 }
 
 const BASE_AIRCRAFT_SOURCES = [
-    { url: '/api/flights?mode=mil', parser: (payload) => parseAdsbPayload(payload, 'Backend ADS-B Relay') },
+    { url: '/api/flights?mode=all', parser: (payload) => parseAdsbPayload(payload, 'Backend ADS-B Relay Global') },
+    { url: '/api/flights?mode=mil', parser: (payload) => parseAdsbPayload(payload, 'Backend ADS-B Relay Mil') },
     { url: API_URLS.ADSB_LOL_GLOBAL, parser: (payload) => parseAdsbPayload(payload, 'ADS-B.lol Global') },
     { url: 'https://api.adsb.lol/v2/mil', parser: (payload) => parseAdsbPayload(payload, 'ADS-B.lol Mil') },
     { url: API_URLS.AIRPLANES_GLOBAL, parser: (payload) => parseAdsbPayload(payload, 'Airplanes.live Global') },
@@ -231,6 +232,10 @@ function buildRegionalPointSources(zones) {
         const queryRadius = Math.min(250, zone.radiusNm);
         const suffix = `${zone.lat}/${zone.lon}/${queryRadius}`;
         return [
+            {
+                url: `/api/flights?lat=${zone.lat}&lon=${zone.lon}&radius=${queryRadius}`,
+                parser: (payload) => parseAdsbPayload(payload, `Backend ADS-B Relay ${zone.id}`),
+            },
             {
                 url: `https://api.airplanes.live/v2/point/${suffix}`,
                 parser: (payload) => parseAdsbPayload(payload, `Airplanes.live ${zone.id}`),
