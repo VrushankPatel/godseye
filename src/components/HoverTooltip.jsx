@@ -103,7 +103,14 @@ export default function HoverTooltip() {
                         {/* High-tech Vehicle Card */}
                         <div className="flex items-center justify-between p-2 rounded bg-black/40 border border-white/10">
                             <div>
-                                <div className="text-[9px] text-electric-blue font-bold uppercase tracking-widest">{hoverInfo.brand || 'Automotive'}</div>
+                                <div className="flex items-center gap-1.5">
+                                    <span className="text-[9px] text-electric-blue font-bold uppercase tracking-widest">{hoverInfo.brand || 'Automotive'}</span>
+                                    {hoverInfo.countryName && (
+                                        <span className="text-[8px] px-1 py-0.2 rounded bg-white/10 text-white/80 font-mono">
+                                            {hoverInfo.countryName}
+                                        </span>
+                                    )}
+                                </div>
                                 <div className="text-xs font-bold text-white truncate max-w-[160px]">{hoverInfo.model || hoverInfo.name}</div>
                             </div>
                             <div className="text-right">

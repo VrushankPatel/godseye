@@ -231,6 +231,11 @@ export default function VehicleDashboard({ vehicle }) {
             <div className="flex items-center gap-1.5">
               <span className="text-[10px] font-bold text-electric-blue tracking-widest uppercase">{vehicle.brand || 'Vehicle'}</span>
               <span className="text-[9px] px-1 py-0.2 rounded bg-white/10 text-white/70">{vehicle.vehicleCategory}</span>
+              {vehicle.countryName && (
+                <span className="text-[9px] px-1.5 py-0.2 rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
+                  {vehicle.countryName}
+                </span>
+              )}
             </div>
             <div className="text-xs font-bold text-white tracking-wide">{vehicle.model}</div>
           </div>
@@ -368,6 +373,12 @@ export default function VehicleDashboard({ vehicle }) {
           <div className="text-white/40 uppercase tracking-widest text-[8px]">Assigned Destination</div>
           <div className="text-electric-blue truncate">{vehicle.destination}</div>
         </div>
+        {vehicle.countryName && (
+          <div className="col-span-2 pt-1 border-t border-white/5 flex items-center justify-between text-[9px]">
+            <span className="text-white/40 uppercase tracking-widest text-[8px]">Regional Fleet Origin</span>
+            <span className="text-white/80 font-bold">{vehicle.countryName} ({vehicle.country})</span>
+          </div>
+        )}
       </div>
     </div>
   );

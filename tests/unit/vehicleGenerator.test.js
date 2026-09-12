@@ -5,6 +5,7 @@ describe('vehicleGenerator', () => {
   const dummyMotorway = {
     type: 'motorway',
     name: 'Interstate 80 Express',
+    coords: [[-122.4194, 37.7749], [-122.4180, 37.7755]],
     waypoints: [[0, 0], [1, 1]],
     flow: { level: 0.85 },
   };
@@ -12,8 +13,17 @@ describe('vehicleGenerator', () => {
   const dummyResidential = {
     type: 'residential',
     name: 'Elm Street',
+    coords: [[-122.4194, 37.7749], [-122.4180, 37.7755]],
     waypoints: [[0, 0], [0.1, 0.1]],
     flow: { level: 0.45 },
+  };
+
+  const dummyIndiaRoad = {
+    type: 'residential',
+    name: 'MG Road Bengaluru',
+    coords: [[77.5946, 12.9716], [77.5950, 12.9720]],
+    waypoints: [[0, 0], [0.1, 0.1]],
+    flow: { level: 0.6 },
   };
 
   it('generates rich vehicle metadata matching required schema', () => {
@@ -66,6 +76,7 @@ describe('vehicleGenerator', () => {
   it('handles road with missing flow gracefully', () => {
     const noFlowRoad = {
       type: 'secondary',
+      coords: [[-122.4194, 37.7749]],
       waypoints: [[0, 0]],
     };
     const v = generateVehicleData(noFlowRoad, 5);
@@ -75,7 +86,7 @@ describe('vehicleGenerator', () => {
     expect(v.roadName).toBe('SECONDARY ARTERIAL');
   });
 
-  it('generates real-world Toyota and Tesla models with brand metadata and shortLabels', () => {
+  it('generates real-world Toyota and Tesla models with brand metadata and shortLabels in the US', () => {
     const samples = Array.from({ length: 40 }, (_, i) => generateVehicleData(dummyResidential, i));
     const brands = new Set(samples.map((s) => s.brand));
 
@@ -94,5 +105,20 @@ describe('vehicleGenerator', () => {
       expect(typeof toyotaSample.paintColor).toBe('string');
       expect(typeof toyotaSample.shortModel).toBe('string');
     }
+  });
+
+  it('generates authentic Indian vehicles in India and never Ford F-150', () => {
+    const samples = Array.from({ length: 30 }, (_, i) => generateVehicleData(dummyIndiaRoad, i));
+    const brands = new Set(samples.map((s) => s.brand));
+
+    expect(brands.has('Maruti Suzuki') || brands.has('Tata Motors') || brands.has('Mahindra')).toBe(true);
+    expect(samples.some((s) => s.model.includes('F-150'))).toBe(false);
+    expect(samples.some((s) => s.model.includes('Cybertruck'))).toBe(false);
+
+    samples.forEach((s) => {
+      expect(s.country).toBe('IN');
+      expect(s.countryName).toBe('India');
+      expect(s.plate).toMatch(/^[A-Z]{2} \d{2} [A-Z]{2} \d{4}$/);
+    });
   });
 });
