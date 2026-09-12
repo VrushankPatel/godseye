@@ -132,33 +132,116 @@ export async function handleCctvFrame(req, res, searchParams) {
   }
 }
 
-export function handleCctvSources(req, res) {
+let cachedSourcesJson = null;
+let lastSourcesFetchTime = 0;
+const SOURCES_CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
+
+export async function handleCctvSources(req, res) {
+  const now = Date.now();
+  if (cachedSourcesJson && (now - lastSourcesFetchTime) < SOURCES_CACHE_TTL_MS) {
+    res.writeHead(200, {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+      'X-Cache': 'HIT',
+    });
+    res.end(cachedSourcesJson);
+    return;
+  }
+
   // Load verified manifest if present
   const manifestPaths = [
     path.resolve(process.cwd(), 'public/manifests/cctv-verified.json'),
     path.resolve(process.cwd(), 'public/data/verified-cctv-manifest.json'),
   ];
+  let manifestData = null;
   for (const manifestPath of manifestPaths) {
     try {
       if (fs.existsSync(manifestPath)) {
-        const data = fs.readFileSync(manifestPath, 'utf8');
-        res.writeHead(200, {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-        });
-        res.end(data);
-        return;
+        const raw = fs.readFileSync(manifestPath, 'utf8');
+        manifestData = JSON.parse(raw);
+        break;
       }
     } catch {
       // Try next
     }
   }
 
+  const baseFeeds = Array.isArray(manifestData?.feeds) ? manifestData.feeds : [];
+  const feedMap = new Map();
+  for (const feed of baseFeeds) {
+    if (feed && feed.id) {
+      feedMap.set(feed.id, feed);
+    }
+  }
+
+  // Fetch Austin Open Data live traffic cameras
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 4500);
+    const austinResp = await fetch("https://data.austintexas.gov/resource/b4k4-adkb.json?$limit=500&$where=camera_status='TURNED_ON'", {
+      headers: { Accept: 'application/json', 'User-Agent': 'GodsEyeTactical/2.0' },
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
+    if (austinResp.ok) {
+      const austinRows = await austinResp.json();
+      if (Array.isArray(austinRows)) {
+        for (const cam of austinRows) {
+          if (!cam) continue;
+          let lat = Number(cam.location_latitude);
+          let lng = Number(cam.location_longitude);
+          if ((!Number.isFinite(lat) || !Number.isFinite(lng)) && cam.location?.coordinates) {
+            lng = Number(cam.location.coordinates[0]);
+            lat = Number(cam.location.coordinates[1]);
+          }
+          if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
+          if (lat < 29.5 || lat > 31.0 || lng < -98.5 || lng > -97.0) continue;
+
+          const id = String(cam.camera_id || cam.id || '').trim();
+          if (!id) continue;
+
+          const feedId = `austin-${id}`;
+          const rawName = String(cam.location_name || '').trim();
+          const cleanName = rawName ? rawName.toUpperCase() : `AUSTIN CAM ${id}`;
+          const imgUrl = cam.screenshot_address || `https://cctv.austinmobility.io/image/${id}.jpg`;
+
+          feedMap.set(feedId, {
+            id: feedId,
+            name: cleanName,
+            lat,
+            lng,
+            url: imgUrl,
+            fallbackUrl: imgUrl,
+            city: 'Austin',
+            mediaType: 'image',
+            refreshSeconds: 10,
+            provider: 'Austin Transportation & Public Works',
+            verificationStatus: 'verified',
+          });
+        }
+      }
+    }
+  } catch {
+    // Austin fetch optional, continue with manifest feeds
+  }
+
+  const combinedFeeds = Array.from(feedMap.values());
+  const responseObj = {
+    generatedAt: new Date().toISOString(),
+    feedCount: combinedFeeds.length,
+    verifiedCount: combinedFeeds.length,
+    feeds: combinedFeeds,
+  };
+
+  cachedSourcesJson = JSON.stringify(responseObj);
+  lastSourcesFetchTime = now;
+
   res.writeHead(200, {
     'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': '*',
+    'X-Cache': 'MISS',
   });
-  res.end(JSON.stringify({ feeds: [], total: 0 }));
+  res.end(cachedSourcesJson);
 }
 
 export function handleCctvHealth(req, res) {

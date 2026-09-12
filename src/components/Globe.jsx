@@ -27,6 +27,7 @@ import TrafficLayer from '../layers/TrafficLayer';
 import MilitaryActivityLayer from '../layers/MilitaryActivityLayer';
 import MilitaryBasesLayer from '../layers/MilitaryBasesLayer';
 import ForbiddenZonesLayer from '../layers/ForbiddenZonesLayer';
+import TacticalWorldOverlay from './TacticalWorldOverlay';
 import { readEnvValue } from '../utils/runtimeEnv';
 
 const TRACK_SAMPLE_INTERVAL_MS = 1000;
@@ -1187,6 +1188,7 @@ export default function Globe() {
                     <MilitaryBasesLayer viewer={viewerRef.current} />
                     <ForbiddenZonesLayer viewer={viewerRef.current} />
                     <AirspaceLayer viewer={viewerRef.current} />
+                    <TacticalWorldOverlay viewer={viewerRef.current} />
                 </>
             )}
         </>

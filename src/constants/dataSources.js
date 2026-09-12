@@ -115,6 +115,7 @@ export const API_URLS = {
     CAMERA_ONTARIO_511: 'https://511on.ca/api/v2/get/cameras',
     CAMERA_ALBERTA_511: 'https://511.alberta.ca/api/v2/get/cameras',
     CAMERA_TFL_JAMCAMS: 'https://api.tfl.gov.uk/Place/Type/JamCam',
+    CAMERA_AUSTIN_OPEN_DATA: 'https://data.austintexas.gov/resource/b4k4-adkb.json?$limit=500&$where=camera_status=%27TURNED_ON%27',
 
     // GPSJam - GPS interference data
     GPSJAM: 'https://gpsjam.org',

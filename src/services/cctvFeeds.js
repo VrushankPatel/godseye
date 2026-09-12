@@ -273,3 +273,50 @@ export function getProxiedCameraFrameUrl(url, id = 'CAM') {
     return `/api/cctv/frame?id=${encodeURIComponent(id)}&url=${encodeURIComponent(str)}`;
 }
 
+export function normalizeAustinFeeds(payload, maxFeeds = Infinity) {
+    const parsed = parseJsonPayload(payload);
+    if (!Array.isArray(parsed)) return [];
+
+    const feeds = [];
+    for (const cam of parsed) {
+        if (!cam) continue;
+        const status = String(cam.camera_status || '').trim().toUpperCase();
+        if (status && status !== 'TURNED_ON') continue;
+
+        let lat = Number(cam.location_latitude);
+        let lng = Number(cam.location_longitude);
+        if ((!Number.isFinite(lat) || !Number.isFinite(lng)) && cam.location?.coordinates) {
+            lng = Number(cam.location.coordinates[0]);
+            lat = Number(cam.location.coordinates[1]);
+        }
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
+        if (lat < 29.5 || lat > 31.0 || lng < -98.5 || lng > -97.0) continue;
+
+        const id = String(cam.camera_id || cam.id || '').trim();
+        if (!id) continue;
+
+        const rawName = String(cam.location_name || '').trim();
+        const cleanName = rawName ? rawName.toUpperCase() : `AUSTIN CAM ${id}`;
+        const screenshotUrl = cam.screenshot_address || `https://cctv.austinmobility.io/image/${id}.jpg`;
+
+        feeds.push({
+            id: `austin-${id}`,
+            name: cleanName,
+            lat,
+            lng,
+            url: screenshotUrl,
+            fallbackUrl: screenshotUrl,
+            city: 'Austin',
+            mediaType: 'image',
+            refreshSeconds: 10,
+            provider: 'Austin Transportation & Public Works',
+            verificationStatus: 'verified',
+        });
+
+        if (feeds.length >= maxFeeds) break;
+    }
+
+    return feeds;
+}
+
+

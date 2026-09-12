@@ -22,6 +22,7 @@ import {
   assignLaneOffset,
   computeLaneOffset,
 } from '../utils/roadNetwork';
+import overlayRegistry from '../services/overlayRegistry';
 
 const ACTIVATION_ALTITUDE_METERS = 8000;
 const FETCH_DEBOUNCE_MS = 320;
@@ -247,15 +248,14 @@ export default function TrafficLayer({ viewer }) {
     });
     feedEntitiesRef.current = [];
     vehicleEntitiesRef.current.forEach((entityId) => {
-      if (viewer && !viewer.isDestroyed()) {
-        const ent = viewer.entities.getById(entityId);
-        if (ent) viewer.entities.remove(ent);
-      }
+      if (viewer && !viewer.isDestroyed()) viewer.entities.removeById(entityId);
     });
     vehicleEntitiesRef.current.clear();
     dotsRef.current = [];
     crossroadsRef.current = [];
     roadsRef.current = [];
+    overlayRegistry.setTrafficActive(false);
+    overlayRegistry.setVehicles([]);
   }, [viewer]);
 
   // Advance vehicles on each Cesium preRender tick with crossroad signal stopping
@@ -514,8 +514,17 @@ export default function TrafficLayer({ viewer }) {
 
       dot.point.position = scratch;
 
+      // Compute heading/bearing along current road segment for tactical reticles
+      const coords = dot.coords;
+      if (coords && coords[safeSegIdx] && coords[safeSegIdx + 1]) {
+        const from = dot.direction > 0 ? coords[safeSegIdx] : coords[safeSegIdx + 1];
+        const to = dot.direction > 0 ? coords[safeSegIdx + 1] : coords[safeSegIdx];
+        dot.headingDeg = computeBearingDeg(from[0], from[1], to[0], to[1]);
+      }
+
       if (dot.label) {
         dot.label.position = scratch;
+        dot.label.show = false; // Hide 3D billboard label; tactical overlay renders crisp HUD callouts
 
         if (dot.currentMps === 0 && (dot.signalColor === 'red' || dot.signalStatus?.includes('STOP') || dot.signalStatus?.includes('QUEUED'))) {
           if (!dot.wasStopped) {
@@ -579,6 +588,9 @@ export default function TrafficLayer({ viewer }) {
         );
       }
     }
+
+    overlayRegistry.setTrafficActive(true);
+    overlayRegistry.setVehicles(dotsRef.current);
 
     viewer.scene.requestRender();
   }, [viewer]);
@@ -697,6 +709,7 @@ export default function TrafficLayer({ viewer }) {
         const direction = road.oneway ? road.oneway : (i % 2 === 0 ? 1 : -1);
 
         const vehicleData = generateVehicleData(road, spawned);
+        vehicleData.vehTag = `VEH-${String(spawned).padStart(4, '0')}`;
         const coord = road.coords[segIdx] || [0, 0];
         vehicleData.longitude = Number(coord[0]).toFixed(4);
         vehicleData.latitude = Number(coord[1]).toFixed(4);

@@ -9,8 +9,10 @@ import {
     normalize511Feeds,
     normalizeCaltransFeed,
     normalizeTflFeeds,
+    normalizeAustinFeeds,
     prioritizeFeeds,
 } from '../services/cctvFeeds';
+import overlayRegistry from '../services/overlayRegistry';
 import { isSharedCacheFresh } from '../services/sharedRuntimeCache';
 import { readLayerCache, writeLayerCache } from '../utils/layerCache';
 import { fetchJsonWithPolicy, fetchTextWithPolicy } from '../utils/network';
@@ -113,6 +115,27 @@ function addEntitiesToViewer(viewer, feeds, imageUrl) {
     return entities;
 }
 
+function syncOverlayCameras(feeds) {
+    if (!Array.isArray(feeds) || !feeds.length) {
+        overlayRegistry.setCctvActive(false);
+        overlayRegistry.setCameras([]);
+        return;
+    }
+    overlayRegistry.setCctvActive(true);
+    overlayRegistry.setCameras(feeds.map((cam) => ({
+        id: cam.id,
+        name: cam.name,
+        city: cam.city,
+        provider: cam.provider,
+        url: cam.url,
+        videoUrl: cam.resolvedVideoUrl || cam.videoUrl || cam.url,
+        mediaType: cam.mediaType || 'image',
+        lat: cam.lat,
+        lng: cam.lng,
+        position: Cesium.Cartesian3.fromDegrees(cam.lng, cam.lat, 15),
+    })));
+}
+
 /**
  * CameraLayer — fetches from government APIs + dynamic discovery engine.
  * Adds Cesium billboard entities for each camera feed.
@@ -129,6 +152,7 @@ export default function CameraLayer({ viewer }) {
     const clearEntities = useCallback(() => {
         entitiesRef.current.forEach((entity) => viewer.entities.remove(entity));
         entitiesRef.current = [];
+        syncOverlayCameras([]);
     }, [viewer]);
 
     useEffect(() => {
@@ -158,6 +182,7 @@ export default function CameraLayer({ viewer }) {
                 );
                 const cachedRenderFeeds = downsampleFeeds(prioritizedCachedFeeds, renderBudget);
                 entitiesRef.current = addEntitiesToViewer(viewer, cachedRenderFeeds, imageUrl);
+                syncOverlayCameras(cachedRenderFeeds);
                 updateData('cctv', prioritizedCachedFeeds, {
                     sourceName: 'Local CCTV cache',
                     isCached: true,
@@ -177,6 +202,7 @@ export default function CameraLayer({ viewer }) {
                 const sharedRenderFeeds = downsampleFeeds(prioritizedSharedFeeds, renderBudget);
                 clearEntities();
                 entitiesRef.current = addEntitiesToViewer(viewer, sharedRenderFeeds, imageUrl);
+                syncOverlayCameras(sharedRenderFeeds);
                 updateData('cctv', prioritizedSharedFeeds, {
                     sourceName: 'Shared RTDB CCTV cache',
                     isCached: true,
@@ -190,7 +216,7 @@ export default function CameraLayer({ viewer }) {
                 return;
             }
 
-            const [manifestRes, caltransRes, ontarioRes, albertaRes, tflRes] = await Promise.allSettled([
+            const [manifestRes, austinRes, caltransRes, ontarioRes, albertaRes, tflRes] = await Promise.allSettled([
                 fetchJsonWithPolicy('/api/cctv/sources', {
                     timeoutMs: 6000,
                     retries: 1,
@@ -200,6 +226,11 @@ export default function CameraLayer({ viewer }) {
                     retries: 1,
                     circuitKey: 'cctv:manifest',
                 })),
+                fetchJsonWithPolicy(API_URLS.CAMERA_AUSTIN_OPEN_DATA, {
+                    timeoutMs: REQUEST_TIMEOUT_MS,
+                    retries: 1,
+                    circuitKey: 'cctv:austin-open-data',
+                }),
                 fetchTextWithPolicy(API_URLS.CAMERA_CALTRANS_CATALOG, {
                     timeoutMs: REQUEST_TIMEOUT_MS,
                     retries: 1,
@@ -225,6 +256,9 @@ export default function CameraLayer({ viewer }) {
             const manifestFeeds = manifestRes.status === 'fulfilled' && Array.isArray(manifestRes.value?.feeds)
                 ? manifestRes.value.feeds
                 : [];
+            const austinFeeds = austinRes.status === 'fulfilled'
+                ? normalizeAustinFeeds(austinRes.value, 500)
+                : [];
             const caltransFeeds = caltransRes.status === 'fulfilled'
                 ? normalizeCaltransFeed(caltransRes.value, MAX_CALTRANS_CAMERAS)
                 : [];
@@ -238,7 +272,7 @@ export default function CameraLayer({ viewer }) {
                 ? normalizeTflFeeds(tflRes.value, MAX_TFL_CAMERAS)
                 : [];
 
-            let govFeeds = mergeFeeds([manifestFeeds, caltransFeeds, ontarioFeeds, albertaFeeds, tflFeeds]);
+            let govFeeds = mergeFeeds([manifestFeeds, austinFeeds, caltransFeeds, ontarioFeeds, albertaFeeds, tflFeeds]);
             govFeeds = govFeeds.filter((f) => Boolean(f.videoUrl || f.url || f.fallbackUrl));
             govFeeds = prioritizeFeeds(govFeeds);
             const renderFeeds = downsampleFeeds(govFeeds, renderBudget);
@@ -248,6 +282,7 @@ export default function CameraLayer({ viewer }) {
             if (govFeeds.length) {
                 clearEntities();
                 entitiesRef.current = addEntitiesToViewer(viewer, renderFeeds, imageUrl);
+                syncOverlayCameras(renderFeeds);
                 updateData('cctv', govFeeds, {
                     sourceName: manifestFeeds.length ? 'Verified CCTV manifest + live catalogs' : 'Live CCTV catalogs',
                     isCached: false,
@@ -279,6 +314,7 @@ export default function CameraLayer({ viewer }) {
                     clearEntities();
                     const sampled = downsampleFeeds(displayable, renderBudget);
                     entitiesRef.current = addEntitiesToViewer(viewer, sampled, imageUrl);
+                    syncOverlayCameras(sampled);
                     updateData('cctv', displayable, {
                         sourceName: 'Verified CCTV manifest + live discovery',
                         isCached: false,
