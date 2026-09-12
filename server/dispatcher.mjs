@@ -3,6 +3,7 @@ import { handleTrafficStatus, handleTrafficFlowTile } from './routes/traffic.mjs
 import { handleCctvFrame, handleCctvSources, handleCctvHealth } from './routes/cctv.mjs';
 import { handleFlights } from './routes/flights.mjs';
 import { handleHealth } from './routes/health.mjs';
+import { handleRadioStations, handleRadioClick } from './routes/radio.mjs';
 
 const FLOW_TILE_REGEX = /^\/api\/(?:traffic|tomtom)\/flow\/(\d+)\/(\d+)\/(\d+)\.pbf$/;
 
@@ -69,6 +70,19 @@ export async function dispatchApiRequest(req, res, next) {
   // Health
   if (pathname === '/api/health') {
     handleHealth(req, res);
+    return true;
+  }
+
+  // Radio Browser Stations
+  if (pathname === '/api/radio/stations') {
+    await handleRadioStations(req, res, urlObj.searchParams);
+    return true;
+  }
+
+  // Radio Station Click
+  if (pathname.startsWith('/api/radio/click/')) {
+    const stationId = pathname.slice('/api/radio/click/'.length);
+    await handleRadioClick(req, res, stationId);
     return true;
   }
 

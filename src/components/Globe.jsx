@@ -27,6 +27,7 @@ import TrafficLayer from '../layers/TrafficLayer';
 import MilitaryActivityLayer from '../layers/MilitaryActivityLayer';
 import MilitaryBasesLayer from '../layers/MilitaryBasesLayer';
 import ForbiddenZonesLayer from '../layers/ForbiddenZonesLayer';
+import RadioLayer from '../layers/RadioLayer';
 import TacticalWorldOverlay from './TacticalWorldOverlay';
 import { readEnvValue } from '../utils/runtimeEnv';
 
@@ -208,6 +209,7 @@ export default function Globe() {
     const lastHoverUpdateMsRef = useRef(0);
     const labelLayersRef = useRef({ country: null, city: null });
     const city3DTilesRef = useRef({ tileset: null, source: 'none' });
+    const photorealTilesetRef = useRef(null);
     const cameraRecenterStateRef = useRef({ lastAppliedMs: 0 });
     const focusHiddenSnapshotRef = useRef(new Map());
     const godModeHiddenSnapshotRef = useRef(new Map());
@@ -363,8 +365,8 @@ export default function Globe() {
     useEffect(() => {
         if (!containerRef.current || viewerRef.current) return;
 
-        // Core Initialization - bypass Ion tokens with robust URL templates
-        const esriProvider = new Cesium.UrlTemplateImageryProvider({
+        // High-resolution satellite base layer (with UrlTemplate fallback)
+        const esriUrlProvider = new Cesium.UrlTemplateImageryProvider({
             url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
             maximumLevel: 19,
             credit: 'Esri World Imagery'
@@ -372,7 +374,7 @@ export default function Globe() {
 
         const viewer = new Cesium.Viewer(containerRef.current, {
             terrainProvider: new Cesium.EllipsoidTerrainProvider(),
-            baseLayer: new Cesium.ImageryLayer(esriProvider),
+            baseLayer: new Cesium.ImageryLayer(esriUrlProvider),
             baseLayerPicker: false,
             animation: false,
             fullscreenButton: false,
@@ -384,20 +386,81 @@ export default function Globe() {
             timeline: false,
             navigationHelpButton: false,
             creditContainer: document.createElement('div'), // hide credits
-            skyAtmosphere: false,
+            skyAtmosphere: true,
             scene3DOnly: false,
             shadows: false,
             requestRenderMode: false,
+            msaaSamples: 4,
+            contextOptions: {
+                webgl: {
+                    preserveDrawingBuffer: true,
+                },
+            },
         });
 
-        // Force a dark, eye-friendly space backdrop (no bright atmospheric blue)
+        // Upgrade base layer to native high-detail ArcGisMapServerImageryProvider
+        Cesium.ArcGisMapServerImageryProvider.fromUrl(
+            'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer',
+            { enablePickFeatures: false }
+        ).then((provider) => {
+            if (!viewer.isDestroyed()) {
+                const layer = new Cesium.ImageryLayer(provider);
+                viewer.imageryLayers.add(layer, 0);
+            }
+        }).catch(() => {
+            // Retain esriUrlProvider
+        });
+
+        // Upgrade to Re:Earth 3D Quantized Mesh Terrain
+        Cesium.CesiumTerrainProvider.fromUrl('https://terrain.reearth.land/cesium-mesh/ellipsoid')
+            .then((meshTerrain) => {
+                if (!viewer.isDestroyed()) {
+                    viewer.terrainProvider = meshTerrain;
+                }
+            })
+            .catch((err) => {
+                console.warn('[Globe] Re:Earth 3D terrain unavailable, retaining ellipsoid:', err?.message || err);
+            });
+
+        // Support Google Photorealistic 3D Tiles if Google API key or Cesium Ion token is configured
+        const googleApiKey = readEnvValue('VITE_GOOGLE_MAPS_KEY') || readEnvValue('GOOGLE_MAPS_KEY');
+        const ionToken = readEnvValue('VITE_CESIUM_ION_TOKEN') || readEnvValue('CESIUM_ION_TOKEN');
+        if (googleApiKey || ionToken) {
+            if (ionToken) Cesium.Ion.defaultAccessToken = ionToken;
+            if (googleApiKey) Cesium.GoogleMaps.defaultApiKey = googleApiKey;
+            Cesium.createGooglePhotorealistic3DTileset({
+                onlyUsingWithGoogleGeocoder: true,
+            }).then((tileset) => {
+                if (!viewer.isDestroyed() && tileset) {
+                    viewer.scene.primitives.add(tileset);
+                    viewer.scene.globe.show = false;
+                    photorealTilesetRef.current = tileset;
+                    console.info('[Globe] Google Photorealistic 3D Tiles activated');
+                }
+            }).catch((err) => {
+                console.warn('[Globe] Google Photorealistic 3D Tiles unavailable, defaulting to satellite globe:', err?.message || err);
+                if (!viewer.isDestroyed()) {
+                    viewer.scene.globe.show = true;
+                }
+            });
+        }
+
+        // Crisp spy-satellite lighting & atmosphere (never let the globe sink into dark pitch-black murkiness)
         viewer.scene.backgroundColor = Cesium.Color.fromCssColorString('#0a0a0f');
         if (viewer.scene.skyBox) {
             viewer.scene.skyBox.show = false;
         }
-        viewer.scene.globe.showGroundAtmosphere = false;
+        viewer.scene.globe.showGroundAtmosphere = true;
         viewer.scene.fog.enabled = false;
-        viewer.scene.globe.enableLighting = true;
+        viewer.scene.globe.enableLighting = false;
+        viewer.scene.globe.depthTestAgainstTerrain = false;
+
+        if (viewer.scene.skyAtmosphere) {
+            viewer.scene.skyAtmosphere.show = true;
+            viewer.scene.skyAtmosphere.atmosphereLightIntensity = 18;
+            viewer.scene.skyAtmosphere.saturationShift = -0.10;
+            viewer.scene.skyAtmosphere.brightnessShift = -0.05;
+        }
 
         // Tweak camera controls for a crisper, more pleasant dragging experience
         viewer.scene.screenSpaceCameraController.inertiaSpin = 0;
@@ -776,6 +839,10 @@ export default function Globe() {
                 viewer.scene.primitives.remove(city3DTilesRef.current.tileset);
             }
             city3DTilesRef.current = { tileset: null, source: 'none' };
+            if (photorealTilesetRef.current && viewer.scene.primitives.contains(photorealTilesetRef.current)) {
+                viewer.scene.primitives.remove(photorealTilesetRef.current);
+            }
+            photorealTilesetRef.current = null;
             setCity3DActive(false);
             hoveredEntityIdRef.current = null;
             clearHoverInfo();
@@ -1188,6 +1255,7 @@ export default function Globe() {
                     <MilitaryBasesLayer viewer={viewerRef.current} />
                     <ForbiddenZonesLayer viewer={viewerRef.current} />
                     <AirspaceLayer viewer={viewerRef.current} />
+                    <RadioLayer viewer={viewerRef.current} />
                     <TacticalWorldOverlay viewer={viewerRef.current} />
                 </>
             )}

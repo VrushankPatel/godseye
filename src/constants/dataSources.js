@@ -116,6 +116,7 @@ export const API_URLS = {
     CAMERA_ALBERTA_511: 'https://511.alberta.ca/api/v2/get/cameras',
     CAMERA_TFL_JAMCAMS: 'https://api.tfl.gov.uk/Place/Type/JamCam',
     CAMERA_AUSTIN_OPEN_DATA: 'https://data.austintexas.gov/resource/b4k4-adkb.json?$limit=500&$where=camera_status=%27TURNED_ON%27',
+    RADIO_STATIONS: '/api/radio/stations',
 
     // GPSJam - GPS interference data
     GPSJAM: 'https://gpsjam.org',
@@ -183,12 +184,14 @@ export const LAYER_DEFS = {
     militaryBases: { label: 'MIL BASES', color: '#f7c15a', icon: '⌂', description: 'Public military installation locations.' },
     forbiddenZones: { label: 'NO-GO ZONES', color: '#ff4d4d', icon: '⛔', description: 'Restricted/forbidden areas and access-limited zones.' },
     airspace: { label: 'AIRSPACE', color: '#00ffff', icon: '⬡', description: 'No-fly/restricted airspace overlays.' },
+    radio: { label: 'WORLD RADIO', color: '#ff6f4f', icon: '📻', description: 'Worldwide live radio broadcast stations with retro analog frequency tuner.' },
 };
 
 // Keep these layers in the primary tactical list; everything else is grouped under "OTHERS".
 export const SURVEILLANCE_PRIMARY_LAYERS = [
     'aircraft',
     'satellites',
+    'radio',
     'seismic',
     'airports',
     'seismicStations',

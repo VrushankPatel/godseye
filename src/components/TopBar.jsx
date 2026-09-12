@@ -40,6 +40,9 @@ export default function TopBar() {
     const sharedRuntimeCache = useStore((s) => s.sharedRuntimeCache);
     const globeViewMode = useStore((s) => s.globeViewMode);
     const toggleGlobeViewMode = useStore((s) => s.toggleGlobeViewMode);
+    const radioTunerOpen = useStore((s) => s.radioTunerOpen);
+    const toggleRadioTuner = useStore((s) => s.toggleRadioTuner);
+    const radioPlaybackStatus = useStore((s) => s.radioPlaybackStatus);
 
     useEffect(() => {
         if (!appIsActive) return undefined;
@@ -119,6 +122,23 @@ export default function TopBar() {
                     CACHE REFRESH
                     <span className="ml-2 text-text-dim">
                         {sharedRuntimeCache.status === 'loading' ? 'SYNCING' : 'FORCE'}
+                    </span>
+                </button>
+
+                <button
+                    className={`glass-panel px-3 py-1.5 mt-1 text-[10px] tracking-[0.18em] transition-all flex items-center justify-between gap-3 ${
+                        radioPlaybackStatus === 'playing'
+                            ? 'text-emerald-300 border-emerald-400/60 bg-emerald-950/40 shadow-[0_0_10px_rgba(16,185,129,0.3)]'
+                            : radioTunerOpen
+                            ? 'text-cyan-200 border-cyan-400/60 bg-cyan-950/40'
+                            : 'text-cyan-200/80 hover:text-white hover:border-cyan-400/50'
+                    }`}
+                    onClick={toggleRadioTuner}
+                    title="Toggle World Radio Retro Tuner"
+                >
+                    <span>📻 WORLD RADIO</span>
+                    <span className={`text-[8px] font-bold ${radioPlaybackStatus === 'playing' ? 'text-emerald-400 animate-pulse' : 'text-text-dim'}`}>
+                        {radioPlaybackStatus === 'playing' ? 'ON AIR' : radioTunerOpen ? 'OPEN' : 'STANDBY'}
                     </span>
                 </button>
 

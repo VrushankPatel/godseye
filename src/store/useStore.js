@@ -40,6 +40,7 @@ function createLayersState() {
         militaryBases: createLayerState(),
         forbiddenZones: createLayerState(),
         airspace: createLayerState(),
+        radio: createLayerState(),
     };
 }
 
@@ -360,6 +361,21 @@ const useStore = create((set, get) => ({
                 forceRefreshToken: Date.now(),
             },
         })),
+
+    // Radio Player & Tuner State
+    radioActiveStation: null,
+    radioPlaybackStatus: 'stopped',
+    radioVolume: 0.8,
+    radioFilterCountry: 'all',
+    radioFilterTag: 'all',
+    radioTunerOpen: false,
+    setRadioActiveStation: (station) => set({ radioActiveStation: station }),
+    setRadioPlaybackStatus: (status) => set({ radioPlaybackStatus: status }),
+    setRadioVolume: (volume) => set({ radioVolume: Math.max(0, Math.min(1, Number(volume) || 0)) }),
+    setRadioFilterCountry: (country) => set({ radioFilterCountry: country || 'all' }),
+    setRadioFilterTag: (tag) => set({ radioFilterTag: tag || 'all' }),
+    setRadioTunerOpen: (open) => set({ radioTunerOpen: Boolean(open) }),
+    toggleRadioTuner: () => set((state) => ({ radioTunerOpen: !state.radioTunerOpen })),
 
     // Get total active feed count
     getActiveFeedCount: () => {

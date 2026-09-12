@@ -10,6 +10,7 @@ import MissionHud from './components/MissionHud';
 import FocusMask from './components/FocusMask';
 import SysTerminal from './components/SysTerminal';
 import WebcamDock from './components/WebcamDock';
+import RadioTuner from './components/RadioTuner';
 import RenderBoundary from './components/RenderBoundary';
 import SharedRuntimeCacheBootstrap from './components/SharedRuntimeCacheBootstrap';
 import useStore from './store/useStore';
@@ -148,6 +149,9 @@ export default function App() {
             </RenderBoundary>
             <RenderBoundary name="webcam-dock">
                 <WebcamDock />
+            </RenderBoundary>
+            <RenderBoundary name="radio-tuner">
+                <RadioTuner />
             </RenderBoundary>
         </div>
     );
