@@ -13,6 +13,15 @@ import {
   buildCrossroads,
   SIGNAL_COLORS,
 } from '../utils/trafficSignals';
+import {
+  buildRoadNetwork,
+  selectNextRoad,
+  selectIntersectionTurn,
+  transferVehicleToRoad,
+  respawnVehicle,
+  assignLaneOffset,
+  computeLaneOffset,
+} from '../utils/roadNetwork';
 
 const ACTIVATION_ALTITUDE_METERS = 8000;
 const FETCH_DEBOUNCE_MS = 320;
@@ -197,6 +206,8 @@ export default function TrafficLayer({ viewer }) {
   const feedEntitiesRef = useRef([]);
   const vehicleEntitiesRef = useRef(new Set());
   const scratchLerpRef = useRef(new Cesium.Cartesian3());
+  const scratchOffsetRef = useRef(new Cesium.Cartesian3());
+  const spawnCounterRef = useRef(10000);
 
   const lastAnimTimeRef = useRef(0);
   const debounceTimerRef = useRef(null);
@@ -281,7 +292,7 @@ export default function TrafficLayer({ viewer }) {
     const segMap = new Map();
     for (let i = 0; i < dots.length; i++) {
       const d = dots[i];
-      const key = d.roadIdx * 1000 + d.segIdx;
+      const key = `${d.roadIdx}:${d.segIdx}`;
       let list = segMap.get(key);
       if (!list) {
         list = [];
@@ -340,7 +351,7 @@ export default function TrafficLayer({ viewer }) {
       }
 
       // Anti-collision car-following queue check (safe following headway behind stopped cars)
-      const sameSegDots = segMap.get(dot.roadIdx * 1000 + dot.segIdx);
+      const sameSegDots = segMap.get(`${dot.roadIdx}:${dot.segIdx}`);
       if (sameSegDots && sameSegDots.length > 1) {
         for (let j = 0; j < sameSegDots.length; j++) {
           const other = sameSegDots[j];
@@ -393,19 +404,86 @@ export default function TrafficLayer({ viewer }) {
         const tDelta = (dot.currentMps * dt) / segLen;
         dot.t += tDelta * dot.direction;
 
-        if (dot.t >= 1.0) {
-          dot.t -= 1.0;
-          dot.segIdx++;
-          if (dot.segIdx >= dot.numSegments) {
-            dot.segIdx = 0;
-            dot.t = Math.random() * 0.15;
+        if (dot.direction > 0) {
+          if (dot.t >= 1.0) {
+            dot.t -= 1.0;
+
+            // Optional turn at intermediate crossroad along the road
+            const intermediateTurn = dot.segIdx < dot.numSegments - 1
+              ? selectIntersectionTurn(dot.road, dot.segIdx + 1, 0.22)
+              : null;
+
+            if (intermediateTurn && dot.vehicleData?.id !== trackedId) {
+              transferVehicleToRoad(dot, intermediateTurn, roadsRef.current);
+            } else {
+              dot.segIdx++;
+              if (dot.segIdx >= dot.numSegments) {
+                // Reached end of current road segment
+                const isTrackedTarget = dot.vehicleData && dot.vehicleData.id === trackedId;
+                const reachedMaxTrip = (dot.tripLegs || 0) >= (dot.maxTripLegs || 10);
+
+                if (reachedMaxTrip && !isTrackedTarget) {
+                  respawnVehicle(dot, roadsRef.current, spawnCounterRef.current++);
+                } else {
+                  const nextConn = selectNextRoad(dot.road, dot.direction, {
+                    visited: dot.visitedRoads,
+                  });
+
+                  if (nextConn) {
+                    transferVehicleToRoad(dot, nextConn, roadsRef.current);
+                  } else {
+                    // Dead end cul-de-sac
+                    if (isTrackedTarget) {
+                      dot.direction = -1;
+                      dot.segIdx = dot.numSegments - 1;
+                      dot.t = 1.0;
+                    } else {
+                      respawnVehicle(dot, roadsRef.current, spawnCounterRef.current++);
+                    }
+                  }
+                }
+              }
+            }
           }
-        } else if (dot.t <= 0.0) {
-          dot.t += 1.0;
-          dot.segIdx--;
-          if (dot.segIdx < 0) {
-            dot.segIdx = dot.numSegments - 1;
-            dot.t = 1.0 - Math.random() * 0.15;
+        } else {
+          // dot.direction < 0 (moving backward)
+          if (dot.t <= 0.0) {
+            dot.t += 1.0;
+
+            const intermediateTurn = dot.segIdx > 0
+              ? selectIntersectionTurn(dot.road, dot.segIdx, 0.22)
+              : null;
+
+            if (intermediateTurn && dot.vehicleData?.id !== trackedId) {
+              transferVehicleToRoad(dot, intermediateTurn, roadsRef.current);
+            } else {
+              dot.segIdx--;
+              if (dot.segIdx < 0) {
+                // Reached start of current road segment
+                const isTrackedTarget = dot.vehicleData && dot.vehicleData.id === trackedId;
+                const reachedMaxTrip = (dot.tripLegs || 0) >= (dot.maxTripLegs || 10);
+
+                if (reachedMaxTrip && !isTrackedTarget) {
+                  respawnVehicle(dot, roadsRef.current, spawnCounterRef.current++);
+                } else {
+                  const nextConn = selectNextRoad(dot.road, dot.direction, {
+                    visited: dot.visitedRoads,
+                  });
+
+                  if (nextConn) {
+                    transferVehicleToRoad(dot, nextConn, roadsRef.current);
+                  } else {
+                    if (isTrackedTarget) {
+                      dot.direction = 1;
+                      dot.segIdx = 0;
+                      dot.t = 0.0;
+                    } else {
+                      respawnVehicle(dot, roadsRef.current, spawnCounterRef.current++);
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -413,12 +491,27 @@ export default function TrafficLayer({ viewer }) {
       dot.signalStatus = sigStatus;
       dot.signalColor = sigColor;
 
+      const safeSegIdx = Math.max(0, Math.min(dot.numSegments - 1, dot.segIdx));
+      const safeT = Math.max(0, Math.min(1, dot.t));
+
       Cesium.Cartesian3.lerp(
-        dot.waypoints[dot.segIdx],
-        dot.waypoints[dot.segIdx + 1],
-        dot.t,
+        dot.waypoints[safeSegIdx],
+        dot.waypoints[safeSegIdx + 1],
+        safeT,
         scratch
       );
+
+      // Apply 3D geodetic lateral lane offset
+      if (dot.laneOffsetMeters) {
+        computeLaneOffset(
+          dot.waypoints[safeSegIdx],
+          dot.waypoints[safeSegIdx + 1],
+          dot.laneOffsetMeters,
+          scratchOffsetRef.current
+        );
+        Cesium.Cartesian3.add(scratch, scratchOffsetRef.current, scratch);
+      }
+
       dot.point.position = scratch;
 
       if (dot.label) {
@@ -451,7 +544,7 @@ export default function TrafficLayer({ viewer }) {
 
       // Compute heading/bearing along current road segment
       const coords = trackedDot.coords;
-      const segIdx = trackedDot.segIdx;
+      const segIdx = Math.max(0, Math.min(trackedDot.numSegments - 1, trackedDot.segIdx));
       let headingDeg = 0;
       if (coords && coords[segIdx] && coords[segIdx + 1]) {
         const from = trackedDot.direction > 0 ? coords[segIdx] : coords[segIdx + 1];
@@ -478,6 +571,9 @@ export default function TrafficLayer({ viewer }) {
               signalStatus: trackedDot.signalStatus || 'ACTIVE TRANSIT',
               signalColor: trackedDot.signalColor || null,
               isStopped: isStoppedAtSignal,
+              roadName: trackedDot.vehicleData?.roadName || 'CORRIDOR ARTERIAL',
+              roadType: trackedDot.vehicleData?.roadType || 'primary',
+              destination: trackedDot.vehicleData?.destination || 'Downtown',
             },
           })
         );
@@ -596,7 +692,8 @@ export default function TrafficLayer({ viewer }) {
         const segIdx = Math.floor(Math.random() * numSegments);
         const t = Math.random();
         const flowScale = road.flow ? Math.max(0.2, road.flow.level) : 1.0;
-        const speed = baseMps * flowScale * (0.8 + Math.random() * 0.4);
+        const driverVariance = (Math.random() - 0.5) * 0.3; // -0.15 to +0.15
+        const speed = baseMps * flowScale * (0.85 + driverVariance);
         const direction = road.oneway ? road.oneway : (i % 2 === 0 ? 1 : -1);
 
         const vehicleData = generateVehicleData(road, spawned);
@@ -605,6 +702,9 @@ export default function TrafficLayer({ viewer }) {
         vehicleData.latitude = Number(coord[1]).toFixed(4);
         vehicleData.speedKmh = Math.round(speed * 3.6);
         vehicleData.speedMph = Math.round(speed * 2.23694);
+
+        const country = vehicleData.country || 'US';
+        const laneOffsetMeters = assignLaneOffset(road.type, direction, spawned, country);
 
         // Vehicle paint styling
         const carPaint = vehicleData.paintColor || '#00ffc8';
@@ -650,9 +750,15 @@ export default function TrafficLayer({ viewer }) {
           mps: speed,
           cruiseMps: speed,
           currentMps: speed,
+          driverVariance,
+          laneOffsetMeters,
           direction,
           road,
           roadIdx: rIdx,
+          spawnSeed: spawned,
+          tripLegs: 0,
+          maxTripLegs: 7 + Math.floor(Math.random() * 10),
+          visitedRoads: [rIdx],
           wasStopped: false,
         });
 
@@ -725,6 +831,9 @@ export default function TrafficLayer({ viewer }) {
     // Apply simulated congestion dynamics to any roads without live flow
     parsedRoads = simulateRoadFlow(parsedRoads);
     roadsRef.current = parsedRoads;
+
+    // Build connected road graph topology
+    buildRoadNetwork(parsedRoads);
 
     // Build crossroads and initialize traffic signal points
     const crossroads = buildCrossroads(parsedRoads);

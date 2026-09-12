@@ -17,6 +17,7 @@ export default function VehicleDashboard({ vehicle }) {
   const canvasRef = useRef(null);
   const [liveSpeed, setLiveSpeed] = useState(vehicle.speedKmh || 50);
   const [liveHeading, setLiveHeading] = useState(vehicle.headingDeg || 0);
+  const [liveRoadName, setLiveRoadName] = useState(vehicle.roadName || 'Corridor Arterial');
   const [signalInfo, setSignalInfo] = useState({
     status: 'ACTIVE TRANSIT',
     color: null,
@@ -37,6 +38,7 @@ export default function VehicleDashboard({ vehicle }) {
       if (data && data.id === vehicle._entityId) {
         if (Number.isFinite(data.speedKmh)) setLiveSpeed(data.speedKmh);
         if (Number.isFinite(data.headingDeg)) setLiveHeading(data.headingDeg);
+        if (data.roadName) setLiveRoadName(data.roadName);
         if (data.signalStatus) {
           setSignalInfo({
             status: data.signalStatus,
@@ -367,7 +369,7 @@ export default function VehicleDashboard({ vehicle }) {
         </div>
         <div>
           <div className="text-white/40 uppercase tracking-widest text-[8px]">Roadway</div>
-          <div className="text-white/90 truncate">{vehicle.roadName}</div>
+          <div className="text-white/90 truncate">{liveRoadName}</div>
         </div>
         <div>
           <div className="text-white/40 uppercase tracking-widest text-[8px]">Assigned Destination</div>
