@@ -74,4 +74,25 @@ describe('vehicleGenerator', () => {
     expect(v.flowStatus).toBe('FLOWING NORMALLY');
     expect(v.roadName).toBe('SECONDARY ARTERIAL');
   });
+
+  it('generates real-world Toyota and Tesla models with brand metadata and shortLabels', () => {
+    const samples = Array.from({ length: 40 }, (_, i) => generateVehicleData(dummyResidential, i));
+    const brands = new Set(samples.map((s) => s.brand));
+
+    expect(brands.has('Tesla') || brands.has('Toyota')).toBe(true);
+
+    const teslaSample = samples.find((s) => s.brand === 'Tesla');
+    if (teslaSample) {
+      expect(teslaSample.shortLabel).toMatch(/Tesla|Cybertruck/);
+      expect(typeof teslaSample.paintColor).toBe('string');
+      expect(typeof teslaSample.shortModel).toBe('string');
+    }
+
+    const toyotaSample = samples.find((s) => s.brand === 'Toyota');
+    if (toyotaSample) {
+      expect(toyotaSample.shortLabel).toMatch(/Toyota|Land Cruiser/);
+      expect(typeof toyotaSample.paintColor).toBe('string');
+      expect(typeof toyotaSample.shortModel).toBe('string');
+    }
+  });
 });

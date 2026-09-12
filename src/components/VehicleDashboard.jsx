@@ -223,6 +223,24 @@ export default function VehicleDashboard({ vehicle }) {
 
   return (
     <div className="flex flex-col gap-3 font-mono">
+      {/* 0. Automotive Brand & Model Identity */}
+      <div className="flex items-center justify-between p-2.5 rounded bg-black/50 border border-white/10 shadow-inner">
+        <div className="flex items-center gap-2.5">
+          <span className="text-xl">{vehicle.icon || '🚗'}</span>
+          <div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] font-bold text-electric-blue tracking-widest uppercase">{vehicle.brand || 'Vehicle'}</span>
+              <span className="text-[9px] px-1 py-0.2 rounded bg-white/10 text-white/70">{vehicle.vehicleCategory}</span>
+            </div>
+            <div className="text-xs font-bold text-white tracking-wide">{vehicle.model}</div>
+          </div>
+        </div>
+        <div className="text-right">
+          <div className="text-[8px] text-white/40 tracking-widest uppercase">REGISTRATION</div>
+          <div className="text-[10px] font-mono font-bold text-white/90">{vehicle.plate}</div>
+        </div>
+      </div>
+
       {/* 1. Camera Tracking & Chase Control Banner */}
       <div className="flex flex-col gap-2 p-2.5 rounded border border-white/10 bg-black/40">
         <div className="flex items-center justify-between">

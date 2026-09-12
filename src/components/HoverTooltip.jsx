@@ -98,6 +98,42 @@ export default function HoverTooltip() {
                             <span className="text-electric-blue tracking-wider font-semibold">CLICK TO LOCK</span>
                         </div>
                     </div>
+                ) : hoverInfo.isVehicle ? (
+                    <div className="flex flex-col gap-2">
+                        {/* High-tech Vehicle Card */}
+                        <div className="flex items-center justify-between p-2 rounded bg-black/40 border border-white/10">
+                            <div>
+                                <div className="text-[9px] text-electric-blue font-bold uppercase tracking-widest">{hoverInfo.brand || 'Automotive'}</div>
+                                <div className="text-xs font-bold text-white truncate max-w-[160px]">{hoverInfo.model || hoverInfo.name}</div>
+                            </div>
+                            <div className="text-right">
+                                <div className="text-sm font-bold text-emerald-400 font-mono leading-none">
+                                    {hoverInfo.speedKmh || 50} <span className="text-[9px] text-white/60">KM/H</span>
+                                </div>
+                                <div className="text-[9px] text-white/50 mt-0.5">{hoverInfo.plate}</div>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-x-2 gap-y-1.5 text-[10px]">
+                            <div>
+                                <span className="text-white/40 text-[8px] uppercase tracking-wider block">Drive Mode</span>
+                                <span className="text-white/90 truncate block">{hoverInfo.driverMode || 'Active'}</span>
+                            </div>
+                            <div>
+                                <span className="text-white/40 text-[8px] uppercase tracking-wider block">Powertrain</span>
+                                <span className="text-emerald-300 truncate block">{hoverInfo.batteryFuel || hoverInfo.powertrain}</span>
+                            </div>
+                            <div className="col-span-2">
+                                <span className="text-white/40 text-[8px] uppercase tracking-wider block">Assigned Destination</span>
+                                <span className="text-electric-blue truncate block">{hoverInfo.destination}</span>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center justify-between text-[9px] font-mono pt-1.5 border-t border-white/10 text-white/60">
+                            <span className="truncate max-w-[140px]">ROAD: {hoverInfo.roadName || hoverInfo.roadType}</span>
+                            <span className="text-emerald-400 font-bold tracking-wider">CLICK TO CHASE ➔</span>
+                        </div>
+                    </div>
                 ) : (
                     <>
                         {(sourceLabel || layerMeta.lastSuccessAt || layerMeta.health === 'error') && (

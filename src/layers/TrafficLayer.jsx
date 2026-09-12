@@ -189,6 +189,7 @@ export default function TrafficLayer({ viewer }) {
 
   const pointCollectionRef = useRef(null);
   const signalsCollectionRef = useRef(null);
+  const labelCollectionRef = useRef(null);
   const crossroadsRef = useRef([]);
   const roadsRef = useRef([]);
   const dotsRef = useRef([]);
@@ -221,6 +222,10 @@ export default function TrafficLayer({ viewer }) {
     if (signalsCollectionRef.current && viewer && !viewer.isDestroyed()) {
       viewer.scene.primitives.remove(signalsCollectionRef.current);
       signalsCollectionRef.current = null;
+    }
+    if (labelCollectionRef.current && viewer && !viewer.isDestroyed()) {
+      viewer.scene.primitives.remove(labelCollectionRef.current);
+      labelCollectionRef.current = null;
     }
     corridorsRef.current.forEach((entity) => {
       if (viewer && !viewer.isDestroyed()) viewer.entities.remove(entity);
@@ -416,6 +421,22 @@ export default function TrafficLayer({ viewer }) {
       );
       dot.point.position = scratch;
 
+      if (dot.label) {
+        dot.label.position = scratch;
+
+        if (dot.currentMps === 0 && (dot.signalColor === 'red' || dot.signalStatus?.includes('STOP') || dot.signalStatus?.includes('QUEUED'))) {
+          if (!dot.wasStopped) {
+            dot.wasStopped = true;
+            dot.label.text = `${dot.vehicleData.shortLabel} 🛑`;
+            dot.label.outlineColor = Cesium.Color.fromCssColorString('#ff3344');
+          }
+        } else if (dot.wasStopped && dot.currentMps > 0.4) {
+          dot.wasStopped = false;
+          dot.label.text = dot.vehicleData.shortLabel;
+          dot.label.outlineColor = Cesium.Color.BLACK;
+        }
+      }
+
       if (trackedId && dot.vehicleData && dot.vehicleData.id === trackedId) {
         trackedDot = dot;
       }
@@ -534,6 +555,12 @@ export default function TrafficLayer({ viewer }) {
       viewer.scene.primitives.add(pointCollectionRef.current);
     }
     pointCollectionRef.current.removeAll();
+
+    if (!labelCollectionRef.current) {
+      labelCollectionRef.current = new Cesium.LabelCollection();
+      viewer.scene.primitives.add(labelCollectionRef.current);
+    }
+    labelCollectionRef.current.removeAll();
     dotsRef.current = [];
 
     const shaderMode = activeShader;
@@ -579,18 +606,40 @@ export default function TrafficLayer({ viewer }) {
         vehicleData.speedKmh = Math.round(speed * 3.6);
         vehicleData.speedMph = Math.round(speed * 2.23694);
 
+        // Vehicle paint styling
+        const carPaint = vehicleData.paintColor || '#00ffc8';
+        const carPointColor = shaderMode === 'DEFAULT'
+          ? Cesium.Color.fromCssColorString(carPaint).withAlpha(0.95)
+          : dotColor;
+
         const point = pointCollectionRef.current.add({
           position: Cesium.Cartesian3.clone(road.waypoints[segIdx]),
-          pixelSize: road.type === 'motorway' ? 5.5 : 4.5,
-          color: dotColor,
-          outlineColor: Cesium.Color.WHITE.withAlpha(0.7),
-          outlineWidth: 1.0,
+          pixelSize: road.type === 'motorway' ? 6.0 : 5.0,
+          color: carPointColor,
+          outlineColor: Cesium.Color.WHITE.withAlpha(0.85),
+          outlineWidth: 1.5,
           disableDepthTestDistance: 50000,
           id: vehicleData,
         });
 
+        // Floating car brand/model label above moving vehicle
+        const label = labelCollectionRef.current.add({
+          position: Cesium.Cartesian3.clone(road.waypoints[segIdx]),
+          text: vehicleData.shortLabel,
+          font: 'bold 10px "JetBrains Mono", monospace, sans-serif',
+          fillColor: Cesium.Color.WHITE,
+          outlineColor: Cesium.Color.BLACK,
+          outlineWidth: 3,
+          style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+          verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+          pixelOffset: new Cesium.Cartesian2(0, -9),
+          distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0.0, 3200.0),
+          disableDepthTestDistance: 50000,
+        });
+
         dotsRef.current.push({
           point,
+          label,
           vehicleData,
           waypoints: road.waypoints,
           coords: road.coords,
@@ -604,6 +653,7 @@ export default function TrafficLayer({ viewer }) {
           direction,
           road,
           roadIdx: rIdx,
+          wasStopped: false,
         });
 
         spawned++;
@@ -743,6 +793,9 @@ export default function TrafficLayer({ viewer }) {
     if (signalsCollectionRef.current) {
       signalsCollectionRef.current.show = alt <= ACTIVATION_ALTITUDE_METERS;
     }
+    if (labelCollectionRef.current) {
+      labelCollectionRef.current.show = alt <= ACTIVATION_ALTITUDE_METERS;
+    }
     spawnDots(parsedRoads, alt);
 
     // Update store data
@@ -774,6 +827,9 @@ export default function TrafficLayer({ viewer }) {
       if (signalsCollectionRef.current) {
         signalsCollectionRef.current.show = false;
       }
+      if (labelCollectionRef.current) {
+        labelCollectionRef.current.show = false;
+      }
       corridorsRef.current.forEach((c) => { c.show = false; });
       setStatus('traffic', 'idle', { sourceName: 'Zoom in (<8km) to activate street traffic' });
       return;
@@ -784,6 +840,9 @@ export default function TrafficLayer({ viewer }) {
     }
     if (signalsCollectionRef.current) {
       signalsCollectionRef.current.show = true;
+    }
+    if (labelCollectionRef.current) {
+      labelCollectionRef.current.show = true;
     }
     corridorsRef.current.forEach((c) => { c.show = true; });
 

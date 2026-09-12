@@ -1,8 +1,15 @@
 {
-  "generatedAt": "2026-09-12T12:10:03.975Z",
+  "generatedAt": "2026-09-12T12:14:35.144Z",
   "sourceCount": 8,
   "itemCount": 80,
   "items": [
+    {
+      "id": "Google News Military-31-Niger’s junta leader appoints ne",
+      "source": "The Washington Post",
+      "title": "Niger’s junta leader appoints new head of military following mutiny - The Washington Post",
+      "link": "https://news.google.com/rss/articles/CBMixgFBVV95cUxQQmJPS3FKeGotdXF1Zy1vbTV1bEVFYzBiYTlETlZrazIxcDNpTmxqVWFCRE9zNVphaDZBeF92U2dwMG1MLU9wcjh4Um5ud05Nblpac2N5bUVPNVlPWTdGWjQ5ZWtEVUppRkEzcVcyOGQtaG9JOURhOEd4S1MwTjJFcnUtaTlSSnFLeFgxcHEwbVYwMWwyMFRNd0gyclVfcm1ZTjdCci1KcFhxbG5fN3lYUVU3LVJOdjU2SEUxTzFJOEJUWTRtckE?oc=5",
+      "publishedAt": 1789214936000
+    },
     {
       "id": "Google News Energy-79-TotalEnergies Plans $10B in Ango",
       "source": "Rigzone",
@@ -11,32 +18,25 @@
       "publishedAt": 1789214763000
     },
     {
-      "id": "Google News World-32-Bolsonaro’s son surges in run to",
+      "id": "Google News World-33-Bolsonaro’s son surges in run to",
       "source": "The Washington Post",
       "title": "Bolsonaro’s son surges in run to free the former president - The Washington Post",
       "link": "https://news.google.com/rss/articles/CBMiugFBVV95cUxOcktuc2NMNzJsV3ZhMEM4TXg5WXEybVh4aDJwZlV4elJ6S3o5bmdCejZyeGJGTzUtTW5US2tlSHN4ZV93NzkzbVpYT21PRDJJU0hFU3FDRkR2UlhFbHlXTGl5dzJHb3lKN1h6bGpPMzdXZjJYWk53VGJUYlFUcGY0aGpvcUhfR2xFYWliNWlxNXEwMEJKWGFzQUV0T0dpVW5vT1NhSHlqUHV3bTlQN2NHQjV6d2Rvc2M2Znc?oc=5",
       "publishedAt": 1789214556000
     },
     {
-      "id": "Google News Military-44-George Answers Your Questions: O",
+      "id": "Google News Military-45-George Answers Your Questions: O",
       "source": "Geopolitical Futures",
       "title": "George Answers Your Questions: On Russia and the Mecca Joint Defense Agreement - Geopolitical Futures",
       "link": "https://news.google.com/rss/articles/CBMirwFBVV95cUxPY0ZuczdPR1Y5dWJoZXY0aDl3UXdTWlB4TGhFZGtJV1BPSE5iRDlzbC0tR3htaGxBVG12cmdGT1pUZlpzUmtHUlhiSXY1MEI5cTRaaG1oX2ZZRzVINXRwWmYwelc3Mjg3MUdBZWNjR2ZXY3o2Y2hxbjBGVWNPc2V5aW0yeWlwOVRQa2JHb3J1UmVkbUUxUzhnb3dYazBuUlJRM2JyYTY4SmpxeDMtMUZr?oc=5",
       "publishedAt": 1789214427000
     },
     {
-      "id": "Google News Military-63-Niger’s junta leader appoints ne",
+      "id": "Google News Military-61-Niger’s junta leader appoints ne",
       "source": "Laredo Morning Times",
       "title": "Niger’s junta leader appoints new head of military following mutiny - Laredo Morning Times",
       "link": "https://news.google.com/rss/articles/CBMioAFBVV95cUxOcTRNRFpwbUNFTThvdF96TGJodUVCcldiVzR2cG42Ulg1YnFJTDRWOU50dkk2dXhILVFOVE45RkpHcnhmN1NzZHRIa2s5NmJuYnhJdFNucEgzMWRNbGRYTnlJQnJad05Lb3JfSDNlb0JkemxJTER3SUlMNXhmOWdyczNMV1o1VTJVQUVqeklxR2hzTGo4RzZva2RKSHRyZDNC?oc=5",
       "publishedAt": 1789214353000
-    },
-    {
-      "id": "Google News Military-59-Niger's junta leader appoints ne",
-      "source": "Newsday",
-      "title": "Niger's junta leader appoints new head of military following mutiny - Newsday",
-      "link": "https://news.google.com/rss/articles/CBMif0FVX3lxTE5nQXJlQkZBVjczSnV1WDlVYnRMZzhZT0ExQTZJak50ZzZvODdHY0FzT29ET1RDa01YZkthVTdKWFIwVHBKZGlpN1VsUm94cWM1RVc4QVlYbnRqNkdjM0FUMTN0cXNfQkVJdHJtUHRxR1o0QUdtNXhGTk1zM3BWMVk?oc=5",
-      "publishedAt": 1789214031000
     },
     {
       "id": "Google News Military-81-Ukraine's parliament changes how",
@@ -47,8 +47,8 @@
     },
     {
       "id": "Google News Military-87-GomSpace Secures $2.4 Million U.",
-      "source": "Pulse 2.0",
-      "title": "GomSpace Secures $2.4 Million U.S. Defense Satellite Order - Pulse 2.0",
+      "source": "pulse2.com",
+      "title": "GomSpace Secures $2.4 Million U.S. Defense Satellite Order - pulse2.com",
       "link": "https://news.google.com/rss/articles/CBMiggFBVV95cUxQWWpQdXdpcjRHcEVYd05rYzlLZVdQV1ExWmIyLUlLTU5vU2N5Z213NzlXQ2NaNjZzamFKR01jMTRrdm1FaDM3dGlpb2I2bzEzcWpualRGTzNIb01EdnVYeXo5V1I2clgyVVlHUEg5dDkwOF9STGNyQVVONmVaY3JfOXVR0gGHAUFVX3lxTE5rMFpSdEx6dEtaOXZuTGpva2p1Y0dqUjhHeFFBc1pWcXRGajNqVjZ5QlJEQ21IeHAyTXJIMzBLSlhwSkpvcXdGcHFsVFJSOUd2Q2hlTnpMRlBRelA4bkVMVjNNcHR4TllZdzdReTNCX05yblhqTjlncXhiaElmS0VNQXFPWGdtUQ?oc=5",
       "publishedAt": 1789213224000
     },
@@ -60,18 +60,11 @@
       "publishedAt": 1789212464000
     },
     {
-      "id": "Google News Energy-97-Strait of Hormuz crisis will be ",
+      "id": "Google News Energy-96-Strait of Hormuz crisis will be ",
       "source": "AzerNews",
       "title": "Strait of Hormuz crisis will be resolved, Trump says - AzerNews",
       "link": "https://news.google.com/rss/articles/CBMiVEFVX3lxTFBJb2VNS3BTNzBsdUZLeDFJRmVjM0w3YmllRVhiY1E5QWwya2MxZXZrZG9VUkx3bDBPSW5aQUV1UjA0OTBia0RfTE5VbWVCOVJNMHBCZA?oc=5",
       "publishedAt": 1789212300000
-    },
-    {
-      "id": "Google News Energy-92-Trump says Iran likely responsib",
-      "source": "CNN",
-      "title": "Trump says Iran likely responsible for attack on vital Saudi oil pipeline - CNN",
-      "link": "https://news.google.com/rss/articles/CBMifEFVX3lxTFBCN05SU2luNWgwQnpYOGtmWndwclVrMERSUmFna1RDQnVRM1J4SEd3TUxieTMwSWNTcnNycXNUMWZ1cFdjalpVMVNxZHhsdFA2RUNmc2RMeXk3aHhrLWU2YURqZDdwU3ZTTGppTjZxX3NSYTBIcXdPdlEyZDI?oc=5",
-      "publishedAt": 1789212031000
     },
     {
       "id": "Google News Energy-72-US limits Hormuz protection wind",
@@ -81,16 +74,16 @@
       "publishedAt": 1789211591000
     },
     {
-      "id": "Google News Military-32-Bears defense enters opener with",
+      "id": "Google News Military-33-Bears defense enters opener with",
       "source": "Chicago Sun-Times",
       "title": "Bears defense enters opener with more questions than answers - Chicago Sun-Times",
       "link": "https://news.google.com/rss/articles/CBMi1gFBVV95cUxQTkcydkpUMllIenFGb2RuXy1pLXphbWNqckdnNU1CX0xqSW5hRWlockRHb25Dc1EtZjJyQmlqa2ZXdkhBYjNXNEV4d0JjcjdlUHVLMzdRZGxtT3BPUFBZVmFhMlBoTklFZkt6MER1ZHNJRXJlZHJ2R3FYYTNzbUkzems3R3FGc21MRUZZSmV3c0c1bDUxSkNCNFNkSGwxUk9LMmZpb3l3RW95NTRsNXFpYmdUWXp0M0hGdEJNYzN3blBDWjE0cFZpamdLMFE1ek5QWW1jSEpB?oc=5",
       "publishedAt": 1789210860000
     },
     {
-      "id": "Google News Military-77-Chicago teens sustain ‘peaceful’",
-      "source": "Chicago Tribune",
-      "title": "Chicago teens sustain ‘peaceful’ community as warriors - Chicago Tribune",
+      "id": "Google News Military-76-Chicago teens sustain ‘peaceful’",
+      "source": "chicagotribune.com",
+      "title": "Chicago teens sustain ‘peaceful’ community as warriors - chicagotribune.com",
       "link": "https://news.google.com/rss/articles/CBMilgFBVV95cUxOTkhKamgzVEJESjBaTC03M29MLTF2V0Rqb09Gb0tIb2w5N2x0VU1mU2t6Skk4LXhNRWhTRWZocmNyZm1waW8zcFA3TV9QcTJ3cERRa0Z1U2FyRmpYcWFDcjQ3Y3JuS090ay1ZdE9YSHBfbUIzd3NnbFBqNnF5UklfaVB2dUV0YVN0aVJNM0JxUk1RTVRyaUE?oc=5",
       "publishedAt": 1789210847000
     },
@@ -102,21 +95,28 @@
       "publishedAt": 1789210834000
     },
     {
-      "id": "Google News Energy-50-Energy Markets Signal Winter Cri",
+      "id": "Google News Energy-48-Energy Markets Signal Winter Cri",
       "source": "Bloomberg.com",
       "title": "Energy Markets Signal Winter Crisis and Rising Interest Rates - Bloomberg.com",
       "link": "https://news.google.com/rss/articles/CBMiuAFBVV95cUxPVDFOVFJGdjIyVklBMXVuSTJBRDRVQkVMSURZS05LY09Ba3hmLXdCVEI1YzBCNDhVYk1ZbFBQOEJOLWVoZ0ZjaG1qb2s4Z0hfYUFBWThaanR4bW5CM1kyRjRJT0hyWWxYZFlpZC03MWU2QVhMbVRHdE56Zm4wRlg2STBYbHRRcVBnZXNHVk1zYXJ4UGdJMzBUdXF4ZDg0NnR1MFd0ZGk4bS1YZGFZVllhUXNhTXZ5bHVB?oc=5",
       "publishedAt": 1789210802000
     },
     {
-      "id": "Google News Military-71-The Steelers defense is determin",
+      "id": "Google News Military-70-The Steelers defense is determin",
       "source": "Pittsburgh Post-Gazette",
       "title": "The Steelers defense is determined to prove it has solved the communication issues of the past - Pittsburgh Post-Gazette",
       "link": "https://news.google.com/rss/articles/CBMivAFBVV95cUxPbUxEazBGWC05a0tVWHBBNE5zRHN5R2JJLVdUYXA1QUtlWVlHMXlEbUsxdzdlY2tCY1hFZC1YRXctVVlsS1JmLTVIUjlTWEthb1p2ckVDS3dudVYwZzRqUjhPekYxQ0VHSjVaaHFaV0ZlWTV5MzBMVUlIbEwtSEItV0E3YS02OE45aUYtUnZlOUNiZ05iQkJaRVZWWmlGMWFHa3dqMmNqUWJUTkJlNmRVWXhDSVVDbEZscVZqdQ?oc=5",
       "publishedAt": 1789210800000
     },
     {
-      "id": "Google News Military-46-The U.S. Military’s Next Signifi",
+      "id": "Google News Military-78-From Russian classrooms to Iran’",
+      "source": "Euromaidan Press",
+      "title": "From Russian classrooms to Iran’s defense industry: how Moscow trains Iranian specialists - Euromaidan Press",
+      "link": "https://news.google.com/rss/articles/CBMixgFBVV95cUxQdFVueGtRWm0zdzR2SWJEUXlhZjJTQmhFT0d4R3U3aUlBLWZTVzdoUGJ1OVp0LUNHTldIdnZaZk4zdGJScEhlTlk4bnB0WkhGT0UwWjk2RlIyQ1RRTFhZclhfTHZQS1Bfa2RqcGpfcXpxdFdtMnY1TEJRV0czQ0kzRDhtaXFWdWJBd1F1NXVEYXMyOXp0bTNXNEhpem1FRXhVcHp3TWgyTjNGMGdXS203dzJ4c29sOWpHbmtrTHZ1a3lkN01fZ2c?oc=5",
+      "publishedAt": 1789210581000
+    },
+    {
+      "id": "Google News Military-47-The U.S. Military’s Next Signifi",
       "source": "RealClearDefense",
       "title": "The U.S. Military’s Next Significant Challenge: Hiding - RealClearDefense",
       "link": "https://news.google.com/rss/articles/CBMiqwFBVV95cUxQUlJ2VTNvakJ4U3pLWjVGNHhBenRJSHl6c3NXeUo2b3lsUlJjaE03N1A0VTVSUTZ1VTJwNTJyYmQ3RlEyWjE1OGI4VFdYN0FpZFczMXFoajJJMDJyclZIbjRWTU9fR0ZRaW14VlRjZFR3VW5Ia1ZtUUdPMld3a3hYb1lObVZjYkdNUjJLMEVCWkZnay1kTTQ3OWZxbWVuOVpicWg5ZFJYNC1sa0k?oc=5",
@@ -130,7 +130,7 @@
       "publishedAt": 1789210088000
     },
     {
-      "id": "Google News World-0-BRICS leaders meet in India as w",
+      "id": "Google News World-1-BRICS leaders meet in India as w",
       "source": "AP News",
       "title": "BRICS leaders meet in India as wars and US tensions test the bloc - AP News",
       "link": "https://news.google.com/rss/articles/CBMioAFBVV95cUxPREdaZmR6TnMxUGFHT280OUlwV1VleHUzc0MzSDc0X2Z6Y3hEdF9aLUZRaVpYNmIwYmtOSGdjWWltTjkyanJhM2NWRUZnMVdnMFJMSVlRMjRuWVZMajVpQ2lOck5McHRYNzJLYmR4R2hkc3M2YzRBTTM2NjlOaHVhcFB0YTZhWkVDVUNpMEZxZDViTjhWWXZGVVhqbFpkR045?oc=5",
@@ -144,7 +144,7 @@
       "publishedAt": 1789209646000
     },
     {
-      "id": "Google News World-4-Saudi Arabia’s shutdown of key p",
+      "id": "Google News Energy-1-Saudi Arabia’s shutdown of key p",
       "source": "NBC News",
       "title": "Saudi Arabia’s shutdown of key pipeline limits oil flow as Yemen hits back against Houthis - NBC News",
       "link": "https://news.google.com/rss/articles/CBMiuAFBVV95cUxPTkhNMzZqVU5KTk1hMGJ5VFpOTTVsUU1PRjVNaU5DREtTLU9tTzlFUF9zNkRSWVIwOWpMVEhudEVYeUk4bnZtcEFSRVJDbHQ0eUlBVXdka1RWUVNyeXVYVXdGVENObE4zQXJfc2hlaDJUYUx2VkdCczIydndIQ0gxVmVSamxfZkdEWE5idHhrMXRIX2ZodXQ5Y002LXQwTDZHZjBVOVowMmpPa2xuZVJkajY5dFN0LVht?oc=5",
@@ -158,14 +158,21 @@
       "publishedAt": 1789209029000
     },
     {
-      "id": "Google News Military-61-N.H. football: Spaulding defense",
+      "id": "Google News World-2-Trump says Iran probably respons",
+      "source": "Reuters",
+      "title": "Trump says Iran probably responsible for attack on Saudi pipeline - Reuters",
+      "link": "https://news.google.com/rss/articles/CBMirwFBVV95cUxPMGtZdldMOGgyY3hFdEVnWklzR3dhREVBZTdDeEhPQjlmaUw1QUlGVUZDdUZoaDZWZzBUTXhUb09ieU4zTVZvYkplLVJ1Z1RscUp6TXMtX2RpdFIxY1ctbVo5d1dtMTJpSFVleW8waDhfREEzNGZlUmpuYVlVSEtWeUctYVJpWEVxNjdUNVE5WUpTV2xQYk5ENGRpaXZQZEtrc0NySnNDdzViU1MyampB?oc=5",
+      "publishedAt": 1789208396000
+    },
+    {
+      "id": "Google News Military-60-N.H. football: Spaulding defense",
       "source": "fosters.com",
       "title": "N.H. football: Spaulding defense, Plante proves too much for Dover in rivalry game - fosters.com",
       "link": "https://news.google.com/rss/articles/CBMi0AFBVV95cUxQMjZNcTRqcFF0cVdzZVZJZko0aklITWNuMUtkQXVfclRZQVRhOExHdTBQLUxHTkd5Q2t2RmNNQjZhX0lORzBwTHN1MG9FR0F1YTlmRi1hbWJmS1RaQVZOSUd2X0VpSnp4SlVHVnJQdjJtRHZPMHhISHYtMkxLN09Uekx5M1JuSmJ1dGh6cGZWcjNRQzNJaFN3ekdNdEcxLUhtOU9XNGRpcjRrcG9GTTJxUDVTbVU2Rl9KLUVmTGRyVDhzbDRibjh4QUU1eEUwcHNk?oc=5",
       "publishedAt": 1789208160000
     },
     {
-      "id": "Google News Military-67-Campbell’s defense lays hammer d",
+      "id": "Google News Military-66-Campbell’s defense lays hammer d",
       "source": "Honolulu Star-Advertiser",
       "title": "Campbell’s defense lays hammer down on Kapolei - Honolulu Star-Advertiser",
       "link": "https://news.google.com/rss/articles/CBMiswFBVV95cUxOY19CenFfNFBkMEU1NkdDdHRPWnBSdklQbzdGUVI3RVo2cFAxbVRDdTZTRGpyc2FUcGFGS1NCdkVuMC0zbTlNR2xLZjdrcG96UHVrcmJxM0dBWWtFYWgzdDY2MHBtRkEwMW03Slo5YTdFRDUxcEU0YzhFek1Fc1lXbWgtZXdVX2dxcGt4dk9sRENWQzl6SmFZdGdXbkxraG5zX2puQ2hKSFJybnR4R3JoX0dpdw?oc=5",
@@ -186,7 +193,7 @@
       "publishedAt": 1789207200000
     },
     {
-      "id": "Google News Energy-70-Trump says Iran war will end ‘ve",
+      "id": "Google News Energy-51-Trump says Iran war will end ‘ve",
       "source": "Middle East Eye",
       "title": "Trump says Iran war will end ‘very soon’, oil prices will fall - Middle East Eye",
       "link": "https://news.google.com/rss/articles/CBMitwFBVV95cUxQSUhtQTBXYkd1ZkhsZHVyRklBbF9hY05yYjlHM2V0RFZrWXVDV3dUVDNOMWVvTi01WkpEMWlMbjBweXlQOWMtTkQwcVk4UzZQbGhQbWpGQ0NQTWFzejJWZTRza05ySHAzWEd1RmpiT0xhdG5nN2F6ZE52eEhhY0VwX0ZrQ0dLcFY5VzBIbEpvRjBITHBDOUFxOWQteTNabmFudG9yWnlDYlhSaVZ3WVdJV2I0ajBjZnM?oc=5",
@@ -228,7 +235,7 @@
       "publishedAt": 1789204243000
     },
     {
-      "id": "Google News Energy-67-Jim Cramer Waits for Oil to Fall",
+      "id": "Google News Energy-68-Jim Cramer Waits for Oil to Fall",
       "source": "Yahoo Finance",
       "title": "Jim Cramer Waits for Oil to Fall Before Adding to FedEx Freight (FDXF) - Yahoo Finance",
       "link": "https://news.google.com/rss/articles/CBMilAFBVV95cUxQb1BuX19XSDFaaHRTekZkdWhRNS1RUExVTFlEX1RESUI0eGppVndrLUNJR0QwNFNvRUI5Wl9hWHlmYVNmQ0FmamdLS1hfQk9pcl80TTRSNHdZRVpDUFlTNFUtYjJ5ejh6UHRKdUpmc0JQZXIyVHR2eFA4OXYwb245aEN3ZnhmTURURlNlRl9fRml3Y2tX?oc=5",
@@ -256,14 +263,14 @@
       "publishedAt": 1789203600000
     },
     {
-      "id": "Google News Energy-99-PA Oil & Gas Industrial Faciliti",
+      "id": "Google News Energy-98-PA Oil & Gas Industrial Faciliti",
       "source": "PA Environment Digest Blog",
       "title": "PA Oil & Gas Industrial Facilities: Permit Notices, Opportunities To Comment - September 12 - PA Environment Digest Blog",
       "link": "https://news.google.com/rss/articles/CBMiowFBVV95cUxOajZSYWdTUTdyZ09tMHBUS0ZuU080eURIVzZEVXdOSWc4by1UX2R5SjgwSEU0T3oxOHN0OE9XR1FhbFVuTkJWemF4RElhemFMeTdnaFVSODdweXVMXy1ZZGpiYWhORjIwem5KVzQyX0xma205Y0FNY0poSlVFZkpWSXpGMDU1ZHltWjVqVUdEbkNZXzhPVXdjUE5nVGZmeXZadEFV?oc=5",
       "publishedAt": 1789203273000
     },
     {
-      "id": "Google News Military-60-Conflict of interest?, meant to ",
+      "id": "Google News Military-59-Conflict of interest?, meant to ",
       "source": "Post and Courier",
       "title": "Conflict of interest?, meant to last | Letters - Post and Courier",
       "link": "https://news.google.com/rss/articles/CBMi4wFBVV95cUxNMExWR0FwOU1FdVRXS0NzVnczNllOV3B0UWtaTzFRWTBWV2JYZ0xIYnR6S2VPQ0pCcjQtQk9kTXBLX29GYjhMb2tEMnVPWnpCNFdvZVJtSTdjN2w4Rm45Z25RRVR1X1o2bEhOYzR6eDdFTXhHckg2Q18zejY0dXVncjlJaGNrVW5ZWlppeHlGS0t3cVZYMy1EQU5kem5BcWdHa2NaUmpLTko1aWp6RUdEbGgyNkJLd3hyUEo0QjRFU1QyZndRYkxvZEZPLUYzeWFpZ1UxLXFfd2Y4UVhrWGpKeklMUQ?oc=5",
@@ -312,21 +319,21 @@
       "publishedAt": 1789200256000
     },
     {
-      "id": "Google News Military-35-More than 500,000 Russian troops",
+      "id": "Google News Military-36-More than 500,000 Russian troops",
       "source": "nypost.com",
       "title": "More than 500,000 Russian troops killed in Ukraine, UK defense chief says - nypost.com",
       "link": "https://news.google.com/rss/articles/CBMiswFBVV95cUxQT0FJS05wOFRJZUszV1ZhYW5YQ2VQTlBFeThndFZJa25OZERZbFpOMkVESElfQ3lIRHJBS3ZTVzM3bl82Q0s3VEpFNEg5WEZJZW9YVHd6M2F2Z3dKcVZHZlV3dm1LQzdOdjdzb0dKUWpXM2hCRXpyMjh5dzduV0FNS0JpSWR3c2lheWJvSEJmdHpWMXk2Y1IyVmVEckFmSHF2RlVtMlBHcVZFYUExN2N5dl9HQQ?oc=5",
       "publishedAt": 1789200240000
     },
     {
-      "id": "Google News Energy-98-Iran holds out the prospect of o",
+      "id": "Google News Energy-97-Iran holds out the prospect of o",
       "source": "Yahoo",
       "title": "Iran holds out the prospect of opening the Strait of Hormuz - Yahoo",
       "link": "https://news.google.com/rss/articles/CBMilgFBVV95cUxNSFZZOHloYWZlRXlSN0RQdXB2TlFCZkJ0WmQyZTlhR1p4WUR6VWxGcW9IS1l5NWY5YUI2YTVZMzlxMVpVTzdqamlTM0cyX09WaXRJS2JIeXI4X3hCTkttd1RISWZ5aDhDMTdQdk4wWkpiMXhRRE1FajJaVENweWFUeUxDS01KaTA1ZXBSc2JXbXRldXZjYnc?oc=5",
       "publishedAt": 1789200200000
     },
     {
-      "id": "Google News Military-49-Mark Kotsay on A's defense, Lawr",
+      "id": "Google News Military-50-Mark Kotsay on A's defense, Lawr",
       "source": "MLB.com",
       "title": "Mark Kotsay on A's defense, Lawrence Butler in win - MLB.com",
       "link": "https://news.google.com/rss/articles/CBMigAFBVV95cUxQNklWNEtya0lKR241VmF2TnBBZVZvMTQ5MnpwRUtjMXZNdTVKN0M1cmVPVV9LSGRGTjh0UXBHdGdSRDVvcURLTnI3R1NTS1VmRG1yNWtVaFBDeDFBeTdUakphVm1kX0hwZmQwbHNPYTMzaS1ZblAxT3ZxVEFZS0Vyeg?oc=5",
@@ -340,14 +347,14 @@
       "publishedAt": 1789198628000
     },
     {
-      "id": "Google News Military-76-Green Hill turns defense into of",
+      "id": "Google News Military-75-Green Hill turns defense into of",
       "source": "Main Street Media of Tennessee",
       "title": "Green Hill turns defense into offense in 28-3 over Centennial - Main Street Media of Tennessee",
       "link": "https://news.google.com/rss/articles/CBMisgFBVV95cUxNNjkyWUpBeVlNVjBkV05EdEN0WmdmYUNGMFU1NnJnaFpQalJwTmRGa2loMVh2N283Slc4RjFmeFg1cUExZE9kN3dhQjl2ZHFtX0g0R2h6N2RPcUdqZzc5N04zVG9pRXhMLWl4aU9jbW1UQzdHTDBVVE1EdUY2Um00VDl1YnJMbjY3UnZfcXN4dkxuTTFwbDRXaTRfcDJyTHozd3U3QVY0c0M0YXlMNmQyYVFB?oc=5",
       "publishedAt": 1789197632000
     },
     {
-      "id": "Google News Military-36-Israel kills Hamas commander in ",
+      "id": "Google News Military-37-Israel kills Hamas commander in ",
       "source": "アラブニュース",
       "title": "Israel kills Hamas commander in Gaza strike, military and militants say - アラブニュース",
       "link": "https://news.google.com/rss/articles/CBMiuAFBVV95cUxPTnBpWVh6djVMeXlVdlFCUmtHM0N2YzQzMHJrSURCYV9BWUlOWFdSV0V5LXdpam00RnV3aFkwXzlFWjIwWWR2b3FaSk84TzVJNlZEZVpmUFV0M29UMlhFaURrRFJXQjNlWkdwcW1fYmxzZHh3d291VzdwZ1dKQVExMG8zSXpKekswRmpfd3ZKWGlYR2RRaVZFaXdPVi1yUERUd1d3VHpVdkZLV1pFWEJURzJUWnkzT28y?oc=5",
@@ -375,7 +382,7 @@
       "publishedAt": 1789194120000
     },
     {
-      "id": "Google News Military-72-El Modena football tops Foothill",
+      "id": "Google News Military-71-El Modena football tops Foothill",
       "source": "Orange County Register",
       "title": "El Modena football tops Foothill as defense forces 6 turnovers - Orange County Register",
       "link": "https://news.google.com/rss/articles/CBMiowFBVV95cUxQR2hnbFBtX0xSbFhHVUo5ajAwYktYTEN5UEhqdmlhTDNVWGFlMWNwTVpmM1VvdG1CU19wR3piOWRTNTJRa2QwOE1ZZDQ0R2l5Mkl2OEd1a1UwbWlPQmtrOWo4dFBuVlVjS1d4NGFRUlNFMFF4NkV1Y194bGhtUS1Gc3NFdzdwSVNId2tuY0NEOEtrSTJ2Ujg5RzFYZkV2eVR5WXdJ?oc=5",
@@ -424,14 +431,14 @@
       "publishedAt": 1789192880000
     },
     {
-      "id": "Google News World-20-Ukraine is fighting Russia anywh",
+      "id": "Google News World-21-Ukraine is fighting Russia anywh",
       "source": "CNN",
       "title": "Ukraine is fighting Russia anywhere it can – even in the deserts of Africa - CNN",
       "link": "https://news.google.com/rss/articles/CBMigAFBVV95cUxOVUZHYVN0YlpFbldScWV3ZWhiVzhTWUJQYmJRbk1wX0UyQzF2V0pBOTZJMF9zWHpaRkctT1UzRzVWckliWnU1UllkZy1xdXBHRkM4YXhKVWk5cWlMcGFEQ2d2RjUxUmhMRXg5MlhVVF94b2JVZ2hVc21zZ1dLdDRueQ?oc=5",
       "publishedAt": 1789192829000
     },
     {
-      "id": "Google News World-1-Yemen's Houthis capture a Red Se",
+      "id": "Google News World-0-Yemen's Houthis capture a Red Se",
       "source": "NPR",
       "title": "Yemen's Houthis capture a Red Sea island in threat to shipping - NPR",
       "link": "https://news.google.com/rss/articles/CBMihwFBVV95cUxQZW1oRU43TWZHOUU5T3dGZlNMSGV4NWZTLVpKbnRrU3JzTzllNFlUdFdYX3hGN0JCdEJrV2NrcUZJQk1GeHRXaTR3SUFFMU1XNVpxZFlib0xtbVZFQUp4b21zSUlNYVR6d19Pa0hpMkdNRVBGeEVYSUlNcmRaci04T2hJSUduR3c?oc=5",
@@ -445,7 +452,7 @@
       "publishedAt": 1789192515000
     },
     {
-      "id": "Google News Military-45-Photos from JoBurg, Gaylord foot",
+      "id": "Google News Military-46-Photos from JoBurg, Gaylord foot",
       "source": "Petoskey News-Review",
       "title": "Photos from JoBurg, Gaylord football's military games - Petoskey News-Review",
       "link": "https://news.google.com/rss/articles/CBMi4gFBVV95cUxOc21fRGp5TFBxTGRCM3RObmVSQjRfTEQxOHJlU2twUWd5dlA4RE4tZXRTWDZXYTFXOGZwRkJzN1BpU3VxVmNhTWdRWjE1cGxVLTVpOXZKME1BeGxrMXUyNmxoOHNlWWZhWWgzZ213eUQzank5bmhzb08zZFNLR2FQY0VKMm5yOU9tRWNMVkU0eklTQjBjZ05YaWg0TmYwNGJhTG9PUEt3Q2NLX0hSR0lubU9IUGl2X0lZNmQ0UXRQZ0NzeXpOWUNLWHNvLU1kcHNCRmZqVmZEdDdib3BCaW40VktR?oc=5",
@@ -466,14 +473,14 @@
       "publishedAt": 1789191044000
     },
     {
-      "id": "Google News Military-97-Minnesota Military and Veterans ",
+      "id": "Google News Military-96-Minnesota Military and Veterans ",
       "source": "kaaltv.com",
       "title": "Minnesota Military and Veterans Museum opens at Camp Ripley in Little Falls - kaaltv.com",
       "link": "https://news.google.com/rss/articles/CBMipwFBVV95cUxNVE00TllqOFpESERpOHlaYy0yUXFPd0RObUJqRFlRQnNfVUJxMDV3Z2s4MkdDcndfbTF5UTBoTHBIUXJrd2pMaHhjOVY4bHdBdmpzbUwxOUJQQllpSnBvNV9QVmJWUDU2c3VKZy1ia25SMnhTYmduck9KUWRudlMwUWZLclpjTHgwbDlYUVptb2FIRTZJc0pBR3pDeU1JR3NvR0xJcDJKRQ?oc=5",
       "publishedAt": 1789190622000
     },
     {
-      "id": "Google News Military-41-Price throws 3 TDs, defense scor",
+      "id": "Google News Military-42-Price throws 3 TDs, defense scor",
       "source": "Pine Bluff Commercial",
       "title": "Price throws 3 TDs, defense scores 3 times in Ricebirds’ 55-12 rout of Bulldogs - Pine Bluff Commercial",
       "link": "https://news.google.com/rss/articles/CBMiqwFBVV95cUxQNGZicFpENTVWZFRyUkp6OUxVazZvX2ZCdEtSUmJGWF9DQUZDcG1kVDVZUDY0NjM1bmdjQ2NNX3VnWkx2aE43LWU2bURMWlBTYk0ybllCWWlBWVFMNnJaRlh6Q2JFNk9QQU9ZZnVLbEsxTjhraDBYTjBCOWVaelpsWG5LM1ZDZFRBTjRMYlo1c3lUNlpoVldQZ2lzaV90ZXJnNzQweFdRS0sweU0?oc=5",
@@ -494,14 +501,14 @@
       "publishedAt": 1789189920000
     },
     {
-      "id": "Google News Military-78-‘It was an emotional time’: Reti",
+      "id": "Google News Military-77-‘It was an emotional time’: Reti",
       "source": "The Republic News",
       "title": "‘It was an emotional time’: Retired Maj. Gen Pillar recounts military response to 9/11 at ceremony - The Republic News",
       "link": "https://news.google.com/rss/articles/CBMizwFBVV95cUxPbk1HZEJkVVdGQk1FV00xc09kSExULUhheWpUaW5JR2pLNHhnc0Jsa3RybjRWRXY4T3JISlVYTnFBSTRNbmgtSEEtU3VReHBYbERCV25YWWxSelVvcTZYN1BaLWM2ejhwenRrM0w5WHlqUUxnb29mQkRtOTVRSTAwWXpsazlUdU9paVA5Z0JqWmhTX2YzQjlJakFVQzBYZDN1eFgycEFXNFVURGV1Z0ZiNF92bUE2OWxrWkJibFZFcm55QjVCSDNGVWFheGlTT0U?oc=5",
       "publishedAt": 1789189225000
     },
     {
-      "id": "Google News Military-52-Russia, Trump and a battle over ",
+      "id": "Google News Military-53-Russia, Trump and a battle over ",
       "source": "CNBC",
       "title": "Russia, Trump and a battle over welfare loom over Sweden’s election - CNBC",
       "link": "https://news.google.com/rss/articles/CBMiiAFBVV95cUxOM3lNdjFuRDNlb21feUwxRVg2RFdXUDVIY2Z0NDdiVFJtWDFRY2RFSVZBZ0F4TVpMT1g1bnV1OUtnbVk0RmZrbXdjLTFpNk9GMW5tV090c1ozZjZsbDZHbWxLUDJ3Ni1rYkpwWlAzRW5zNHFubGdtZi1LalFyc1hOVHNkX09UaENF0gGOAUFVX3lxTE9IWlhQUnplR0JjQm5aMVJlbkl0ZXFfTjJjRTV4c280R1ZLQVpJT0ZUVXpDLUF3TWhoQzA5WDlkWjVkNnJlRTFickkyalk5SmtRV2dqRmR2clV4dTJoR2Q1ZV9qeFhwVVIwX20xSWZJRHJDT0dRM3doT3lsc2w3akdxZkdsVVppbHZnRDlKbmc?oc=5",
@@ -522,7 +529,7 @@
       "publishedAt": 1789189067000
     },
     {
-      "id": "Google News Military-96-Gregory-Portland showing champio",
+      "id": "Google News Military-95-Gregory-Portland showing champio",
       "source": "SouthTexasNews.com",
       "title": "Gregory-Portland showing championship-level defense in domination of Calallen - SouthTexasNews.com",
       "link": "https://news.google.com/rss/articles/CBMiigJBVV95cUxQWlZOcDBEZml5S1ViSDJYbEJWVmdaUWwzTmxabmpPVTBxVmprYXAzMl80a2dMTmU4ZnpNU0lpRi0zblRKdEw3dkpyNG1PMXV2M1djQ2lRdDFUZHpBLWtpdmw2Q0tYOFB0QmxrTXFMMGhRNHZzVDJoMG9Tblk2UTZmOVk4TEF1cjlxa2I0enpSejUzcU90ejB3U2FiQ1BFNHRZcXpqZGtWdVJoQUh2ZlZsVElPdURNampES3lRcHp1MnZFdnRFM1JGRVpLY2tLck0yZGZ2OUlzTFMzNmFJamJ4d2tqMlQ4a0hkUjJ6RkhXVlJaMHp0dFdaYW8yT3BkV3NKMHBrN2dJeTFpdw?oc=5",
@@ -550,17 +557,10 @@
       "publishedAt": 1789186680000
     },
     {
-      "id": "Google News Military-37-Chennault Aviation and Military ",
+      "id": "Google News Military-38-Chennault Aviation and Military ",
       "source": "WITN",
       "title": "Chennault Aviation and Military Museum hosts 9/11 remembrance event - WITN",
       "link": "https://news.google.com/rss/articles/CBMiowFBVV95cUxOZDhqekRIY1NaZlJydmRtT3dpSDB6azNNeGhVNDhfa3JITjlaQUZMLWFMNmFkWnoxZDFoUU84bERPSV85b3pqcEJnbDhYdFVzRGxVZjB1dTBmNzl0QVFsZ0FBN2JCXzlPSk1jOGY5UUUwTGNrbUl5WlRjeVA4WldMMGRFZFp1TVhlM2lGU2tqRk9rcXJFeUZHa09Tb0JIc1o0MEVV?oc=5",
-      "publishedAt": 1789186680000
-    },
-    {
-      "id": "Google News Military-51-Chennault Aviation and Military ",
-      "source": "Live 5 News",
-      "title": "Chennault Aviation and Military Museum hosts 9/11 remembrance event - Live 5 News",
-      "link": "https://news.google.com/rss/articles/CBMiqgFBVV95cUxNX3VyTkRCM3U0Vnc0TjY5RUhBNjNVa1E5X3I0T19URVl6NzBnQVJORnR3UkM4ZWlwcG9JNFlaZ1ZqOTM1LUloVzZHdUxUOEstRlRibXQ3dlpid1llV0dnOFNNV2tqcV82Q0FRa3hibWhfSElxaVZsSFBDSWRKVnRpQUNOTkd3VmhkRkZ2TTFmaU1JZWszSEZjYnRzWGZxWkg3cDZnaVpRbDYwQQ?oc=5",
       "publishedAt": 1789186680000
     }
   ]
