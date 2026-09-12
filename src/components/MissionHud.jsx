@@ -6,6 +6,7 @@ import IntelWire from './IntelWire';
 import IntelBriefPanel from './IntelBriefPanel';
 import LiveNewsRelayPanel from './LiveNewsRelayPanel';
 import StrategicIntelPanel from './StrategicIntelPanel';
+import VehicleDashboard from './VehicleDashboard';
 import { discoverEntityVisuals } from '../services/visualDiscovery';
 import { isContinuousLiveCameraFeed } from '../services/cctvFeeds';
 
@@ -423,6 +424,7 @@ export default function MissionHud() {
     const inspector = useStore((s) => s.inspector);
     const clearInspector = useStore((s) => s.clearInspector);
     const trackedTarget = useStore((s) => s.trackedTarget);
+    const clearTrackedTarget = useStore((s) => s.clearTrackedTarget);
     const toggleTrackedTarget = useStore((s) => s.toggleTrackedTarget);
     const trackingView = useStore((s) => s.trackingView);
     const setTrackingView = useStore((s) => s.setTrackingView);
@@ -436,7 +438,7 @@ export default function MissionHud() {
     const setFocusMode = useStore((s) => s.setFocusMode);
     const appIsActive = useStore((s) => s.appIsActive);
 
-    const TRACKABLE_TYPES = new Set(['aircraft', 'satellites', 'militaryActivity']);
+    const TRACKABLE_TYPES = new Set(['aircraft', 'satellites', 'militaryActivity', 'traffic']);
     const AIRCRAFT_VIEWS = [{ id: 'CHASE', label: 'Chase' }, { id: 'COCKPIT', label: 'Cockpit' }, { id: 'TOP', label: 'Top' }, { id: 'SIDE', label: 'Side' }];
     const SATELLITE_VIEWS = [{ id: 'ORBIT', label: 'Orbit' }, { id: 'NADIR', label: 'Nadir' }, { id: 'WIDE', label: 'Wide' }];
 
@@ -449,6 +451,7 @@ export default function MissionHud() {
     const trackViews = inspector?.type === 'satellites' ? SATELLITE_VIEWS : AIRCRAFT_VIEWS;
     const hasMedia = Boolean(
         inspector &&
+        !inspector.isVehicle &&
         (
             inspector.mediaEnabled ||
             inspector.type === 'cctv' ||
@@ -911,8 +914,14 @@ DO NOT wrap the JSON in markdown code blocks like \`\`\`json. Return ONLY the ra
                         <div className="rcp-section rcp-entity">
                             <div className="rcp-header" style={{ borderBottomColor: `${inspectorDef.color}22` }}>
                                 <span style={{ color: inspectorDef.color }}>{inspectorDef.icon} {inspectorDef.label}</span>
-                                <button onClick={clearInspector} className="rcp-action">✕</button>
+                                <button onClick={() => { clearInspector(); clearTrackedTarget(); }} className="rcp-action">✕</button>
                             </div>
+                            {inspector.isVehicle ? (
+                                <div style={{ padding: '8px 10px 10px' }}>
+                                    <VehicleDashboard vehicle={inspector} />
+                                </div>
+                            ) : (
+                                <>
                             {hasMedia && (
                                 <div style={{ padding: '8px 10px 6px' }}>
                                     <div className="rcp-media-toolbar">
@@ -1057,6 +1066,8 @@ DO NOT wrap the JSON in markdown code blocks like \`\`\`json. Return ONLY the ra
                                         ))}
                                     </div>
                                 </div>
+                            )}
+                            </>
                             )}
 
                             {/* Gemini AI Briefing Widget */}

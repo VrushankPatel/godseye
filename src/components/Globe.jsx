@@ -133,6 +133,9 @@ const ENTITY_ID_PREFIX_LAYER_MAP = [
     ['weather-', 'weather'],
     ['air-quality-', 'airQuality'],
     ['cctv-', 'cctv'],
+    ['vehicle-', 'traffic'],
+    ['traffic-veh-', 'traffic'],
+    ['traffic-cctv-', 'traffic'],
     ['traffic-', 'traffic'],
     ['mil-activity-', 'militaryActivity'],
     ['mil-base-', 'militaryBases'],
@@ -140,9 +143,19 @@ const ENTITY_ID_PREFIX_LAYER_MAP = [
     ['airspace-', 'airspace'],
 ];
 
+const VEHICLE_TRACK_VIEWS = {
+    CHASE: new Cesium.Cartesian3(45, 0, 20),
+    TOP: new Cesium.Cartesian3(0, 0, 140),
+    SIDE: new Cesium.Cartesian3(0, -35, 14),
+    CINEMATIC: new Cesium.Cartesian3(60, -45, 30),
+};
+
 function getTrackViewOffset(type, view) {
     if (type === 'satellites') {
         return SATELLITE_TRACK_VIEWS[view] || SATELLITE_TRACK_VIEWS.ORBIT;
+    }
+    if (type === 'traffic' || type === 'traffic_vehicle') {
+        return VEHICLE_TRACK_VIEWS[view] || VEHICLE_TRACK_VIEWS.CHASE;
     }
     return AIRCRAFT_TRACK_VIEWS[view] || AIRCRAFT_TRACK_VIEWS.CHASE;
 }
@@ -189,6 +202,7 @@ export default function Globe() {
     const trailPositionsRef = useRef([]);
     const trailTimerRef = useRef(null);
     const trackedAircraftEntityIdRef = useRef(null);
+    const trackedVehicleEntityIdRef = useRef(null);
     const hoveredEntityIdRef = useRef(null);
     const lastHoverUpdateMsRef = useRef(0);
     const labelLayersRef = useRef({ country: null, city: null });
@@ -204,11 +218,14 @@ export default function Globe() {
     const setCity3DActive = useStore((s) => s.setCity3DActive);
     const isAutoRotating = useStore((s) => s.isAutoRotating);
     const setAutoRotating = useStore((s) => s.setAutoRotating);
+    const inspector = useStore((s) => s.inspector);
     const setInspector = useStore((s) => s.setInspector);
     const setHoverInfo = useStore((s) => s.setHoverInfo);
     const clearHoverInfo = useStore((s) => s.clearHoverInfo);
     const trackedTarget = useStore((s) => s.trackedTarget);
+    const setTrackedTarget = useStore((s) => s.setTrackedTarget);
     const trackingView = useStore((s) => s.trackingView);
+    const setTrackingView = useStore((s) => s.setTrackingView);
     const clearTrackedTarget = useStore((s) => s.clearTrackedTarget);
     const requestLayerRefresh = useStore((s) => s.requestLayerRefresh);
     const focusHideEntities = useStore((s) => s.focusHideEntities);
@@ -228,6 +245,65 @@ export default function Globe() {
         }
         trackedEntity.model = undefined;
         trackedEntity.orientation = undefined;
+    }, []);
+
+    const cleanupTrackedVehicleEntity = useCallback(() => {
+        const viewer = viewerRef.current;
+        const vehicleId = trackedVehicleEntityIdRef.current;
+        trackedVehicleEntityIdRef.current = null;
+        if (!viewer || viewer.isDestroyed() || !vehicleId) return;
+        const entity = viewer.entities.getById(vehicleId);
+        if (entity) {
+            viewer.entities.remove(entity);
+        }
+    }, []);
+
+    const ensureVehicleEntity = useCallback((vehicleData, initialPosition) => {
+        const viewer = viewerRef.current;
+        if (!viewer || viewer.isDestroyed() || !vehicleData?._entityId) return null;
+        let entity = viewer.entities.getById(vehicleData._entityId);
+        if (!entity) {
+            entity = viewer.entities.add({
+                id: vehicleData._entityId,
+                name: vehicleData.name,
+                position: initialPosition ? Cesium.Cartesian3.clone(initialPosition) : Cesium.Cartesian3.ZERO,
+                point: {
+                    pixelSize: 10,
+                    color: Cesium.Color.fromCssColorString('#00ff95'),
+                    outlineColor: Cesium.Color.WHITE,
+                    outlineWidth: 2,
+                    disableDepthTestDistance: 50000,
+                },
+                label: {
+                    text: vehicleData.callsign || vehicleData.name,
+                    font: 'bold 11px monospace',
+                    fillColor: Cesium.Color.fromCssColorString('#00ffc8'),
+                    outlineColor: Cesium.Color.BLACK,
+                    outlineWidth: 3,
+                    style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                    verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+                    pixelOffset: new Cesium.Cartesian2(0, -16),
+                    disableDepthTestDistance: 50000,
+                },
+                properties: {
+                    ...vehicleData,
+                    _layerType: 'traffic',
+                    _headingDeg: vehicleData.headingDeg || 0,
+                },
+            });
+            entity.orientation = new Cesium.CallbackProperty((time, result) => {
+                const pos = entity.position?.getValue ? entity.position.getValue(time) : entity.position;
+                if (!pos) return undefined;
+                const headingDeg = getTrackedHeadingDegrees(entity, time);
+                const headingRad = Cesium.Math.toRadians(headingDeg);
+                const hpr = new Cesium.HeadingPitchRoll(headingRad, 0, 0);
+                return Cesium.Transforms.headingPitchRollQuaternion(pos, hpr, Cesium.Ellipsoid.WGS84, undefined, result);
+            }, false);
+        } else if (initialPosition) {
+            entity.position = Cesium.Cartesian3.clone(initialPosition);
+        }
+        trackedVehicleEntityIdRef.current = vehicleData._entityId;
+        return entity;
     }, []);
 
     const applyTrackedAircraftVisual = useCallback((entity) => {
@@ -565,6 +641,31 @@ export default function Globe() {
                 return null;
             }
 
+            // Handle plain JS object (e.g. from PointPrimitive on TrafficLayer)
+            if (typeof pickedObject.id === 'object' && !pickedObject.id.properties && !(pickedObject.id instanceof Cesium.Entity)) {
+                const obj = pickedObject.id;
+                let lat = obj.latitude;
+                let lon = obj.longitude;
+                if ((!lat || !lon) && pickedObject.primitive?.position) {
+                    const carto = Cesium.Cartographic.fromCartesian(pickedObject.primitive.position);
+                    if (carto) {
+                        lat = Cesium.Math.toDegrees(carto.latitude).toFixed(4);
+                        lon = Cesium.Math.toDegrees(carto.longitude).toFixed(4);
+                    }
+                }
+                const entityId = obj.id || obj._entityId || 'vehicle-unknown';
+                const inferredLayerType = obj._layerType || obj.type || inferLayerTypeFromEntityId(entityId);
+                return {
+                    ...obj,
+                    latitude: lat,
+                    longitude: lon,
+                    type: inferredLayerType,
+                    _layerType: inferredLayerType,
+                    _entityId: entityId,
+                    name: obj.name || entityId,
+                };
+            }
+
             const props = {};
             const propertyBag = pickedObject.id.properties;
             const propertyNames = propertyBag?.propertyNames || [];
@@ -613,9 +714,19 @@ export default function Globe() {
             if (parsed) {
                 clearHoverInfo();
                 setInspector(parsed);
+                if (parsed.isVehicle) {
+                    ensureVehicleEntity(parsed, pickedObject.primitive?.position);
+                    setTrackingView('CHASE');
+                    setTrackedTarget({
+                        entityId: parsed._entityId,
+                        type: 'traffic',
+                        label: parsed.name,
+                    });
+                }
             } else {
-                // Clicked on empty space, close inspector
+                // Clicked on empty space, close inspector and release tracking
                 setInspector(null);
+                clearTrackedTarget();
             }
         }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 
@@ -675,12 +786,16 @@ export default function Globe() {
         };
     }, [
         clearHoverInfo,
+        clearTrackedTarget,
+        ensureVehicleEntity,
         removeTrail,
         restoreTrackedAircraftVisual,
         setAutoRotating,
         setHoverInfo,
         setInspector,
         setCity3DActive,
+        setTrackedTarget,
+        setTrackingView,
         setViewerRefStore,
     ]);
 
@@ -758,14 +873,19 @@ export default function Globe() {
             viewer.trackedEntity = undefined;
             removeTrail();
             restoreTrackedAircraftVisual();
+            cleanupTrackedVehicleEntity();
             return;
         }
 
-        const targetEntity = viewer.entities.getById(trackedTarget.entityId);
+        let targetEntity = viewer.entities.getById(trackedTarget.entityId);
+        if (!targetEntity && trackedTarget.type === 'traffic' && inspector?._entityId === trackedTarget.entityId) {
+            targetEntity = ensureVehicleEntity(inspector);
+        }
         if (!targetEntity) {
             clearTrackedTarget();
             removeTrail();
             restoreTrackedAircraftVisual();
+            cleanupTrackedVehicleEntity();
             return;
         }
 
@@ -781,7 +901,9 @@ export default function Globe() {
 
         const trailColor = trackedTarget.type === 'satellites'
             ? Cesium.Color.fromCssColorString('#ffaa00')
-            : Cesium.Color.fromCssColorString('#00b4ff');
+            : (trackedTarget.type === 'traffic'
+                ? Cesium.Color.fromCssColorString('#00ff95')
+                : Cesium.Color.fromCssColorString('#00b4ff'));
 
         trailEntityRef.current = viewer.entities.add({
             id: `track-trail-${trackedTarget.entityId}`,
@@ -817,7 +939,8 @@ export default function Globe() {
 
             const trail = trailPositionsRef.current;
             const lastPoint = trail[trail.length - 1];
-            if (!lastPoint || Cesium.Cartesian3.distance(lastPoint, position) >= MIN_TRACK_POINT_DISTANCE_METERS) {
+            const minDist = trackedTarget.type === 'traffic' ? 15 : MIN_TRACK_POINT_DISTANCE_METERS;
+            if (!lastPoint || Cesium.Cartesian3.distance(lastPoint, position) >= minDist) {
                 trail.push(Cesium.Cartesian3.clone(position));
                 if (trail.length > MAX_TRACK_POINTS) {
                     trail.splice(0, trail.length - MAX_TRACK_POINTS);
@@ -839,6 +962,9 @@ export default function Globe() {
         trackingView,
         applyTrackedAircraftVisual,
         clearTrackedTarget,
+        cleanupTrackedVehicleEntity,
+        ensureVehicleEntity,
+        inspector,
         removeTrail,
         restoreTrackedAircraftVisual,
         setAutoRotating,

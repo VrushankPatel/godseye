@@ -2,8 +2,9 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import useStore from '../store/useStore';
 import { LAYER_DEFS } from '../constants/dataSources';
 import { isContinuousLiveCameraFeed, getProxiedCameraFrameUrl } from '../services/cctvFeeds';
+import VehicleDashboard from './VehicleDashboard';
 
-const TRACKABLE_LAYER_TYPES = new Set(['aircraft', 'satellites', 'militaryActivity']);
+const TRACKABLE_LAYER_TYPES = new Set(['aircraft', 'satellites', 'militaryActivity', 'traffic']);
 const DEFAULT_REFRESH_SECONDS = 5;
 const AIRCRAFT_TRACK_VIEWS = [
     { id: 'CHASE', label: 'Chase' },
@@ -352,82 +353,88 @@ export default function Inspector() {
                             </div>
                         </div>
 
-                        {hasMediaPanel && (
-                            <div className="w-full mb-3 rounded overflow-hidden relative group bg-black/40">
-                                {renderCCTVMedia(false)}
-                                <div className="absolute top-2 right-2 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button
-                                        onClick={() => setIsMaximized(true)}
-                                        className="bg-black/80 px-2 py-1 text-[10px] text-white border border-white/20 hover:bg-white/20 transition-colors"
-                                    >
-                                        MAXIMIZE ⤢
-                                    </button>
-                                </div>
-                            </div>
-                        )}
-
-                        <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-                            {Object.entries(inspector).map(([key, value]) => {
-                                if (
-                                    key === 'type' ||
-                                    key === 'name' ||
-                                    key.startsWith('_') ||
-                                    typeof value === 'object' ||
-                                    key === 'url' ||
-                                    key === 'fallbackUrl' ||
-                                    key === 'videoUrl' ||
-                                    key === 'mediaType' ||
-                                    key === 'refreshSeconds' ||
-                                    key === 'detailsUrl'
-                                ) {
-                                    return null;
-                                }
-                                return (
-                                    <div key={key} className="flex flex-col gap-1">
-                                        <div className="text-[10px] leading-none text-text-dim tracking-[0.16em] uppercase">{key}</div>
-                                        <div
-                                            className="text-[15px] leading-[1.2] text-text-primary tracking-[0.03em] break-words"
-                                            title={String(value)}
-                                        >
-                                            {value !== null && value !== undefined ? String(value) : 'N/A'}
+                        {inspector.isVehicle ? (
+                            <VehicleDashboard vehicle={inspector} />
+                        ) : (
+                            <>
+                                {hasMediaPanel && (
+                                    <div className="w-full mb-3 rounded overflow-hidden relative group bg-black/40">
+                                        {renderCCTVMedia(false)}
+                                        <div className="absolute top-2 right-2 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button
+                                                onClick={() => setIsMaximized(true)}
+                                                className="bg-black/80 px-2 py-1 text-[10px] text-white border border-white/20 hover:bg-white/20 transition-colors"
+                                            >
+                                                MAXIMIZE ⤢
+                                            </button>
                                         </div>
                                     </div>
-                                );
-                            })}
-                        </div>
+                                )}
 
-                        {isTrackable && (
-                            <button
-                                onClick={handleTrackToggle}
-                                className={`mt-2 border text-xs tracking-widest px-3 py-2.5 transition-colors ${isTracked
-                                    ? 'border-red-400/50 text-red-200 bg-red-500/15 hover:bg-red-500/25'
-                                    : 'border-cyan-400/50 text-cyan-200 bg-cyan-500/10 hover:bg-cyan-500/20'
-                                    }`}
-                            >
-                                {isTracked ? 'STOP TRACK' : 'TRACK TARGET'}
-                            </button>
-                        )}
+                                <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+                                    {Object.entries(inspector).map(([key, value]) => {
+                                        if (
+                                            key === 'type' ||
+                                            key === 'name' ||
+                                            key.startsWith('_') ||
+                                            typeof value === 'object' ||
+                                            key === 'url' ||
+                                            key === 'fallbackUrl' ||
+                                            key === 'videoUrl' ||
+                                            key === 'mediaType' ||
+                                            key === 'refreshSeconds' ||
+                                            key === 'detailsUrl'
+                                        ) {
+                                            return null;
+                                        }
+                                        return (
+                                            <div key={key} className="flex flex-col gap-1">
+                                                <div className="text-[10px] leading-none text-text-dim tracking-[0.16em] uppercase">{key}</div>
+                                                <div
+                                                    className="text-[15px] leading-[1.2] text-text-primary tracking-[0.03em] break-words"
+                                                    title={String(value)}
+                                                >
+                                                    {value !== null && value !== undefined ? String(value) : 'N/A'}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
 
-                        {isTracked && (
-                            <div className="mt-2">
-                                <div className="text-[10px] text-text-dim tracking-widest uppercase mb-1.5">
-                                    Track View
-                                </div>
-                                <div className="grid grid-cols-2 gap-1.5">
-                                    {trackViewOptions.map((view) => (
-                                        <button
-                                            key={view.id}
-                                            onClick={() => setTrackingView(view.id)}
-                                            className={`border px-2 py-1.5 text-[10px] tracking-widest transition-colors ${trackingView === view.id
-                                                ? 'border-cyan-300/70 text-cyan-100 bg-cyan-500/20'
-                                                : 'border-white/15 text-text-dim bg-white/5 hover:bg-white/10 hover:text-white'
-                                                }`}
-                                        >
-                                            {view.label}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
+                                {isTrackable && (
+                                    <button
+                                        onClick={handleTrackToggle}
+                                        className={`mt-2 border text-xs tracking-widest px-3 py-2.5 transition-colors ${isTracked
+                                            ? 'border-red-400/50 text-red-200 bg-red-500/15 hover:bg-red-500/25'
+                                            : 'border-cyan-400/50 text-cyan-200 bg-cyan-500/10 hover:bg-cyan-500/20'
+                                            }`}
+                                    >
+                                        {isTracked ? 'STOP TRACK' : 'TRACK TARGET'}
+                                    </button>
+                                )}
+
+                                {isTracked && (
+                                    <div className="mt-2">
+                                        <div className="text-[10px] text-text-dim tracking-widest uppercase mb-1.5">
+                                            Track View
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-1.5">
+                                            {trackViewOptions.map((view) => (
+                                                <button
+                                                    key={view.id}
+                                                    onClick={() => setTrackingView(view.id)}
+                                                    className={`border px-2 py-1.5 text-[10px] tracking-widest transition-colors ${trackingView === view.id
+                                                        ? 'border-cyan-300/70 text-cyan-100 bg-cyan-500/20'
+                                                        : 'border-white/15 text-text-dim bg-white/5 hover:bg-white/10 hover:text-white'
+                                                        }`}
+                                                >
+                                                    {view.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </>
                         )}
 
                     </div>

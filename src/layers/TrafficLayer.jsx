@@ -6,6 +6,19 @@ import { isContinuousLiveCameraFeed } from '../services/cctvFeeds';
 import { deriveFetchCenter, clampBoundsAroundCenter, greatCircleKm } from '../utils/trafficBounds';
 import { matchFlowToRoads } from '../utils/flowMatch';
 import { fetchFlowForBounds } from '../utils/flowTiles';
+import { generateVehicleData } from '../utils/vehicleGenerator';
+
+function computeBearingDeg(lon1, lat1, lon2, lat2) {
+  const toRad = Math.PI / 180;
+  const toDeg = 180 / Math.PI;
+  const dLon = (lon2 - lon1) * toRad;
+  const phi1 = lat1 * toRad;
+  const phi2 = lat2 * toRad;
+  const y = Math.sin(dLon) * Math.cos(phi2);
+  const x = Math.cos(phi1) * Math.sin(phi2) - Math.sin(phi1) * Math.cos(phi2) * Math.cos(dLon);
+  const brng = Math.atan2(y, x) * toDeg;
+  return Math.round((brng + 360) % 360);
+}
 
 const ACTIVATION_ALTITUDE_METERS = 8000;
 const FETCH_DEBOUNCE_MS = 320;
@@ -178,12 +191,14 @@ export default function TrafficLayer({ viewer }) {
   const updateData = useStore((s) => s.updateLayerData);
   const setStatus = useStore((s) => s.setLayerStatus);
   const markLayerFetchStart = useStore((s) => s.markLayerFetchStart);
+  const trackedTarget = useStore((s) => s.trackedTarget);
 
   const pointCollectionRef = useRef(null);
   const roadsRef = useRef([]);
   const dotsRef = useRef([]);
   const corridorsRef = useRef([]);
   const feedEntitiesRef = useRef([]);
+  const vehicleEntitiesRef = useRef(new Set());
   const scratchLerpRef = useRef(new Cesium.Cartesian3());
 
   const lastAnimTimeRef = useRef(0);
@@ -193,6 +208,12 @@ export default function TrafficLayer({ viewer }) {
   const preRenderDisposerRef = useRef(null);
   const cameraDisposerRef = useRef(null);
   const liveModeRef = useRef(false);
+  const lastTelemetryDispatchRef = useRef(0);
+  const trackedTargetRef = useRef(trackedTarget);
+
+  useEffect(() => {
+    trackedTargetRef.current = trackedTarget;
+  }, [trackedTarget]);
 
   // Clear all rendered visual artifacts
   const clearVisuals = useCallback(() => {
@@ -208,6 +229,13 @@ export default function TrafficLayer({ viewer }) {
       if (viewer && !viewer.isDestroyed()) viewer.entities.remove(entity);
     });
     feedEntitiesRef.current = [];
+    vehicleEntitiesRef.current.forEach((entityId) => {
+      if (viewer && !viewer.isDestroyed()) {
+        const ent = viewer.entities.getById(entityId);
+        if (ent) viewer.entities.remove(ent);
+      }
+    });
+    vehicleEntitiesRef.current.clear();
     dotsRef.current = [];
     roadsRef.current = [];
   }, [viewer]);
@@ -223,6 +251,9 @@ export default function TrafficLayer({ viewer }) {
 
     const scratch = scratchLerpRef.current;
     const dots = dotsRef.current;
+    const trackedId = trackedTargetRef.current?.entityId;
+
+    let trackedDot = null;
 
     for (let i = 0; i < dots.length; i++) {
       const dot = dots[i];
@@ -254,8 +285,96 @@ export default function TrafficLayer({ viewer }) {
         scratch
       );
       dot.point.position = scratch;
+
+      if (trackedId && dot.vehicleData && dot.vehicleData.id === trackedId) {
+        trackedDot = dot;
+      }
     }
+
+    // Synchronize tracked vehicle entity position and camera along street
+    if (trackedDot) {
+      const targetEntity = viewer.entities.getById(trackedId);
+      if (targetEntity) {
+        targetEntity.position = Cesium.Cartesian3.clone(trackedDot.point.position);
+      }
+
+      // Compute heading/bearing along current road segment
+      const coords = trackedDot.coords;
+      const segIdx = trackedDot.segIdx;
+      let headingDeg = 0;
+      if (coords && coords[segIdx] && coords[segIdx + 1]) {
+        const from = trackedDot.direction > 0 ? coords[segIdx] : coords[segIdx + 1];
+        const to = trackedDot.direction > 0 ? coords[segIdx + 1] : coords[segIdx];
+        headingDeg = computeBearingDeg(from[0], from[1], to[0], to[1]);
+      }
+
+      if (targetEntity?.properties) {
+        targetEntity.properties._headingDeg = headingDeg;
+      }
+
+      // Broadcast live telemetry updates for VehicleDashboard
+      if (now - lastTelemetryDispatchRef.current > 75) {
+        lastTelemetryDispatchRef.current = now;
+        const speedKmh = Math.round(trackedDot.mps * 3.6);
+        window.dispatchEvent(
+          new CustomEvent('godseye:vehicle-telemetry', {
+            detail: {
+              id: trackedId,
+              speedKmh,
+              headingDeg,
+            },
+          })
+        );
+      }
+    }
+
+    viewer.scene.requestRender();
   }, [viewer]);
+
+  // Ensure tracked vehicle exists in viewer.entities when tracking is activated
+  useEffect(() => {
+    if (!trackedTarget?.entityId || trackedTarget.type !== 'traffic' || !viewer || viewer.isDestroyed()) {
+      return;
+    }
+
+    const targetId = trackedTarget.entityId;
+    let targetEntity = viewer.entities.getById(targetId);
+    if (!targetEntity) {
+      const dot = dotsRef.current.find((d) => d.vehicleData?.id === targetId);
+      if (dot) {
+        const initialPos = dot.point.position;
+        targetEntity = viewer.entities.add({
+          id: targetId,
+          name: dot.vehicleData.name,
+          position: Cesium.Cartesian3.clone(initialPos),
+          point: {
+            pixelSize: 10,
+            color: Cesium.Color.fromCssColorString('#00ff95'),
+            outlineColor: Cesium.Color.WHITE,
+            outlineWidth: 2,
+            disableDepthTestDistance: 50000,
+          },
+          label: {
+            text: dot.vehicleData.callsign || dot.vehicleData.name,
+            font: 'bold 11px monospace',
+            fillColor: Cesium.Color.fromCssColorString('#00ffc8'),
+            outlineColor: Cesium.Color.BLACK,
+            outlineWidth: 3,
+            style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+            verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+            pixelOffset: new Cesium.Cartesian2(0, -16),
+            disableDepthTestDistance: 50000,
+          },
+          properties: {
+            ...dot.vehicleData,
+            _layerType: 'traffic',
+            _headingDeg: 0,
+          },
+        });
+        vehicleEntitiesRef.current.add(targetId);
+      }
+    }
+  }, [trackedTarget, viewer]);
 
   // Check TomTom status once
   useEffect(() => {
@@ -317,6 +436,13 @@ export default function TrafficLayer({ viewer }) {
         const speed = baseMps * flowScale * (0.8 + Math.random() * 0.4);
         const direction = road.oneway ? road.oneway : (i % 2 === 0 ? 1 : -1);
 
+        const vehicleData = generateVehicleData(road, spawned);
+        const coord = road.coords[segIdx] || [0, 0];
+        vehicleData.longitude = Number(coord[0]).toFixed(4);
+        vehicleData.latitude = Number(coord[1]).toFixed(4);
+        vehicleData.speedKmh = Math.round(speed * 3.6);
+        vehicleData.speedMph = Math.round(speed * 2.23694);
+
         const point = pointCollectionRef.current.add({
           position: Cesium.Cartesian3.clone(road.waypoints[segIdx]),
           pixelSize: road.type === 'motorway' ? 5.5 : 4.5,
@@ -324,11 +450,14 @@ export default function TrafficLayer({ viewer }) {
           outlineColor: Cesium.Color.WHITE.withAlpha(0.7),
           outlineWidth: 1.0,
           disableDepthTestDistance: 50000,
+          id: vehicleData,
         });
 
         dotsRef.current.push({
           point,
+          vehicleData,
           waypoints: road.waypoints,
+          coords: road.coords,
           segmentDist: road.segmentDist,
           numSegments,
           segIdx,
