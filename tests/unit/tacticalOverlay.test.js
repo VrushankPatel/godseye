@@ -136,5 +136,35 @@ describe('Tactical World Overlay & CCTV Integration', () => {
             expect(overlayRegistry.getVehicles()).toEqual([]);
             expect(overlayRegistry.getCameras()).toEqual([]);
         });
+
+        it('stores rich vehicle data including carName, model, plate, and velocity', () => {
+            const richVehicle = {
+                id: 'vehicle-motorway-0',
+                currentMps: 13.5,
+                headingDeg: 124,
+                vehicleData: {
+                    id: 'vehicle-motorway-0',
+                    carName: 'Maruti Suzuki Dzire',
+                    name: 'Maruti Suzuki Dzire',
+                    model: 'Dzire ZXi',
+                    shortLabel: 'Maruti Dzire',
+                    brand: 'Maruti Suzuki',
+                    plate: 'GJ01 AB 4821',
+                    country: 'IN',
+                    countryName: 'India',
+                    isVehicle: true,
+                },
+            };
+
+            overlayRegistry.setTrafficActive(true);
+            overlayRegistry.setVehicles([richVehicle]);
+
+            const stored = overlayRegistry.getVehicles();
+            expect(stored.length).toBe(1);
+            expect(stored[0].vehicleData.carName).toBe('Maruti Suzuki Dzire');
+            expect(stored[0].vehicleData.plate).toBe('GJ01 AB 4821');
+            expect(stored[0].vehicleData.brand).toBe('Maruti Suzuki');
+            expect(stored[0].headingDeg).toBe(124);
+        });
     });
 });

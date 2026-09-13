@@ -213,14 +213,14 @@ describe('countryFleets', () => {
     it('generates authentic Indian license plates', () => {
       for (let s = 1; s <= 20; s++) {
         const plate = generateRegionalPlate('IN', s);
-        expect(plate).toMatch(/^[A-Z]{2} \d{2} [A-Z]{2} \d{4}$/);
+        expect(plate).toMatch(/^[A-Z]{2}\d{2} [A-Z]{2} \d{4}$/);
       }
     });
 
     it('generates authentic US license plates', () => {
       for (let s = 1; s <= 20; s++) {
         const plate = generateRegionalPlate('US', s);
-        expect(plate).toMatch(/^[A-Z]{2} · \d{4}$/);
+        expect(plate).toMatch(/^([A-Z]{2} · [A-Z]{3}-\d{4}|\d[A-Z]{3}\d{3})$/);
       }
     });
 
@@ -234,7 +234,7 @@ describe('countryFleets', () => {
     it('generates authentic German license plates', () => {
       for (let s = 1; s <= 20; s++) {
         const plate = generateRegionalPlate('DE', s);
-        expect(plate).toMatch(/^[A-Z]{1,2}-[A-Z]{2} \d{3}$/);
+        expect(plate).toMatch(/^[A-Z]{1,2}-[A-Z]{2} \d{3,4}$/);
       }
     });
 

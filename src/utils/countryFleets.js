@@ -8,5 +8,6 @@ export {
   detectCountry,
   getCountryFleet,
   generateRegionalPlate,
+  INDIAN_RTO_REGISTRY,
   getCountryName,
 } from './countryFleets/index.js';

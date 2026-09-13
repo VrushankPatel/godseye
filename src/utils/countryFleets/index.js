@@ -7,9 +7,9 @@ import { MEA_FLEETS } from './middleEastAfrica.js';
 import { OCEANIA_FLEETS } from './oceania.js';
 import { REGIONAL_FLEETS } from './regional.js';
 import { detectCountry } from './geoDetect.js';
-import { generateRegionalPlate } from './plates.js';
+import { generateRegionalPlate, INDIAN_RTO_REGISTRY } from './plates.js';
 
-export { detectCountry, generateRegionalPlate };
+export { detectCountry, generateRegionalPlate, INDIAN_RTO_REGISTRY };
 
 /**
  * Combined country fleets dictionary.

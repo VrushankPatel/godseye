@@ -100,8 +100,8 @@ export function generateVehicleData(road, index, options = {}) {
   const number = String(Math.floor(10 + pseudoRandom(seed + 2) * 890)).padStart(3, '0');
   const callsign = `${prefix}-${number}`;
 
-  // Authentic regional registration plate
-  const plate = generateRegionalPlate(country, seed + 4);
+  // Authentic regional registration plate (uses exact state RTO if coords in India or specific regions)
+  const plate = generateRegionalPlate(country, seed + 4, { lat, lon });
 
   // Authentic regional destination
   const destination = (tmpl.destinationList && tmpl.destinationList.length > 0)
@@ -131,7 +131,9 @@ export function generateVehicleData(road, index, options = {}) {
     country,
     countryName,
     brand: tmpl.brand,
-    name: `${tmpl.shortLabel} · ${callsign}`,
+    name: tmpl.name, // Full authentic car name (e.g. Maruti Suzuki Dzire, Tata Nexon EV, Tesla Model Y)
+    carName: tmpl.name,
+    carModel: tmpl.model,
     callsign,
     vehicleClass: tmpl.name,
     vehicleCategory: tmpl.category,

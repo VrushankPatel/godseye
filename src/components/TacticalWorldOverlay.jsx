@@ -5,7 +5,9 @@ import overlayRegistry from '../services/overlayRegistry';
 import { getProxiedCameraFrameUrl } from '../services/cctvFeeds';
 
 const MAX_CCTV_ALTITUDE_M = 14000;
-const MAX_VEHICLE_CALLOUT_ALTITUDE_M = 3600;
+const MAX_VEHICLE_CALLOUT_ALTITUDE_M = 3500;
+const FULL_VEHICLE_TIP_ALTITUDE_M = 1000;
+const MAX_VISIBLE_VEHICLE_CALLOUTS = 40;
 const CCTV_CARD_W = 120;
 const CCTV_CARD_H = 72;
 const CCTV_THUMB_W = 112;
@@ -80,7 +82,13 @@ export default function TacticalWorldOverlay({ viewer }) {
     const trafficEnabled = useStore((s) => s.layers.traffic.enabled);
     const setInspector = useStore((s) => s.setInspector);
     const setTrackedTarget = useStore((s) => s.setTrackedTarget);
+    const trackedTarget = useStore((s) => s.trackedTarget);
+    const trackedTargetRef = useRef(trackedTarget);
+    trackedTargetRef.current = trackedTarget;
+    const setHoverInfo = useStore((s) => s.setHoverInfo);
+    const clearHoverInfo = useStore((s) => s.clearHoverInfo);
 
+    const vehicleHoverActiveRef = useRef(false);
     const scratchWin = useRef(new Cesium.Cartesian2());
 
     useEffect(() => {
@@ -113,9 +121,11 @@ export default function TacticalWorldOverlay({ viewer }) {
                         });
                         return;
                     } else if (hit.type === 'vehicle') {
+                        setInspector(hit.data);
                         setTrackedTarget({
                             type: 'traffic',
                             entityId: hit.data.id,
+                            label: hit.data.carName || hit.data.name || hit.data.callsign,
                         });
                         return;
                     }
@@ -142,10 +152,30 @@ export default function TacticalWorldOverlay({ viewer }) {
             }
 
             hoveredCardRef.current = foundHit?.data?.id || null;
+
             if (foundHit) {
                 container.style.cursor = 'pointer';
-            } else if (container.style.cursor === 'pointer') {
-                container.style.cursor = 'default';
+                if (foundHit.type === 'vehicle') {
+                    vehicleHoverActiveRef.current = true;
+                    setHoverInfo({
+                        ...foundHit.data,
+                        isVehicle: true,
+                        screenX: e.clientX,
+                        screenY: e.clientY,
+                        timestamp: Date.now(),
+                    });
+                } else if (vehicleHoverActiveRef.current) {
+                    vehicleHoverActiveRef.current = false;
+                    clearHoverInfo();
+                }
+            } else {
+                if (container.style.cursor === 'pointer') {
+                    container.style.cursor = 'default';
+                }
+                if (vehicleHoverActiveRef.current) {
+                    vehicleHoverActiveRef.current = false;
+                    clearHoverInfo();
+                }
             }
         };
 
@@ -158,8 +188,12 @@ export default function TacticalWorldOverlay({ viewer }) {
             if (container.style.cursor === 'pointer') {
                 container.style.cursor = 'default';
             }
+            if (vehicleHoverActiveRef.current) {
+                vehicleHoverActiveRef.current = false;
+                clearHoverInfo();
+            }
         };
-    }, [setInspector, setTrackedTarget, viewer]);
+    }, [clearHoverInfo, setHoverInfo, setInspector, setTrackedTarget, viewer]);
 
     useEffect(() => {
         if (!viewer || viewer.isDestroyed()) return;
@@ -199,6 +233,9 @@ export default function TacticalWorldOverlay({ viewer }) {
                 const vehicles = overlayRegistry.getVehicles();
                 const drawCallouts = cameraHeightM <= MAX_VEHICLE_CALLOUT_ALTITUDE_M;
 
+                const isZoomedIn = cameraHeightM <= FULL_VEHICLE_TIP_ALTITUDE_M;
+                const vehicleCandidates = [];
+
                 for (let i = 0; i < vehicles.length; i++) {
                     const veh = vehicles[i];
                     const pos = veh.point?.position || veh.position;
@@ -217,8 +254,39 @@ export default function TacticalWorldOverlay({ viewer }) {
 
                     const headingRad = Cesium.Math.toRadians(veh.headingDeg || 0);
                     const isHovered = hoveredCardRef.current === veh.vehicleData?.id;
+                    const isTracked = trackedTargetRef.current?.entityId === veh.vehicleData?.id;
                     const speedMph = Math.round((veh.currentMps || 0) * 2.23694);
+                    const speedKmh = Math.round((veh.currentMps || 0) * 3.6);
                     const isStopped = veh.currentMps < 0.2 || (veh.signalColor === 'red');
+
+                    const hitVehData = {
+                        ...(veh.vehicleData || {}),
+                        id: veh.vehicleData?.id || `vehicle-${i}`,
+                        name: veh.vehicleData?.name || veh.vehicleData?.carName || 'Vehicle',
+                        carName: veh.vehicleData?.carName || veh.vehicleData?.name || 'Vehicle',
+                        model: veh.vehicleData?.model || veh.vehicleData?.shortModel || '',
+                        shortModel: veh.vehicleData?.shortModel || '',
+                        shortLabel: veh.vehicleData?.shortLabel || veh.vehicleData?.name || '',
+                        brand: veh.vehicleData?.brand || 'Automotive',
+                        plate: veh.vehicleData?.plate || 'GJ01 AB 4821',
+                        country: veh.vehicleData?.country || 'IN',
+                        countryName: veh.vehicleData?.countryName || 'India',
+                        isVehicle: true,
+                        speedKmh,
+                        speedMph,
+                        isStopped,
+                        headingDeg: Math.round(veh.headingDeg || 0),
+                    };
+
+                    // Register hit area around vehicle pointer chevron
+                    cardHitsRef.current.push({
+                        type: 'vehicle',
+                        x: sx - 12,
+                        y: sy - 12,
+                        w: 24,
+                        h: 24,
+                        data: hitVehData,
+                    });
 
                     // Draw sleek directional vehicle pointer / chevron
                     ctx.save();
@@ -259,60 +327,265 @@ export default function TacticalWorldOverlay({ viewer }) {
 
                     ctx.restore();
 
-                    // Draw tactical HUD callout box (VEH-XXXX) with leader line when zoomed in
+                    // Collect candidate for callout rendering
                     if (drawCallouts) {
-                        const vehTag = veh.vehicleData?.vehTag || `VEH-${String(veh.spawnSeed || i).padStart(4, '0')}`;
-                        const model = veh.vehicleData?.shortLabel;
-                        const metricText = isStopped ? 'STOP' : (isHovered && model ? model.slice(0, 8) : `${speedMph} MPH`);
-                        const primaryText = vehTag;
+                        const isFull = isZoomedIn || isHovered || isTracked;
+                        let calloutW, calloutH, callX, callY;
 
-                        const calloutW = 68;
-                        const calloutH = 18;
-                        const leadOffset = (i % 2 === 0) ? 14 : -14;
-                        const callX = leadOffset > 0 ? sx + leadOffset : sx + leadOffset - calloutW;
-                        const callY = sy - 24;
+                        if (isFull) {
+                            calloutW = 148;
+                            calloutH = 34;
+                            const leadOffset = (i % 2 === 0) ? 16 : -16;
+                            callX = leadOffset > 0 ? sx + leadOffset : sx + leadOffset - calloutW;
+                            callY = sy - 38;
+                        } else {
+                            // Smaller compact tooltip for zoomed out view
+                            calloutW = 68;
+                            calloutH = 16;
+                            callX = Math.round(sx - calloutW / 2);
+                            callY = Math.round(sy - 24);
+                        }
 
-                        // Thin leader line connecting pointer to callout
-                        ctx.beginPath();
-                        ctx.moveTo(sx, sy - 2);
-                        ctx.lineTo(callX + (leadOffset > 0 ? 0 : calloutW), callY + calloutH / 2);
-                        ctx.strokeStyle = isStopped ? 'rgba(255, 68, 85, 0.7)' : 'rgba(0, 229, 255, 0.7)';
-                        ctx.lineWidth = 1;
-                        ctx.stroke();
+                        const centerDist = Math.hypot(sx - clientW / 2, sy - clientH / 2);
 
-                        // Callout dark backing plate
-                        ctx.fillStyle = isStopped ? 'rgba(32, 6, 12, 0.9)' : 'rgba(3, 14, 26, 0.88)';
-                        ctx.strokeStyle = isStopped ? '#ff4455' : 'rgba(0, 229, 255, 0.5)';
-                        ctx.lineWidth = 1;
-                        drawRoundedRect(ctx, callX, callY, calloutW, calloutH, 3);
-                        ctx.fill();
-                        ctx.stroke();
+                        vehicleCandidates.push({
+                            veh,
+                            i,
+                            sx,
+                            sy,
+                            isFull,
+                            isHovered,
+                            isTracked,
+                            isStopped,
+                            speedKmh,
+                            speedMph,
+                            hitVehData,
+                            calloutW,
+                            calloutH,
+                            callX,
+                            callY,
+                            centerDist,
+                        });
+                    }
+                }
 
-                        // Left accent bar
-                        ctx.fillStyle = isStopped ? '#ff4455' : '#00e5ff';
-                        ctx.fillRect(callX, callY + 2, 2.5, calloutH - 4);
+                // Screen-space declutter to eliminate crowding & overlapping boxes
+                if (vehicleCandidates.length > 0) {
+                    const acceptedCallouts = [];
+                    const occupiedBoxes = [];
 
-                        // Callout Text
-                        ctx.fillStyle = '#ffffff';
-                        ctx.font = 'bold 8.5px "JetBrains Mono", monospace';
-                        ctx.textAlign = 'left';
-                        ctx.textBaseline = 'middle';
-                        ctx.fillText(primaryText, callX + 5, callY + calloutH / 2 - 1);
+                    const hasOverlap = (targetBox, margin) => {
+                        for (let b = 0; b < occupiedBoxes.length; b++) {
+                            const box = occupiedBoxes[b];
+                            if (!(
+                                targetBox.x + targetBox.w + margin < box.x ||
+                                box.x + box.w + margin < targetBox.x ||
+                                targetBox.y + targetBox.h + margin < box.y ||
+                                box.y + box.h + margin < targetBox.y
+                            )) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    };
 
-                        // Micro metric
-                        ctx.fillStyle = isStopped ? '#ff6677' : '#00ffc8';
-                        ctx.font = '8px "JetBrains Mono", monospace';
-                        ctx.textAlign = 'right';
-                        ctx.fillText(metricText, callX + calloutW - 4, callY + calloutH / 2 - 1);
+                    // 1. Always prioritize hovered or tracked vehicles
+                    for (let c = 0; c < vehicleCandidates.length; c++) {
+                        const cand = vehicleCandidates[c];
+                        if (cand.isHovered || cand.isTracked) {
+                            acceptedCallouts.push(cand);
+                            occupiedBoxes.push({
+                                x: cand.callX,
+                                y: cand.callY,
+                                w: cand.calloutW,
+                                h: cand.calloutH,
+                            });
+                        }
+                    }
 
-                        // Register hit for clicking / tracking
+                    // 2. Sort remaining candidates by distance to screen center
+                    const remaining = vehicleCandidates.filter(c => !c.isHovered && !c.isTracked);
+                    remaining.sort((a, b) => a.centerDist - b.centerDist);
+
+                    const margin = isZoomedIn ? 6 : 10;
+                    for (let c = 0; c < remaining.length; c++) {
+                        if (acceptedCallouts.length >= MAX_VISIBLE_VEHICLE_CALLOUTS) break;
+                        const cand = remaining[c];
+                        const box = {
+                            x: cand.callX,
+                            y: cand.callY,
+                            w: cand.calloutW,
+                            h: cand.calloutH,
+                        };
+                        if (!hasOverlap(box, margin)) {
+                            acceptedCallouts.push(cand);
+                            occupiedBoxes.push(box);
+                        }
+                    }
+
+                    // Render accepted vehicle callouts
+                    for (let c = 0; c < acceptedCallouts.length; c++) {
+                        const cand = acceptedCallouts[c];
+                        const {
+                            veh,
+                            sx,
+                            sy,
+                            isFull,
+                            isHovered,
+                            isStopped,
+                            speedKmh,
+                            hitVehData,
+                            calloutW,
+                            calloutH,
+                            callX,
+                            callY,
+                            i,
+                        } = cand;
+
+                        if (isFull) {
+                            // ── FULL TIP (Zoomed In or Hovered/Tracked) ──
+                            const leadOffset = (i % 2 === 0) ? 16 : -16;
+
+                            // Leader line connecting pointer to callout card
+                            ctx.beginPath();
+                            ctx.arc(sx, sy - 3, 2, 0, Math.PI * 2);
+                            ctx.fillStyle = isStopped ? '#ff4455' : (isHovered ? '#00e5ff' : '#00ffc8');
+                            ctx.fill();
+
+                            ctx.beginPath();
+                            ctx.moveTo(sx, sy - 3);
+                            ctx.lineTo(leadOffset > 0 ? callX : callX + calloutW, callY + calloutH / 2);
+                            ctx.strokeStyle = isStopped
+                                ? 'rgba(255, 68, 85, 0.8)'
+                                : (isHovered ? '#00e5ff' : 'rgba(0, 229, 255, 0.65)');
+                            ctx.lineWidth = 1;
+                            ctx.stroke();
+
+                            // Callout dark backing tactical glass plate
+                            ctx.save();
+                            if (isHovered) {
+                                ctx.shadowColor = 'rgba(0, 229, 255, 0.6)';
+                                ctx.shadowBlur = 8;
+                            }
+                            ctx.fillStyle = isStopped ? 'rgba(32, 6, 14, 0.94)' : 'rgba(3, 14, 26, 0.92)';
+                            ctx.strokeStyle = isStopped ? '#ff4455' : (isHovered ? '#00e5ff' : 'rgba(0, 229, 255, 0.55)');
+                            ctx.lineWidth = isHovered ? 1.5 : 1;
+                            drawRoundedRect(ctx, callX, callY, calloutW, calloutH, 3);
+                            ctx.fill();
+                            ctx.stroke();
+                            ctx.restore();
+
+                            // Left accent indicator bar
+                            ctx.fillStyle = isStopped ? '#ff4455' : (isHovered ? '#00e5ff' : '#00ffc8');
+                            ctx.fillRect(callX, callY + 2, 2.5, calloutH - 4);
+
+                            // Line 1: Car Name & Brand
+                            const rawCarName = (veh.vehicleData?.shortLabel || veh.vehicleData?.carName || veh.vehicleData?.name || 'VEHICLE').toUpperCase();
+                            const carNameDisplay = rawCarName.length > 17 ? rawCarName.slice(0, 16) + '…' : rawCarName;
+
+                            ctx.fillStyle = isHovered ? '#00e5ff' : '#ffffff';
+                            ctx.font = 'bold 8.5px "JetBrains Mono", monospace';
+                            ctx.textAlign = 'left';
+                            ctx.textBaseline = 'middle';
+                            ctx.fillText(carNameDisplay, callX + 7, callY + 9.5);
+
+                            // Model variant or country tag on right
+                            const modelTag = (veh.vehicleData?.shortModel || veh.vehicleData?.model || veh.vehicleData?.country || '').slice(0, 7).toUpperCase();
+                            if (modelTag) {
+                                ctx.fillStyle = 'rgba(0, 229, 255, 0.65)';
+                                ctx.font = '7.5px "JetBrains Mono", monospace';
+                                ctx.textAlign = 'right';
+                                ctx.fillText(modelTag, callX + calloutW - 6, callY + 9.5);
+                            }
+
+                            // Subtle hairline separator
+                            ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+                            ctx.lineWidth = 0.6;
+                            ctx.beginPath();
+                            ctx.moveTo(callX + 4, callY + 18);
+                            ctx.lineTo(callX + calloutW - 4, callY + 18);
+                            ctx.stroke();
+
+                            // Line 2: Authentic License Plate Badge
+                            const plateText = veh.vehicleData?.plate || 'GJ01 AB 4821';
+                            const plateBadgeW = 68;
+                            const plateBadgeH = 10.5;
+                            const plateBadgeX = callX + 7;
+                            const plateBadgeY = callY + 20.5;
+
+                            ctx.fillStyle = '#ffcc00';
+                            ctx.fillRect(plateBadgeX, plateBadgeY, plateBadgeW, plateBadgeH);
+                            ctx.strokeStyle = '#000000';
+                            ctx.lineWidth = 0.5;
+                            ctx.strokeRect(plateBadgeX, plateBadgeY, plateBadgeW, plateBadgeH);
+
+                            ctx.fillStyle = '#000000';
+                            ctx.font = 'bold 7px "JetBrains Mono", monospace';
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            ctx.fillText(plateText, plateBadgeX + plateBadgeW / 2, plateBadgeY + plateBadgeH / 2 + 0.5);
+
+                            // Line 2: Live Velocity or Stop Status on right
+                            ctx.textAlign = 'right';
+                            ctx.textBaseline = 'middle';
+                            if (isStopped) {
+                                ctx.fillStyle = '#ff4455';
+                                ctx.font = 'bold 8px "JetBrains Mono", monospace';
+                                ctx.fillText('🔴 STOP', callX + calloutW - 6, callY + 25.5);
+                            } else {
+                                ctx.fillStyle = '#00ffc8';
+                                ctx.font = 'bold 8px "JetBrains Mono", monospace';
+                                ctx.fillText(`${speedKmh} KM/H`, callX + calloutW - 6, callY + 25.5);
+                            }
+                        } else {
+                            // ── SMALLER TOOLTIP (Zoomed Out Overview) ──
+                            // Thin leader line directly up to compact pill
+                            ctx.beginPath();
+                            ctx.moveTo(sx, sy - 3);
+                            ctx.lineTo(sx, callY + calloutH);
+                            ctx.strokeStyle = isStopped ? 'rgba(255, 68, 85, 0.6)' : 'rgba(0, 229, 255, 0.5)';
+                            ctx.lineWidth = 0.8;
+                            ctx.stroke();
+
+                            // Compact pill backdrop
+                            ctx.fillStyle = isStopped ? 'rgba(32, 6, 14, 0.90)' : 'rgba(3, 14, 26, 0.88)';
+                            ctx.strokeStyle = isStopped ? 'rgba(255, 68, 85, 0.7)' : 'rgba(0, 229, 255, 0.5)';
+                            ctx.lineWidth = 1;
+                            drawRoundedRect(ctx, callX, callY, calloutW, calloutH, 2.5);
+                            ctx.fill();
+                            ctx.stroke();
+
+                            // Small status indicator dot
+                            ctx.beginPath();
+                            ctx.arc(callX + 6, callY + calloutH / 2, 2.2, 0, Math.PI * 2);
+                            ctx.fillStyle = isStopped ? '#ff4455' : '#00ffc8';
+                            ctx.fill();
+
+                            // Short car model name
+                            const shortLabel = (veh.vehicleData?.shortModel || veh.vehicleData?.shortLabel || 'CAR').toUpperCase();
+                            const truncShort = shortLabel.length > 7 ? shortLabel.slice(0, 6) : shortLabel;
+
+                            ctx.fillStyle = '#ffffff';
+                            ctx.font = 'bold 7.5px "JetBrains Mono", monospace';
+                            ctx.textAlign = 'left';
+                            ctx.textBaseline = 'middle';
+                            ctx.fillText(truncShort, callX + 11, callY + calloutH / 2 + 0.5);
+
+                            // Micro metric on right
+                            ctx.fillStyle = isStopped ? '#ff6677' : '#00ffc8';
+                            ctx.font = '7px "JetBrains Mono", monospace';
+                            ctx.textAlign = 'right';
+                            ctx.fillText(isStopped ? 'STOP' : `${speedKmh}k`, callX + calloutW - 4, callY + calloutH / 2 + 0.5);
+                        }
+
+                        // Register hit for HUD card
                         cardHitsRef.current.push({
                             type: 'vehicle',
                             x: callX,
                             y: callY,
                             w: calloutW,
                             h: calloutH,
-                            data: veh.vehicleData || { id: `vehicle-${i}` },
+                            data: hitVehData,
                         });
                     }
                 }

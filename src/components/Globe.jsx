@@ -386,7 +386,7 @@ export default function Globe() {
             timeline: false,
             navigationHelpButton: false,
             creditContainer: document.createElement('div'), // hide credits
-            skyAtmosphere: true,
+            skyAtmosphere: new Cesium.SkyAtmosphere(),
             scene3DOnly: false,
             shadows: false,
             requestRenderMode: false,
@@ -447,19 +447,33 @@ export default function Globe() {
 
         // Crisp spy-satellite lighting & atmosphere (never let the globe sink into dark pitch-black murkiness)
         viewer.scene.backgroundColor = Cesium.Color.fromCssColorString('#0a0a0f');
-        if (viewer.scene.skyBox) {
+        if (viewer.scene.skyBox && typeof viewer.scene.skyBox === 'object') {
             viewer.scene.skyBox.show = false;
         }
-        viewer.scene.globe.showGroundAtmosphere = true;
-        viewer.scene.fog.enabled = false;
-        viewer.scene.globe.enableLighting = false;
-        viewer.scene.globe.depthTestAgainstTerrain = false;
+        if (viewer.scene.globe) {
+            viewer.scene.globe.showGroundAtmosphere = true;
+            viewer.scene.globe.enableLighting = false;
+            viewer.scene.globe.depthTestAgainstTerrain = false;
+        }
+        if (viewer.scene.fog) {
+            viewer.scene.fog.enabled = false;
+        }
 
-        if (viewer.scene.skyAtmosphere) {
+        if (viewer.scene.skyAtmosphere && typeof viewer.scene.skyAtmosphere === 'object') {
             viewer.scene.skyAtmosphere.show = true;
             viewer.scene.skyAtmosphere.atmosphereLightIntensity = 18;
             viewer.scene.skyAtmosphere.saturationShift = -0.10;
             viewer.scene.skyAtmosphere.brightnessShift = -0.05;
+        } else if (viewer.scene.skyAtmosphere !== false) {
+            try {
+                viewer.scene.skyAtmosphere = new Cesium.SkyAtmosphere();
+                viewer.scene.skyAtmosphere.show = true;
+                viewer.scene.skyAtmosphere.atmosphereLightIntensity = 18;
+                viewer.scene.skyAtmosphere.saturationShift = -0.10;
+                viewer.scene.skyAtmosphere.brightnessShift = -0.05;
+            } catch {
+                // Atmosphere fallback
+            }
         }
 
         // Tweak camera controls for a crisper, more pleasant dragging experience

@@ -76,18 +76,22 @@ export default function HoverTooltip() {
                     <div className="flex items-center gap-2">
                         <span className="text-base" style={{ color: def.color }}>{def.icon}</span>
                         <div className="text-[11px] tracking-widest text-white font-mono font-semibold">
-                            {isCctv ? 'CCTV RECON' : `${def.label} PREVIEW`}
+                            {hoverInfo.isVehicle ? 'VEHICLE RECON' : isCctv ? 'CCTV RECON' : `${def.label} PREVIEW`}
                         </div>
                     </div>
-                    {isCctv && (
+                    {isCctv ? (
                         <div className="text-[9px] font-mono text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-1.5 py-0.5 rounded tracking-widest">
                             STREAM
                         </div>
-                    )}
+                    ) : hoverInfo.isVehicle ? (
+                        <div className="text-[9px] font-mono text-cyan-400 bg-cyan-950/60 border border-cyan-500/30 px-1.5 py-0.5 rounded tracking-widest uppercase">
+                            {hoverInfo.country || 'LIVE'}
+                        </div>
+                    ) : null}
                 </div>
 
                 <div className="text-sm text-white tracking-wide truncate mb-2 font-medium">
-                    {hoverInfo.name || hoverInfo.callsign || hoverInfo.id || 'UNIDENTIFIED'}
+                    {hoverInfo.carName || hoverInfo.name || hoverInfo.callsign || hoverInfo.id || 'UNIDENTIFIED'}
                 </div>
 
                 {isCctv ? (
@@ -99,46 +103,70 @@ export default function HoverTooltip() {
                         </div>
                     </div>
                 ) : hoverInfo.isVehicle ? (
-                    <div className="flex flex-col gap-2">
+                    <div className="flex flex-col gap-2.5">
                         {/* High-tech Vehicle Card */}
-                        <div className="flex items-center justify-between p-2 rounded bg-black/40 border border-white/10">
-                            <div>
-                                <div className="flex items-center gap-1.5">
-                                    <span className="text-[9px] text-electric-blue font-bold uppercase tracking-widest">{hoverInfo.brand || 'Automotive'}</span>
-                                    {hoverInfo.countryName && (
-                                        <span className="text-[8px] px-1 py-0.2 rounded bg-white/10 text-white/80 font-mono">
-                                            {hoverInfo.countryName}
-                                        </span>
-                                    )}
+                        <div className="p-2.5 rounded bg-black/60 border border-cyan-500/30 shadow-[0_0_12px_rgba(0,229,255,0.12)]">
+                            <div className="flex items-start justify-between gap-2">
+                                <div className="min-w-0">
+                                    <div className="flex items-center gap-1.5 mb-0.5">
+                                        <span className="text-[9px] text-cyan-400 font-bold uppercase tracking-widest">{hoverInfo.brand || 'Automotive'}</span>
+                                        {hoverInfo.countryName && (
+                                            <span className="text-[8px] px-1.5 py-0.2 rounded bg-cyan-950/80 border border-cyan-500/30 text-cyan-300 font-mono">
+                                                {hoverInfo.countryName}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="text-sm font-bold text-white tracking-wide truncate">
+                                        {hoverInfo.carName || hoverInfo.name || hoverInfo.model}
+                                    </div>
+                                    <div className="text-[10px] text-white/60 font-mono mt-0.5 truncate">
+                                        {hoverInfo.model} · {hoverInfo.vehicleCategory || 'Passenger Vehicle'}
+                                    </div>
                                 </div>
-                                <div className="text-xs font-bold text-white truncate max-w-[160px]">{hoverInfo.model || hoverInfo.name}</div>
-                            </div>
-                            <div className="text-right">
-                                <div className="text-sm font-bold text-emerald-400 font-mono leading-none">
-                                    {hoverInfo.speedKmh || 50} <span className="text-[9px] text-white/60">KM/H</span>
+
+                                {/* Authentic License Plate Badge */}
+                                <div className="text-right shrink-0">
+                                    <div className="inline-block px-2 py-0.5 rounded bg-[#ffcc00] text-black font-mono font-black text-[11px] tracking-wider border border-black shadow">
+                                        {hoverInfo.plate || 'GJ01 AB 4821'}
+                                    </div>
+                                    <div className="text-[8px] text-cyan-400/70 font-mono mt-0.5 tracking-wider uppercase">
+                                        REGISTRATION
+                                    </div>
                                 </div>
-                                <div className="text-[9px] text-white/50 mt-0.5">{hoverInfo.plate}</div>
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-x-2 gap-y-1.5 text-[10px]">
+                        {/* Live Velocity & State Bar */}
+                        <div className="flex items-center justify-between p-2 rounded bg-black/40 border border-white/10 text-xs">
+                            <div className="flex items-center gap-2">
+                                <span className={`w-2 h-2 rounded-full ${hoverInfo.isStopped ? 'bg-red-500 animate-ping' : 'bg-emerald-400 animate-pulse'}`} />
+                                <span className={`font-mono font-bold text-xs ${hoverInfo.isStopped ? 'text-red-400' : 'text-emerald-300'}`}>
+                                    {hoverInfo.isStopped ? 'SIGNAL STOP (0 KM/H)' : `${hoverInfo.speedKmh || 48} KM/H (${hoverInfo.speedMph || 30} MPH)`}
+                                </span>
+                            </div>
+                            <div className="text-[9px] text-white/60 font-mono">
+                                HEADING: {hoverInfo.headingDeg !== undefined ? `${Math.round(hoverInfo.headingDeg)}°` : '0°'}
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-[10px] bg-black/30 p-2 rounded border border-white/5">
                             <div>
                                 <span className="text-white/40 text-[8px] uppercase tracking-wider block">Drive Mode</span>
-                                <span className="text-white/90 truncate block">{hoverInfo.driverMode || 'Active'}</span>
+                                <span className="text-white/90 truncate block">{hoverInfo.driverMode || 'Autonomous'}</span>
                             </div>
                             <div>
                                 <span className="text-white/40 text-[8px] uppercase tracking-wider block">Powertrain</span>
-                                <span className="text-emerald-300 truncate block">{hoverInfo.batteryFuel || hoverInfo.powertrain}</span>
+                                <span className="text-emerald-300 truncate block">{hoverInfo.batteryFuel || hoverInfo.powertrain || 'Hybrid Petrol'}</span>
                             </div>
-                            <div className="col-span-2">
-                                <span className="text-white/40 text-[8px] uppercase tracking-wider block">Assigned Destination</span>
-                                <span className="text-electric-blue truncate block">{hoverInfo.destination}</span>
+                            <div className="col-span-2 pt-0.5">
+                                <span className="text-white/40 text-[8px] uppercase tracking-wider block">Assigned Corridor</span>
+                                <span className="text-cyan-300 truncate block font-mono">{hoverInfo.roadName || hoverInfo.roadType || 'City Arterial'}</span>
                             </div>
                         </div>
 
-                        <div className="flex items-center justify-between text-[9px] font-mono pt-1.5 border-t border-white/10 text-white/60">
-                            <span className="truncate max-w-[140px]">ROAD: {hoverInfo.roadName || hoverInfo.roadType}</span>
-                            <span className="text-emerald-400 font-bold tracking-wider">CLICK TO CHASE ➔</span>
+                        <div className="flex items-center justify-between text-[9px] font-mono pt-1 border-t border-white/10 text-white/60">
+                            <span>CALLSIGN: {hoverInfo.callsign || 'UNIT-001'}</span>
+                            <span className="text-emerald-400 font-bold tracking-wider animate-pulse">CLICK TO CHASE ➔</span>
                         </div>
                     </div>
                 ) : (

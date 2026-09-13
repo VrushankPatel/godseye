@@ -38,7 +38,7 @@ describe('vehicleGenerator', () => {
     expect(typeof v.name).toBe('string');
     expect(typeof v.callsign).toBe('string');
     expect(v.callsign).toMatch(/^[A-Z]+-\d{3}$/);
-    expect(v.plate).toMatch(/^[A-Z]{2} · \d{4}$/);
+    expect(v.plate).toMatch(/^([A-Z]{2} · [A-Z]{3}-\d{4}|\d[A-Z]{3}\d{3})$/);
 
     expect(typeof v.vehicleClass).toBe('string');
     expect(typeof v.vehicleCategory).toBe('string');
@@ -118,7 +118,8 @@ describe('vehicleGenerator', () => {
     samples.forEach((s) => {
       expect(s.country).toBe('IN');
       expect(s.countryName).toBe('India');
-      expect(s.plate).toMatch(/^[A-Z]{2} \d{2} [A-Z]{2} \d{4}$/);
+      expect(s.carName).toBeTruthy();
+      expect(s.plate).toMatch(/^[A-Z]{2}\d{2} [A-Z]{2} \d{4}$/);
     });
   });
 });

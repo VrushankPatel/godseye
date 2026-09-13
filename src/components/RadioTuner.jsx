@@ -32,6 +32,7 @@ export default function RadioTuner() {
   const setFilterCountry = useStore((s) => s.setRadioFilterCountry);
   const filterTag = useStore((s) => s.radioFilterTag);
   const setFilterTag = useStore((s) => s.setRadioFilterTag);
+  const citiesVisible = useStore((s) => s.citiesVisible);
 
   const [stations, setStations] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -40,9 +41,59 @@ export default function RadioTuner() {
   const [isDragging, setIsDragging] = useState(false);
   const [dialWidth, setDialWidth] = useState(360);
   const [isMuted, setIsMuted] = useState(false);
+  const [panelPos, setPanelPos] = useState(null);
 
   const dialRef = useRef(null);
   const dragTimeoutRef = useRef(null);
+  const isDraggingPanelRef = useRef(false);
+  const dragStartPosRef = useRef({ mouseX: 0, mouseY: 0, startX: 0, startY: 0 });
+  const panelRef = useRef(null);
+
+  const rightOffset = citiesVisible
+    ? 'calc(260px + max(18px, env(safe-area-inset-right)) + 16px)'
+    : 'max(18px, env(safe-area-inset-right))';
+
+  const handleHeaderMouseDown = (e) => {
+    if (e.button !== 0 || e.target.closest('button')) return;
+    e.preventDefault();
+
+    const panelEl = panelRef.current;
+    if (!panelEl) return;
+    const rect = panelEl.getBoundingClientRect();
+
+    isDraggingPanelRef.current = true;
+    dragStartPosRef.current = {
+      mouseX: e.clientX,
+      mouseY: e.clientY,
+      startX: rect.left,
+      startY: rect.top,
+    };
+
+    const handleMouseMove = (moveEvent) => {
+      if (!isDraggingPanelRef.current) return;
+      const dx = moveEvent.clientX - dragStartPosRef.current.mouseX;
+      const dy = moveEvent.clientY - dragStartPosRef.current.mouseY;
+
+      const newX = Math.max(10, Math.min(window.innerWidth - rect.width - 10, dragStartPosRef.current.startX + dx));
+      const newY = Math.max(60, Math.min(window.innerHeight - rect.height - 10, dragStartPosRef.current.startY + dy));
+
+      setPanelPos({ x: newX, y: newY });
+    };
+
+    const handleMouseUp = () => {
+      isDraggingPanelRef.current = false;
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+  };
+
+  const handleHeaderDoubleClick = (e) => {
+    if (e.target.closest('button')) return;
+    setPanelPos(null);
+  };
 
   // Sync audio status
   useEffect(() => {
@@ -213,7 +264,13 @@ export default function RadioTuner() {
       {/* Floating Tactical Radio Toggle Pill */}
       <button
         onClick={toggleRadioTuner}
-        className={`fixed z-30 bottom-6 right-6 px-3.5 py-2 rounded-lg font-mono text-[11px] tracking-wider transition-all flex items-center gap-2 backdrop-blur-md border ${
+        style={{
+          position: 'fixed',
+          bottom: '24px',
+          right: rightOffset,
+          transition: 'right 0.2s ease',
+        }}
+        className={`z-30 px-3.5 py-2 rounded-lg font-mono text-[11px] tracking-wider transition-all flex items-center gap-2 backdrop-blur-md border ${
           radioTunerOpen
             ? 'bg-cyan-950/80 border-cyan-400 text-cyan-200 shadow-[0_0_15px_rgba(6,182,212,0.35)]'
             : playbackStatus === 'playing'
@@ -231,22 +288,56 @@ export default function RadioTuner() {
 
       {/* Retro Analog Radio Tuner Panel */}
       {radioTunerOpen && (
-        <div className="fixed z-30 bottom-20 right-6 w-[430px] max-w-[calc(100vw-2rem)] rounded-xl border border-cyan-500/30 bg-[#020b10]/95 backdrop-blur-xl shadow-[0_0_30px_rgba(0,180,255,0.18)] text-cyan-100 font-mono text-xs overflow-hidden select-none animate-fadeIn">
-          {/* Top Brass / Aluminum Bezel Bar */}
-          <div className="flex items-center justify-between px-3.5 py-2 border-b border-cyan-500/20 bg-gradient-to-r from-cyan-950/60 via-[#041a24] to-cyan-950/60">
+        <div
+          ref={panelRef}
+          style={
+            panelPos
+              ? {
+                  position: 'fixed',
+                  left: `${panelPos.x}px`,
+                  top: `${panelPos.y}px`,
+                }
+              : {
+                  position: 'fixed',
+                  bottom: '76px',
+                  right: rightOffset,
+                  transition: 'right 0.2s ease',
+                }
+          }
+          className="z-30 w-[430px] max-w-[calc(100vw-2rem)] rounded-xl border border-cyan-500/30 bg-[#020b10]/95 backdrop-blur-xl shadow-[0_0_30px_rgba(0,180,255,0.18)] text-cyan-100 font-mono text-xs overflow-hidden select-none animate-fadeIn"
+        >
+          {/* Top Brass / Aluminum Bezel Bar (Draggable) */}
+          <div
+            onMouseDown={handleHeaderMouseDown}
+            onDoubleClick={handleHeaderDoubleClick}
+            className="flex items-center justify-between px-3.5 py-2 border-b border-cyan-500/20 bg-gradient-to-r from-cyan-950/60 via-[#041a24] to-cyan-950/60 cursor-grab active:cursor-grabbing"
+            title="Drag to reposition · Double-click to reset"
+          >
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-orange-500 shadow-[0_0_8px_#ff6f4f]" />
               <span className="font-bold tracking-[0.2em] text-cyan-300 text-[11px]">
                 TACTICAL WORLD RADIO · TUNER-88
               </span>
+              <span className="text-[9px] text-cyan-400/40 hidden sm:inline select-none">⋮⋮</span>
             </div>
-            <button
-              onClick={() => setRadioTunerOpen(false)}
-              className="text-cyan-400/60 hover:text-cyan-200 text-base leading-none px-1"
-              title="Close Tuner"
-            >
-              ✕
-            </button>
+            <div className="flex items-center gap-1.5">
+              {panelPos && (
+                <button
+                  onClick={() => setPanelPos(null)}
+                  className="text-cyan-400/60 hover:text-cyan-200 text-[9px] px-1.5 py-0.5 rounded border border-cyan-500/30 bg-cyan-950/40 font-mono"
+                  title="Reset to default docked position"
+                >
+                  RESET
+                </button>
+              )}
+              <button
+                onClick={() => setRadioTunerOpen(false)}
+                className="text-cyan-400/60 hover:text-cyan-200 text-base leading-none px-1"
+                title="Close Tuner"
+              >
+                ✕
+              </button>
+            </div>
           </div>
 
           <div className="p-3.5 space-y-3">
