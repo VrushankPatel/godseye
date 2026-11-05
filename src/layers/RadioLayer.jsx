@@ -8,7 +8,7 @@ const RADIO_MARKER_PREFIX = 'radio-station-';
 
 export default function RadioLayer({ viewer }) {
   const enabled = useStore((state) => state.layers.radio.enabled);
-  const setLayerData = useStore((state) => state.setLayerData);
+  const setLayerData = useStore((state) => state.updateLayerData); // the store's action is updateLayerData; setLayerData is undefined
   const setLayerStatus = useStore((state) => state.setLayerStatus);
   const setRadioActiveStation = useStore((state) => state.setRadioActiveStation);
   const setRadioPlaybackStatus = useStore((state) => state.setRadioPlaybackStatus);
