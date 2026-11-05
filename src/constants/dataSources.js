@@ -94,8 +94,9 @@ export const API_URLS = {
     // NOAA / NWS CAP alerts (official active watches/warnings/advisories)
     NWS_ALERTS_ACTIVE: 'https://api.weather.gov/alerts/active?status=actual',
     // Power-grid/infrastructure feeds
-    ODIN_OUTAGES:
-        'https://ornl.opendatasoft.com/api/explore/v2.1/catalog/datasets/odin-real-time-outages-county/records',
+    // DOE / ORNL ODIN public outage API. The old ornl.opendatasoft.com dataset stopped answering in 2026;
+    // county-level summaries now come from https://odin.ornl.gov/odi (documented at https://odin.ornl.gov/scalar).
+    ODIN_OUTAGES: 'https://odin.ornl.gov/odi/map?scale=COUNTY',
     ODIN_OUTAGES_PROXY: 'https://api.allorigins.win/raw?url=',
     WRI_GLOBAL_POWER_PLANTS_CSV:
         'https://raw.githubusercontent.com/wri/global-power-plant-database/master/output_database/global_power_plant_database.csv',

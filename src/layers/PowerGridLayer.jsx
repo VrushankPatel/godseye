@@ -12,11 +12,6 @@ function toNumber(value) {
     return Number.isFinite(parsed) ? parsed : null;
 }
 
-function toIso(value) {
-    const ts = Date.parse(String(value || ''));
-    return Number.isFinite(ts) ? new Date(ts).toISOString() : 'N/A';
-}
-
 function parseCsvLine(line) {
     const cells = [];
     let current = '';
@@ -108,44 +103,46 @@ function createOutageIcon(level) {
     return canvas.toDataURL('image/png');
 }
 
+// ODIN's public map feed: one entry per county with an outage, listing each utility's customers out.
 function normalizeOutages(payload) {
-    const rows = Array.isArray(payload?.results) ? payload.results : [];
+    const rows = Array.isArray(payload) ? payload : [];
 
     return rows
-        .map((row, index) => {
-            const lat = toNumber(row?.geo_point_2d?.lat ?? row?.centroid?.lat);
-            const lon = toNumber(row?.geo_point_2d?.lon ?? row?.centroid?.lon);
+        .flatMap((row) => (Array.isArray(row?.outages) && row.outages.length ? row.outages.map((o) => ({ row, o })) : [{ row, o: {} }]))
+        .map(({ row, o }, index) => {
+            const env = o.envelope || {};
+            const lat = (toNumber(env.minY) + toNumber(env.maxY)) / 2;
+            const lon = (toNumber(env.minX) + toNumber(env.maxX)) / 2;
             if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
 
-            const meters = toNumber(row?.metersaffected);
+            const meters = toNumber(o.metersOut ?? row.metersOut);
+            const served = toNumber(o.metersServed);
             const level = Number.isFinite(meters) && meters >= 50000
                 ? 'SEVERE'
                 : Number.isFinite(meters) && meters >= 5000
                     ? 'MODERATE'
                     : 'LOW';
 
-            const utility = row?.utilitydisclaimer || row?.name || 'Unknown Utility';
-            const county = row?.county || 'N/A';
-            const state = row?.state || 'N/A';
-            const id = `outage-${row?.utility_id || utility}-${county}-${state}-${index}`.replace(/[^a-zA-Z0-9_.-]/g, '_');
+            const utility = o.utilityName || 'Unknown utility';
+            const county = row.countyName || o.county || 'N/A';
+            const state = row.stateName || o.stateName || 'N/A';
+            const id = `outage-${o.utilityId || utility}-${row.id || county}-${index}`.replace(/[^a-zA-Z0-9_.-]/g, '_');
 
             return {
                 id,
                 assetType: 'OUTAGE',
-                name: `Outage - ${county}, ${state}`,
+                name: `Outage - ${county} County, ${state}`,
                 utility,
                 county,
                 state,
                 metersAffected: Number.isFinite(meters) ? Math.round(meters) : null,
+                customersServed: Number.isFinite(served) ? Math.round(served) : null,
+                percentOut: Number.isFinite(meters) && served > 0 ? `${((meters / served) * 100).toFixed(2)}%` : 'N/A',
                 severityLevel: level,
-                cause: row?.cause || row?.incident_cause || 'N/A',
-                status: row?.statuskind || 'N/A',
-                started: toIso(row?.reportedstarttime),
-                estRestore: toIso(row?.estimatedrestorationtime),
                 lat,
                 lon,
-                source: 'US DOE ODIN real-time outages',
-                reference: API_URLS.ODIN_OUTAGES,
+                source: 'US DOE / ORNL ODIN (county-level)',
+                reference: 'https://odin.ornl.gov/',
             };
         })
         .filter(Boolean);
@@ -243,7 +240,7 @@ async function fetchTextWithTimeout(url, timeoutMs = REQUEST_TIMEOUT_MS) {
 }
 
 async function fetchOutages() {
-    const direct = `${API_URLS.ODIN_OUTAGES}?limit=1200`;
+    const direct = API_URLS.ODIN_OUTAGES;
     const proxy = `${API_URLS.ODIN_OUTAGES_PROXY}${encodeURIComponent(direct)}`;
 
     try {
@@ -334,10 +331,8 @@ export default function PowerGridLayer({ viewer }) {
                     entity.properties.state = asset.state;
                     entity.properties.metersAffected = asset.metersAffected !== null ? String(asset.metersAffected) : 'N/A';
                     entity.properties.severityLevel = asset.severityLevel;
-                    entity.properties.cause = asset.cause;
-                    entity.properties.status = asset.status;
-                    entity.properties.started = asset.started;
-                    entity.properties.estRestore = asset.estRestore;
+                    entity.properties.customersServed = asset.customersServed !== null ? String(asset.customersServed) : 'N/A';
+                    entity.properties.percentOut = asset.percentOut;
                 } else {
                     entity.properties.fuel = asset.fuel;
                     entity.properties.capacityMw = `${asset.capacityMw} MW`;
@@ -371,10 +366,8 @@ export default function PowerGridLayer({ viewer }) {
                             state: asset.state,
                             metersAffected: asset.metersAffected !== null ? String(asset.metersAffected) : 'N/A',
                             severityLevel: asset.severityLevel,
-                            cause: asset.cause,
-                            status: asset.status,
-                            started: asset.started,
-                            estRestore: asset.estRestore,
+                            customersServed: asset.customersServed !== null ? String(asset.customersServed) : 'N/A',
+                            percentOut: asset.percentOut,
                         }
                         : {
                             country: asset.country,
@@ -410,12 +403,16 @@ export default function PowerGridLayer({ viewer }) {
                 setStatus('powerGrid', 'loading');
             }
 
-            const [outagesPayload, plantsCsv] = await Promise.all([
+            // Either source may be down, so show whatever arrives instead of failing the whole layer
+            // (an outage-feed failure used to hide the power plants too).
+            const [outagesResult, plantsResult] = await Promise.allSettled([
                 fetchOutages(),
                 plantsLoadedRef.current ? Promise.resolve(null) : fetchPowerPlantsCsv(),
             ]);
+            const outagesPayload = outagesResult.status === 'fulfilled' ? outagesResult.value : null;
+            const plantsCsv = plantsResult.status === 'fulfilled' ? plantsResult.value : null;
 
-            const outages = normalizeOutages(outagesPayload);
+            const outages = outagesPayload ? normalizeOutages(outagesPayload) : [];
             let plants = [];
 
             if (plantsCsv) {
