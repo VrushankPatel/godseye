@@ -141,7 +141,7 @@ export const POLL_INTERVALS = {
     SOLAR_FLARES: 300000, // 5 minutes
     SEISMIC_STATIONS: 43200000, // 12 hours
     AIR_QUALITY: 600000, // 10 minutes
-    WEATHER: 600000,    // 10 minutes
+    WEATHER: 3600000,   // 1 hour (stays inside Open-Meteo's free 10,000 locations/day)
     CCTV: 5000,         // 5 seconds for still images
     MARITIME_PORTS: 43200000, // 12 hours
     POWER_GRID: 300000, // 5 minutes
