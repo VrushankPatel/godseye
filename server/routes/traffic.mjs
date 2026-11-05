@@ -113,7 +113,7 @@ export async function handleTrafficFlowTile(req, res, z, x, y) {
   }
 
   // Upstream fetch
-  const upstreamUrl = `https://api.tomtom.com/traffic/map/4/tile/flow/relative0/${zoom}/${col}/${row}.pbf?key=${encodeURIComponent(key)}&trafficModelId=-1`;
+  const upstreamUrl = `https://api.tomtom.com/traffic/map/4/tile/flow/relative/${zoom}/${col}/${row}.pbf?key=${encodeURIComponent(key)}&trafficModelId=-1`;
 
   try {
     _dailyCount += 1;
