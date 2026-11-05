@@ -8,6 +8,7 @@ const OVERPASS_MAX_BBOX_DEG = 1.5; // ~160km max span
 
 const MIRRORS = [
   'https://overpass-api.de/api/interpreter',
+  'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
   'https://overpass.kumi.systems/api/interpreter',
   'https://lz4.overpass-api.de/api/interpreter',
 ];
@@ -74,14 +75,13 @@ function sanitizeOverpassQuery(rawBody) {
   return { ok: true, query: clamped };
 }
 
+// Ask every mirror at once and use the first good answer, then cancel the rest. Public Overpass servers are
+// often overloaded or slow; trying them one after another could leave the map waiting a minute and a half.
 async function fetchFromMirrors(query) {
-  let lastError = null;
-
-  for (const mirror of MIRRORS) {
+  const controllers = MIRRORS.map(() => new AbortController());
+  const attempt = async (mirror, controller) => {
+    const timer = setTimeout(() => controller.abort(), (OVERPASS_MAX_TIMEOUT_S + 5) * 1000);
     try {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), (OVERPASS_MAX_TIMEOUT_S + 5) * 1000);
-
       const res = await fetch(mirror, {
         method: 'POST',
         headers: {
@@ -92,27 +92,23 @@ async function fetchFromMirrors(query) {
         body: `data=${encodeURIComponent(query)}`,
         signal: controller.signal,
       });
-
+      if (!res.ok) throw new Error(`Mirror ${mirror} status ${res.status}`);
+      const json = await res.json();
+      if (!json || !Array.isArray(json.elements)) throw new Error(`Mirror ${mirror} returned no data`);
+      return { ok: true, data: json, mirror };
+    } finally {
       clearTimeout(timer);
-
-      if (res.ok) {
-        const json = await res.json();
-        if (json && Array.isArray(json.elements)) {
-          return { ok: true, data: json, mirror };
-        }
-      }
-
-      if (res.status === 429 || res.status >= 500) {
-        lastError = new Error(`Mirror ${mirror} status ${res.status}`);
-        continue;
-      }
-    } catch (err) {
-      lastError = err;
-      continue;
     }
-  }
+  };
 
-  throw lastError || new Error('All Overpass mirrors failed');
+  try {
+    const winner = await Promise.any(MIRRORS.map((m, i) => attempt(m, controllers[i])));
+    controllers.forEach((c) => c.abort()); // stop the slower ones
+    return winner;
+  } catch (err) {
+    const reasons = err?.errors?.map((e) => e.message).join('; ');
+    throw new Error(reasons || 'All Overpass mirrors failed');
+  }
 }
 
 export async function handleOverpassRequest(req, res) {

@@ -163,6 +163,34 @@ function buildSyntheticRoadsAround(lat, lon) {
   return roads;
 }
 
+// When OpenStreetMap roads can't be fetched (the free Overpass servers are often overloaded), use the road
+// lines inside TomTom's flow tiles instead: real road shapes with real speeds, instead of a made-up grid.
+const TOMTOM_ROAD_TYPE = (t) => {
+  const v = String(t || '').toLowerCase();
+  if (v.includes('motorway')) return 'motorway';
+  if (v.includes('international') || v.includes('major road')) return 'primary';
+  if (v.includes('secondary') || v.includes('connecting') || v.includes('major local')) return 'secondary';
+  return 'residential';
+};
+function roadsFromFlowSegments(segments) {
+  return segments.map((seg) => {
+    const coords = seg.coords;
+    const waypoints = coords.map(([cLon, cLat]) => Cesium.Cartesian3.fromDegrees(cLon, cLat, DOT_HEIGHT_OFFSET));
+    const segmentDist = [];
+    for (let j = 0; j < waypoints.length - 1; j++) {
+      segmentDist.push(Cesium.Cartesian3.distance(waypoints[j], waypoints[j + 1]));
+    }
+    return {
+      coords,
+      type: TOMTOM_ROAD_TYPE(seg.roadType),
+      oneway: 1, // TomTom gives each direction as its own line
+      waypoints,
+      segmentDist,
+      flow: { level: seg.trafficLevel, closure: seg.closure, simulated: false },
+    };
+  });
+}
+
 function simulateRoadFlow(roads) {
   return roads.map((road, idx) => {
     if (road.flow) return road;
@@ -806,38 +834,36 @@ export default function TrafficLayer({ viewer }) {
       // Fallback
     }
 
-    // 2. If proxy failed, try direct mirror (CORS-friendly public mirror)
-    if (!overpassData || !Array.isArray(overpassData.elements)) {
+    // (The local server already asks every public Overpass mirror at once; a second try from the browser
+    // had no time limit and could hang the layer, so if that failed we go straight to TomTom's roads.)
+
+    let parsedRoads = parseOverpassRoads(overpassData);
+
+    // Live TomTom flow (when a key is set)
+    let flowSegments = [];
+    if (liveModeRef.current) {
       try {
-        const directRes = await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`);
-        if (directRes.ok) {
-          overpassData = await directRes.json();
-        }
+        flowSegments = (await fetchFlowForBounds(bounds)) || [];
       } catch {
-        // Fall back to synthetic city grid
+        // no live flow this time
       }
     }
 
-    let parsedRoads = parseOverpassRoads(overpassData);
-    if (!parsedRoads.length) {
-      // Synthesize realistic local grid around camera center if Overpass was offline
-      parsedRoads = buildSyntheticRoadsAround(center.lat, center.lon);
-    }
-
-    // Match TomTom flow if live mode active
-    if (liveModeRef.current) {
-      try {
-        const flowSegments = await fetchFlowForBounds(bounds);
-        if (flowSegments && flowSegments.length) {
-          const matchResult = matchFlowToRoads(parsedRoads, flowSegments);
-          matchResult.matches.forEach((m, idx) => {
-            if (m && parsedRoads[idx]) {
-              parsedRoads[idx].flow = m;
-            }
-          });
-        }
-      } catch {
-        // Fall back to simulation
+    if (!parsedRoads.length && flowSegments.length) {
+      // No OpenStreetMap roads: draw TomTom's own road lines, which carry real speeds.
+      parsedRoads = roadsFromFlowSegments(flowSegments);
+    } else {
+      if (!parsedRoads.length) {
+        // Nothing real to draw at all: fall back to a placeholder grid (fully simulated).
+        parsedRoads = buildSyntheticRoadsAround(center.lat, center.lon);
+      }
+      if (flowSegments.length) {
+        const matchResult = matchFlowToRoads(parsedRoads, flowSegments);
+        matchResult.matches.forEach((m, idx) => {
+          if (m && parsedRoads[idx]) {
+            parsedRoads[idx].flow = m;
+          }
+        });
       }
     }
 
