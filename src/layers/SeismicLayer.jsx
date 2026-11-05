@@ -207,7 +207,12 @@ export default function SeismicLayer({ viewer }) {
                     depth: `${depth} km`,
                     location: properties.place,
                     time: new Date(properties.time).toISOString(),
-                    tsunami: properties.tsunami ? 'Warning Issued' : 'None',
+                    // USGS sets this flag for large quakes in oceanic regions. It is not a tsunami warning
+                    // (official warnings come from tsunami.gov), so don't label it as one.
+                    tsunami: properties.tsunami ? 'USGS flag set (not a warning)' : 'None',
+                    pagerAlert: properties.alert || 'none', // USGS PAGER impact alert: green/yellow/orange/red
+                    felt: properties.felt ?? 'N/A', // "Did You Feel It?" reports
+                    url: properties.url || '',
                 },
             });
 
