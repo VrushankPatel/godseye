@@ -7,8 +7,12 @@ import { fetchJsonWithPolicy } from '../utils/network';
 const REQUEST_TIMEOUT_MS = 12000;
 const BATCH_SIZE = 48;
 
-const WORLD_GRID_STEP = 8;
-const INDIA_GRID_STEP = 4;
+// Open-Meteo's free tier allows 600 locations a minute and 10,000 a day, and counts every grid point.
+// The old 8°/4° grid was ~830 points fetched all at once every 10 minutes, which tripped both limits and
+// blanked the layer. 12°/6° is ~360 points, fetched batch by batch, hourly (see POLL_INTERVALS.WEATHER).
+const WORLD_GRID_STEP = 12;
+const INDIA_GRID_STEP = 6;
+const BATCH_GAP_MS = 1500;
 
 function formatCellId(lat, lon) {
     const latToken = `${lat >= 0 ? 'n' : 's'}${Math.abs(lat).toFixed(1).replace('.', '_')}`;
@@ -399,8 +403,17 @@ export default function WeatherLayer({ viewer }) {
                 setStatus('weather', 'loading', { sourceName: 'Open-Meteo + NOAA Alerts' });
             }
 
+            // One batch at a time, and keep whatever succeeds: a single refused batch used to blank the layer.
             const chunks = chunkArray(WEATHER_NODES, BATCH_SIZE);
-            const responses = await Promise.all(chunks.map((chunk) => fetchWeatherBatch(chunk)));
+            const responses = [];
+            for (const [i, chunk] of chunks.entries()) {
+                if (i > 0) await new Promise((r) => setTimeout(r, BATCH_GAP_MS));
+                try {
+                    responses.push(await fetchWeatherBatch(chunk));
+                } catch {
+                    responses.push([]);
+                }
+            }
             const weatherEntries = chunks.flatMap((chunk, index) =>
                 normalizeWeatherResponse(chunk, responses[index] || [])
             );
